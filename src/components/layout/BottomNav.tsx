@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Trophy, BarChart3, Swords, User } from "lucide-react";
+import { Home, Trophy, BarChart3, Swords, User, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { name: "Tournaments", href: "/tournaments", icon: Trophy },
   { name: "Rankings", href: "/leaderboard", icon: BarChart3 },
   { name: "Matches", href: "/matches", icon: Swords },
+  { name: "Wallet", href: "/wallet", icon: Wallet },
   { name: "Profile", href: "/profile", icon: User },
 ];
 
@@ -28,7 +29,7 @@ export function BottomNav() {
               key={item.name}
               href={item.href}
               className={cn(
-                "flex h-full w-full flex-col items-center justify-center gap-1.5 text-[10px] font-bold transition-colors",
+                "flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-1.5 whitespace-nowrap text-[9px] font-bold transition-colors sm:text-[10px]",
                 isActive ? "text-[#c5f94d]" : "text-[#8e998f] hover:text-[#dce3d6]"
               )}
             >

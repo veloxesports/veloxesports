@@ -15,7 +15,8 @@ export default async function Home() {
   const wallet = walletResult.success && walletResult.data ? walletResult.data.wallet : null;
   const displayName = user?.firstName || "Player";
   const profile = user?.profile;
-  const winRate = "—";
+  const totalMatches = (profile?.wins ?? 0) + (profile?.losses ?? 0);
+  const winRate = totalMatches ? `${Math.round(((profile?.wins ?? 0) / totalMatches) * 100)}%` : "—";
 
   return (
     <main className="velox-page">

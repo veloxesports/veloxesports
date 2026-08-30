@@ -17,7 +17,7 @@ export async function getCurrentUser() {
       role: true,
       status: true,
       profile: {
-        select: { rank: true, level: true, xp: true },
+        select: { rank: true, level: true, xp: true, wins: true, losses: true },
       },
     },
   });
