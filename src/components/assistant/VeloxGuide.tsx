@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Bot, LoaderCircle, SendHorizontal, Sparkles, X } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 type ChatMessage = {
   id: string;
@@ -32,6 +33,7 @@ function createMessage(role: ChatMessage["role"], content: string): ChatMessage 
 }
 
 export function VeloxGuide() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
@@ -48,6 +50,8 @@ export function VeloxGuide() {
   useEffect(() => {
     endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, isSending]);
+
+  if (pathname.startsWith("/admin")) return null;
 
   async function askGuide(question: string) {
     const trimmedQuestion = question.trim();

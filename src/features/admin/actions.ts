@@ -72,18 +72,143 @@ export async function createAuditLog(
 export async function getAdminStats() {
   try {
     await requireRole(["SUPER_ADMIN", "ADMIN", "TOURNAMENT_MANAGER", "FINANCE_MANAGER", "MODERATOR", "SUPPORT"]);
-    const [totalUsers, activeTournaments, pendingDisputes, registrations, pendingPayments, recentTransactions] = await Promise.all([
+    const activeSince = new Date();
+    activeSince.setDate(activeSince.getDate() - 30);
+
+    const [
+      totalUsers,
+      activeUsers,
+      totalTournaments,
+      activeTournaments,
+      liveTournaments,
+      pendingDisputes,
+      registrations,
+      pendingPayments,
+      pendingTransactions,
+      matchesNeedingAttention,
+      paymentTotals,
+      refundTotals,
+      rewardTotals,
+      activeEvents,
+      recentTransactions,
+      recentRegistrations,
+      recentActivity,
+      tournamentStatusCounts,
+    ] = await Promise.all([
       prisma.user.count(),
-      prisma.tournament.count({ where: { status: { in: ["REGISTRATION_OPEN", "UPCOMING", "LIVE"] } } }),
+      prisma.user.count({ where: { status: "ACTIVE", lastLogin: { gte: activeSince } } }),
+      prisma.tournament.count(),
+      prisma.tournament.count({ where: { status: { in: ["REGISTRATION_OPEN", "UPCOMING", "CHECK_IN", "LIVE"] } } }),
+      prisma.tournament.count({ where: { status: "LIVE" } }),
       prisma.dispute.count({ where: { status: "OPEN" } }),
       prisma.tournamentRegistration.count({ where: { status: "CONFIRMED" } }),
       prisma.telegramPayment.count({ where: { status: "PENDING" } }),
-      prisma.walletTransaction.findMany({ take: 5, orderBy: { createdAt: "desc" }, include: { wallet: { include: { user: true } } } }),
+      prisma.walletTransaction.count({ where: { status: { in: ["PENDING", "PROCESSING"] } } }),
+      prisma.match.count({ where: { status: { in: ["LIVE", "AWAITING_RESULT", "UNDER_REVIEW", "DISPUTED"] } } }),
+      prisma.telegramPayment.aggregate({ _sum: { amount: true }, where: { status: "COMPLETED" } }),
+      prisma.refund.aggregate({ _sum: { amount: true }, where: { status: "COMPLETED" } }),
+      prisma.walletTransaction.aggregate({ _sum: { amount: true }, where: { type: "PRIZE_REWARD", status: "COMPLETED" } }),
+      prisma.tournament.findMany({
+        where: { status: { in: ["REGISTRATION_OPEN", "UPCOMING", "CHECK_IN", "LIVE"] } },
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          startDate: true,
+          currentParticipants: true,
+          maxParticipants: true,
+          game: { select: { name: true } },
+        },
+        orderBy: { startDate: "asc" },
+        take: 4,
+      }),
+      prisma.walletTransaction.findMany({
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          amount: true,
+          currency: true,
+          type: true,
+          status: true,
+          description: true,
+          createdAt: true,
+          tournament: { select: { title: true } },
+          wallet: {
+            select: {
+              user: {
+                select: {
+                  username: true,
+                  firstName: true,
+                  profile: { select: { veloxUsername: true } },
+                },
+              },
+            },
+          },
+        },
+      }),
+      prisma.tournamentRegistration.findMany({
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          status: true,
+          createdAt: true,
+          tournament: { select: { title: true, game: { select: { name: true } } } },
+          user: {
+            select: {
+              username: true,
+              firstName: true,
+              profile: { select: { veloxUsername: true } },
+            },
+          },
+        },
+      }),
+      prisma.auditLog.findMany({
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          action: true,
+          entity: true,
+          createdAt: true,
+          admin: {
+            select: {
+              username: true,
+              firstName: true,
+              profile: { select: { veloxUsername: true } },
+            },
+          },
+        },
+      }),
+      prisma.tournament.groupBy({
+        by: ["status"],
+        _count: { _all: true },
+      }),
     ]);
 
     return {
       success: true,
-      data: { totalUsers, activeTournaments, pendingDisputes, registrations, pendingPayments, recentTransactions },
+      data: {
+        totalUsers,
+        activeUsers,
+        totalTournaments,
+        activeTournaments,
+        liveTournaments,
+        pendingDisputes,
+        registrations,
+        pendingPayments,
+        pendingTransactions,
+        matchesNeedingAttention,
+        totalPaymentStars: paymentTotals._sum.amount ?? 0,
+        totalRefundStars: refundTotals._sum.amount ?? 0,
+        tournamentRewardStars: rewardTotals._sum.amount ?? 0,
+        activeEvents,
+        recentTransactions,
+        recentRegistrations,
+        recentActivity,
+        tournamentStatusCounts,
+      },
     };
   } catch (error) {
     if (error instanceof Error && (error.message === "UNAUTHENTICATED" || error.message === "FORBIDDEN")) {
@@ -204,6 +329,7 @@ export async function createTournament(input: unknown) {
       return created;
     });
     revalidatePath("/tournaments");
+    revalidatePath("/admin");
     revalidatePath("/admin/tournaments");
     return { success: true, data: tournament };
   } catch (error) {
@@ -226,6 +352,7 @@ export async function setTournamentStatus(input: unknown) {
       await tx.auditLog.create({ data: { adminId: admin.id, action: "TOURNAMENT_STATUS_CHANGED", entity: "Tournament", entityId: parsed.data.tournamentId, oldValue: toAuditJson(current), newValue: toAuditJson({ status: parsed.data.status }) } });
     });
     revalidatePath("/tournaments");
+    revalidatePath("/admin");
     revalidatePath("/admin/tournaments");
     return { success: true };
   } catch (error) {
@@ -255,6 +382,7 @@ export async function cancelTournamentAndRefund(tournamentId: unknown) {
     const refundResults = await Promise.all(payments.map((payment) => refundStarsPayment(payment.id)));
     const refunded = refundResults.filter((result) => result.success).length;
     revalidatePath("/tournaments");
+    revalidatePath("/admin");
     revalidatePath("/admin/tournaments");
     revalidatePath("/admin/finance");
     return { success: true, data: { refunded, pending: payments.length - refunded }, warning: payments.length - refunded ? "Some refunds need finance reconciliation." : undefined };
