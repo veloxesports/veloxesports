@@ -3,8 +3,10 @@ import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import crypto from "node:crypto";
 import { evidenceExtension, type EvidenceFile, validateEvidenceFile } from "@/lib/validation/evidence";
+import { profileImageExtension, type ProfileImageFile, validateProfileImageFile } from "@/lib/validation/profile-image";
 
 const EVIDENCE_BUCKET = "match-evidence";
+const PROFILE_IMAGES_BUCKET = "profile-images";
 
 function getSupabaseAdminClient() {
   const url = process.env.SUPABASE_URL;
@@ -20,6 +22,25 @@ function getSupabaseAdminClient() {
 }
 
 export { validateEvidenceFile };
+
+async function ensureProfileImagesBucket() {
+  const client = getSupabaseAdminClient();
+  const { data: existingBucket } = await client.storage.getBucket(PROFILE_IMAGES_BUCKET);
+  if (existingBucket) return client;
+
+  const { error } = await client.storage.createBucket(PROFILE_IMAGES_BUCKET, {
+    public: true,
+    fileSizeLimit: "2MB",
+    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+  });
+
+  if (error && !/already exists/i.test(error.message)) {
+    console.error("Profile image bucket creation failed", { code: error.name });
+    throw new Error("PROFILE_IMAGE_UPLOAD_FAILED");
+  }
+
+  return client;
+}
 
 export async function uploadMatchEvidence(matchId: string, userId: string, file: EvidenceFile) {
   if (!validateEvidenceFile(file)) {
@@ -54,4 +75,28 @@ export async function createEvidenceSignedUrl(storagePath: string, expiresInSeco
   }
 
   return data.signedUrl;
+}
+
+export async function uploadProfileImage(userId: string, file: ProfileImageFile) {
+  if (!validateProfileImageFile(file)) {
+    throw new Error("INVALID_PROFILE_IMAGE");
+  }
+
+  const client = await ensureProfileImagesBucket();
+  const extension = profileImageExtension(file.type as "image/jpeg" | "image/png" | "image/webp");
+  const storagePath = `avatars/${userId}/${crypto.randomUUID()}.${extension}`;
+  const storage = client.storage.from(PROFILE_IMAGES_BUCKET);
+  const { error } = await storage.upload(storagePath, new Uint8Array(await file.arrayBuffer()), {
+    contentType: file.type,
+    upsert: false,
+  });
+
+  if (error) {
+    console.error("Profile image upload failed", { code: error.name });
+    throw new Error("PROFILE_IMAGE_UPLOAD_FAILED");
+  }
+
+  const { data } = storage.getPublicUrl(storagePath);
+  if (!data.publicUrl) throw new Error("PROFILE_IMAGE_UPLOAD_FAILED");
+  return data.publicUrl;
 }

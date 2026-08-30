@@ -7,6 +7,11 @@ import { validateTelegramWebAppData } from "@/lib/telegram/auth";
 import { ensureReferralCode } from "@/features/referrals/service";
 
 const initDataSchema = z.string().trim().min(1).max(4_096);
+const PROFILE_IMAGES_STORAGE_SEGMENT = "/storage/v1/object/public/profile-images/";
+
+function isVeloxUploadedProfileImage(profileImage: string | null | undefined) {
+  return Boolean(profileImage?.includes(PROFILE_IMAGES_STORAGE_SEGMENT));
+}
 
 export async function authenticateTelegram(initData: unknown) {
   const parsedInitData = initDataSchema.safeParse(initData);
@@ -24,6 +29,14 @@ export async function authenticateTelegram(initData: unknown) {
 
   try {
     const user = await prisma.$transaction(async (tx) => {
+      const existingAccount = await tx.user.findUnique({
+        where: { telegramId: String(telegramUser.id) },
+        select: { profileImage: true },
+      });
+      const profileImage = isVeloxUploadedProfileImage(existingAccount?.profileImage)
+        ? existingAccount!.profileImage
+        : telegramUser.photo_url ?? null;
+
       const account = await tx.user.upsert({
         where: { telegramId: String(telegramUser.id) },
         update: {
@@ -31,7 +44,7 @@ export async function authenticateTelegram(initData: unknown) {
           firstName: telegramUser.first_name,
           lastName: telegramUser.last_name ?? null,
           languageCode: telegramUser.language_code ?? null,
-          profileImage: telegramUser.photo_url ?? null,
+          profileImage,
           isPremium: telegramUser.is_premium ?? false,
           lastLogin: new Date(),
         },

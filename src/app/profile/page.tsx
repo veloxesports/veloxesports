@@ -1,5 +1,6 @@
 import { getPlayerProfile } from "@/features/profile/actions";
-import { User, Trophy, Gamepad2, Settings, Swords, Medal, Gift } from "lucide-react";
+import { User, Trophy, Gamepad2, Swords, Medal, Gift } from "lucide-react";
+import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import Link from "next/link";
 
 export default async function ProfilePage() {
@@ -22,32 +23,15 @@ export default async function ProfilePage() {
 
   return (
     <div className="velox-page">
-      {/* Header Banner */}
-      <div className="h-40 rounded-[28px] border border-[#31442f] bg-gradient-to-br from-[#244219] to-[#0d130e] relative overflow-hidden">
-        <div className="absolute top-4 right-4 z-10">
-          <Link href="/settings" aria-label="Open settings" className="w-10 h-10 rounded-full bg-black/50 backdrop-blur border border-[#51604e] flex items-center justify-center text-white hover:border-[#c5f94d]">
-            <Settings className="w-5 h-5" />
-          </Link>
-        </div>
-      </div>
+      <ProfileHeader
+        initialImageUrl={profile.user.profileImage}
+        displayName={profile.veloxUsername || profile.user.firstName || "VELOX Player"}
+        fallbackInitial={(profile.veloxUsername || profile.user.firstName || "U")[0].toUpperCase()}
+        rank={profile.rank}
+        level={profile.level}
+      />
 
-      <div className="px-4 relative -mt-16 mb-6">
-        <div className="flex flex-col items-center">
-          <div className="w-32 h-32 rounded-full bg-[#111811] border-4 border-[#c5f94d] flex items-center justify-center text-gray-500 shadow-[0_0_20px_rgba(197,249,77,0.2)] overflow-hidden">
-            <span className="text-4xl font-black text-white">{profile.veloxUsername?.[0]?.toUpperCase() || 'U'}</span>
-          </div>
-          
-          <h1 className="text-2xl font-black text-white mt-3">{profile.veloxUsername || profile.user.firstName}</h1>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="bg-[#263c1c] text-[#d4ff76] border border-[#4f703c] text-xs px-2 py-0.5 rounded-full font-bold uppercase">
-              {profile.rank}
-            </span>
-            <span className="text-gray-400 text-sm font-medium">Level {profile.level}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="px-4 flex flex-col gap-6">
+      <div className="mt-6 px-4 flex flex-col gap-6">
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-3">
           <div className="velox-card p-4 flex flex-col items-center text-center">

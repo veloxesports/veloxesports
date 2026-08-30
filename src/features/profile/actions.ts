@@ -2,6 +2,9 @@
 
 import { prisma } from "@/lib/database/prisma";
 import { requireCurrentUser } from "@/lib/auth/current-user";
+import { uploadProfileImage } from "@/lib/database/supabase";
+import { validateProfileImageFile } from "@/lib/validation/profile-image";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 const profileUpdateSchema = z.object({
@@ -64,6 +67,38 @@ export async function updateCurrentProfile(input: unknown) {
     }
     console.error("Profile update failed", error);
     return { success: false, error: "We couldn't save your profile. Please try again." };
+  }
+}
+
+export async function uploadCurrentProfileImage(formData: FormData) {
+  const file = formData.get("profileImage");
+  if (!validateProfileImageFile(file)) {
+    return { success: false, error: "Upload a JPG, PNG, or WebP image smaller than 2 MB." };
+  }
+
+  try {
+    const user = await requireCurrentUser();
+    const profileImage = await uploadProfileImage(user.id, file);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { profileImage },
+      select: { profileImage: true },
+    });
+    revalidatePath("/profile");
+    revalidatePath("/settings");
+    return { success: true, data: { profileImage } };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHENTICATED") {
+      return { success: false, error: "Open VELOX in Telegram to update your profile image." };
+    }
+    if (error instanceof Error && error.message === "SUPABASE_STORAGE_NOT_CONFIGURED") {
+      return { success: false, error: "Profile image storage has not been configured yet." };
+    }
+    if (error instanceof Error && error.message === "PROFILE_IMAGE_UPLOAD_FAILED") {
+      return { success: false, error: "We couldn't upload your image. Please try again." };
+    }
+    console.error("Profile image upload failed", error);
+    return { success: false, error: "We couldn't save your profile image. Please try again." };
   }
 }
 
