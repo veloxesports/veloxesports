@@ -206,11 +206,11 @@ export function VeloxGuide() {
         onClick={() => setIsOpen((current) => !current)}
         aria-expanded={isOpen}
         aria-controls="velox-guide"
-        className="group relative flex h-14 items-center gap-2 rounded-2xl border border-[#d9ff82]/70 bg-[#c5f94d] px-4 text-[#091009] shadow-[0_14px_38px_rgba(76,118,26,0.35)] transition hover:scale-[1.03] hover:bg-[#d6ff71] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c5f94d] focus-visible:ring-offset-2 focus-visible:ring-offset-[#080d09]"
+        aria-label={isOpen ? "Close VELOX Guide" : "Open VELOX Guide"}
+        className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-[#d9ff82]/70 bg-[#c5f94d] text-[#091009] shadow-[0_14px_38px_rgba(76,118,26,0.35)] transition hover:scale-[1.03] hover:bg-[#d6ff71] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c5f94d] focus-visible:ring-offset-2 focus-visible:ring-offset-[#080d09]"
       >
         <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-[#080d09] bg-emerald-500" />
         <Bot className="h-6 w-6" aria-hidden />
-        <span className="text-sm font-black">Ask VELOX</span>
       </button>
     </div>
   );
