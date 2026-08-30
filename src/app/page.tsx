@@ -13,8 +13,8 @@ export default async function Home() {
   ]);
   const featuredTournament = tournamentsResult.success && tournamentsResult.data ? tournamentsResult.data[0] : undefined;
   const wallet = walletResult.success && walletResult.data ? walletResult.data.wallet : null;
-  const displayName = user?.firstName || "Player";
   const profile = user?.profile;
+  const displayName = profile?.veloxUsername || user?.username || user?.firstName || "Player";
   const totalMatches = (profile?.wins ?? 0) + (profile?.losses ?? 0);
   const winRate = totalMatches ? `${Math.round(((profile?.wins ?? 0) / totalMatches) * 100)}%` : "—";
 

@@ -57,6 +57,10 @@ export async function updateCurrentProfile(input: unknown) {
         country: parsed.data.country || null,
       },
     });
+    revalidatePath("/");
+    revalidatePath("/leaderboard");
+    revalidatePath("/profile");
+    revalidatePath("/settings");
     return { success: true, data: profile };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHENTICATED") {
