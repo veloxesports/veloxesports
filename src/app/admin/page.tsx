@@ -1,4 +1,4 @@
-import { Activity, ArrowUpRight, Calendar, ChevronRight, CreditCard, Gamepad2, ShieldAlert, Swords, Trophy, Users } from "lucide-react";
+import { Activity, ArrowUpRight, Calendar, ChevronRight, CreditCard, Gamepad2, LogOut, ShieldAlert, Swords, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 import { getAdminStats } from "@/features/admin/actions";
 
@@ -26,9 +26,16 @@ export default async function AdminDashboard() {
           <h1 className="mt-2 text-3xl font-black tracking-[-0.05em] text-white sm:text-4xl">Command Center</h1>
           <p className="mt-2 max-w-md text-sm leading-relaxed text-[#8e998f]">Monitor the competitive platform and act on the work that needs your team.</p>
         </div>
-        <Link href="/" className="velox-muted-button shrink-0 px-3 py-2.5 text-xs" aria-label="Open the player experience">
-          Player app <ArrowUpRight className="ml-1.5 h-3.5 w-3.5" aria-hidden />
-        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          <Link href="/" className="velox-muted-button px-3 py-2.5 text-xs" aria-label="Open the player experience">
+            Player app <ArrowUpRight className="ml-1.5 h-3.5 w-3.5" aria-hidden />
+          </Link>
+          <form action="/api/admin/auth/logout" method="post">
+            <button type="submit" className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#2a352b] bg-[#131b14] text-[#aeb8ad] transition hover:border-[#6c7d5a] hover:text-white" aria-label="Sign out of the Command Center">
+              <LogOut className="h-4 w-4" aria-hidden />
+            </button>
+          </form>
+        </div>
       </header>
 
       <section className="relative mt-7 overflow-hidden rounded-[28px] border border-[#415d32] bg-[#182714] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.22)] sm:p-7">

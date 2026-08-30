@@ -51,7 +51,7 @@ export function VeloxGuide() {
     endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, isSending]);
 
-  if (pathname.startsWith("/admin")) return null;
+  if (pathname.startsWith("/admin") || pathname === "/admin-login") return null;
 
   async function askGuide(question: string) {
     const trimmedQuestion = question.trim();

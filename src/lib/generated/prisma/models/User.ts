@@ -247,6 +247,7 @@ export type UserWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   lastLogin?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   profile?: Prisma.XOR<Prisma.UserProfileNullableScalarRelationFilter, Prisma.UserProfileWhereInput> | null
+  webAdminAccount?: Prisma.XOR<Prisma.WebAdminAccountNullableScalarRelationFilter, Prisma.WebAdminAccountWhereInput> | null
   wallet?: Prisma.XOR<Prisma.WalletNullableScalarRelationFilter, Prisma.WalletWhereInput> | null
   registrations?: Prisma.TournamentRegistrationListRelationFilter
   payments?: Prisma.TelegramPaymentListRelationFilter
@@ -273,6 +274,7 @@ export type UserOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   lastLogin?: Prisma.SortOrderInput | Prisma.SortOrder
   profile?: Prisma.UserProfileOrderByWithRelationInput
+  webAdminAccount?: Prisma.WebAdminAccountOrderByWithRelationInput
   wallet?: Prisma.WalletOrderByWithRelationInput
   registrations?: Prisma.TournamentRegistrationOrderByRelationAggregateInput
   payments?: Prisma.TelegramPaymentOrderByRelationAggregateInput
@@ -302,6 +304,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   lastLogin?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   profile?: Prisma.XOR<Prisma.UserProfileNullableScalarRelationFilter, Prisma.UserProfileWhereInput> | null
+  webAdminAccount?: Prisma.XOR<Prisma.WebAdminAccountNullableScalarRelationFilter, Prisma.WebAdminAccountWhereInput> | null
   wallet?: Prisma.XOR<Prisma.WalletNullableScalarRelationFilter, Prisma.WalletWhereInput> | null
   registrations?: Prisma.TournamentRegistrationListRelationFilter
   payments?: Prisma.TelegramPaymentListRelationFilter
@@ -366,6 +369,7 @@ export type UserCreateInput = {
   updatedAt?: Date | string
   lastLogin?: Date | string | null
   profile?: Prisma.UserProfileCreateNestedOneWithoutUserInput
+  webAdminAccount?: Prisma.WebAdminAccountCreateNestedOneWithoutUserInput
   wallet?: Prisma.WalletCreateNestedOneWithoutUserInput
   registrations?: Prisma.TournamentRegistrationCreateNestedManyWithoutUserInput
   payments?: Prisma.TelegramPaymentCreateNestedManyWithoutUserInput
@@ -392,6 +396,7 @@ export type UserUncheckedCreateInput = {
   updatedAt?: Date | string
   lastLogin?: Date | string | null
   profile?: Prisma.UserProfileUncheckedCreateNestedOneWithoutUserInput
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedCreateNestedOneWithoutUserInput
   wallet?: Prisma.WalletUncheckedCreateNestedOneWithoutUserInput
   registrations?: Prisma.TournamentRegistrationUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.TelegramPaymentUncheckedCreateNestedManyWithoutUserInput
@@ -418,6 +423,7 @@ export type UserUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profile?: Prisma.UserProfileUpdateOneWithoutUserNestedInput
+  webAdminAccount?: Prisma.WebAdminAccountUpdateOneWithoutUserNestedInput
   wallet?: Prisma.WalletUpdateOneWithoutUserNestedInput
   registrations?: Prisma.TournamentRegistrationUpdateManyWithoutUserNestedInput
   payments?: Prisma.TelegramPaymentUpdateManyWithoutUserNestedInput
@@ -444,6 +450,7 @@ export type UserUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profile?: Prisma.UserProfileUncheckedUpdateOneWithoutUserNestedInput
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedUpdateOneWithoutUserNestedInput
   wallet?: Prisma.WalletUncheckedUpdateOneWithoutUserNestedInput
   registrations?: Prisma.TournamentRegistrationUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.TelegramPaymentUncheckedUpdateManyWithoutUserNestedInput
@@ -717,6 +724,20 @@ export type UserUpdateOneWithoutReceivedReferralNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutReceivedReferralInput, Prisma.UserUpdateWithoutReceivedReferralInput>, Prisma.UserUncheckedUpdateWithoutReceivedReferralInput>
 }
 
+export type UserCreateNestedOneWithoutWebAdminAccountInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutWebAdminAccountInput, Prisma.UserUncheckedCreateWithoutWebAdminAccountInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutWebAdminAccountInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutWebAdminAccountNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutWebAdminAccountInput, Prisma.UserUncheckedCreateWithoutWebAdminAccountInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutWebAdminAccountInput
+  upsert?: Prisma.UserUpsertWithoutWebAdminAccountInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutWebAdminAccountInput, Prisma.UserUpdateWithoutWebAdminAccountInput>, Prisma.UserUncheckedUpdateWithoutWebAdminAccountInput>
+}
+
 export type UserCreateNestedOneWithoutAuditLogsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutAuditLogsInput, Prisma.UserUncheckedCreateWithoutAuditLogsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutAuditLogsInput
@@ -745,6 +766,7 @@ export type UserCreateWithoutProfileInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   lastLogin?: Date | string | null
+  webAdminAccount?: Prisma.WebAdminAccountCreateNestedOneWithoutUserInput
   wallet?: Prisma.WalletCreateNestedOneWithoutUserInput
   registrations?: Prisma.TournamentRegistrationCreateNestedManyWithoutUserInput
   payments?: Prisma.TelegramPaymentCreateNestedManyWithoutUserInput
@@ -770,6 +792,7 @@ export type UserUncheckedCreateWithoutProfileInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   lastLogin?: Date | string | null
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedCreateNestedOneWithoutUserInput
   wallet?: Prisma.WalletUncheckedCreateNestedOneWithoutUserInput
   registrations?: Prisma.TournamentRegistrationUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.TelegramPaymentUncheckedCreateNestedManyWithoutUserInput
@@ -811,6 +834,7 @@ export type UserUpdateWithoutProfileInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webAdminAccount?: Prisma.WebAdminAccountUpdateOneWithoutUserNestedInput
   wallet?: Prisma.WalletUpdateOneWithoutUserNestedInput
   registrations?: Prisma.TournamentRegistrationUpdateManyWithoutUserNestedInput
   payments?: Prisma.TelegramPaymentUpdateManyWithoutUserNestedInput
@@ -836,6 +860,7 @@ export type UserUncheckedUpdateWithoutProfileInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedUpdateOneWithoutUserNestedInput
   wallet?: Prisma.WalletUncheckedUpdateOneWithoutUserNestedInput
   registrations?: Prisma.TournamentRegistrationUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.TelegramPaymentUncheckedUpdateManyWithoutUserNestedInput
@@ -862,6 +887,7 @@ export type UserCreateWithoutWalletInput = {
   updatedAt?: Date | string
   lastLogin?: Date | string | null
   profile?: Prisma.UserProfileCreateNestedOneWithoutUserInput
+  webAdminAccount?: Prisma.WebAdminAccountCreateNestedOneWithoutUserInput
   registrations?: Prisma.TournamentRegistrationCreateNestedManyWithoutUserInput
   payments?: Prisma.TelegramPaymentCreateNestedManyWithoutUserInput
   achievements?: Prisma.UserAchievementCreateNestedManyWithoutUserInput
@@ -887,6 +913,7 @@ export type UserUncheckedCreateWithoutWalletInput = {
   updatedAt?: Date | string
   lastLogin?: Date | string | null
   profile?: Prisma.UserProfileUncheckedCreateNestedOneWithoutUserInput
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedCreateNestedOneWithoutUserInput
   registrations?: Prisma.TournamentRegistrationUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.TelegramPaymentUncheckedCreateNestedManyWithoutUserInput
   achievements?: Prisma.UserAchievementUncheckedCreateNestedManyWithoutUserInput
@@ -928,6 +955,7 @@ export type UserUpdateWithoutWalletInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profile?: Prisma.UserProfileUpdateOneWithoutUserNestedInput
+  webAdminAccount?: Prisma.WebAdminAccountUpdateOneWithoutUserNestedInput
   registrations?: Prisma.TournamentRegistrationUpdateManyWithoutUserNestedInput
   payments?: Prisma.TelegramPaymentUpdateManyWithoutUserNestedInput
   achievements?: Prisma.UserAchievementUpdateManyWithoutUserNestedInput
@@ -953,6 +981,7 @@ export type UserUncheckedUpdateWithoutWalletInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profile?: Prisma.UserProfileUncheckedUpdateOneWithoutUserNestedInput
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedUpdateOneWithoutUserNestedInput
   registrations?: Prisma.TournamentRegistrationUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.TelegramPaymentUncheckedUpdateManyWithoutUserNestedInput
   achievements?: Prisma.UserAchievementUncheckedUpdateManyWithoutUserNestedInput
@@ -978,6 +1007,7 @@ export type UserCreateWithoutPaymentsInput = {
   updatedAt?: Date | string
   lastLogin?: Date | string | null
   profile?: Prisma.UserProfileCreateNestedOneWithoutUserInput
+  webAdminAccount?: Prisma.WebAdminAccountCreateNestedOneWithoutUserInput
   wallet?: Prisma.WalletCreateNestedOneWithoutUserInput
   registrations?: Prisma.TournamentRegistrationCreateNestedManyWithoutUserInput
   achievements?: Prisma.UserAchievementCreateNestedManyWithoutUserInput
@@ -1003,6 +1033,7 @@ export type UserUncheckedCreateWithoutPaymentsInput = {
   updatedAt?: Date | string
   lastLogin?: Date | string | null
   profile?: Prisma.UserProfileUncheckedCreateNestedOneWithoutUserInput
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedCreateNestedOneWithoutUserInput
   wallet?: Prisma.WalletUncheckedCreateNestedOneWithoutUserInput
   registrations?: Prisma.TournamentRegistrationUncheckedCreateNestedManyWithoutUserInput
   achievements?: Prisma.UserAchievementUncheckedCreateNestedManyWithoutUserInput
@@ -1044,6 +1075,7 @@ export type UserUpdateWithoutPaymentsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profile?: Prisma.UserProfileUpdateOneWithoutUserNestedInput
+  webAdminAccount?: Prisma.WebAdminAccountUpdateOneWithoutUserNestedInput
   wallet?: Prisma.WalletUpdateOneWithoutUserNestedInput
   registrations?: Prisma.TournamentRegistrationUpdateManyWithoutUserNestedInput
   achievements?: Prisma.UserAchievementUpdateManyWithoutUserNestedInput
@@ -1069,6 +1101,7 @@ export type UserUncheckedUpdateWithoutPaymentsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profile?: Prisma.UserProfileUncheckedUpdateOneWithoutUserNestedInput
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedUpdateOneWithoutUserNestedInput
   wallet?: Prisma.WalletUncheckedUpdateOneWithoutUserNestedInput
   registrations?: Prisma.TournamentRegistrationUncheckedUpdateManyWithoutUserNestedInput
   achievements?: Prisma.UserAchievementUncheckedUpdateManyWithoutUserNestedInput
@@ -1094,6 +1127,7 @@ export type UserCreateWithoutRegistrationsInput = {
   updatedAt?: Date | string
   lastLogin?: Date | string | null
   profile?: Prisma.UserProfileCreateNestedOneWithoutUserInput
+  webAdminAccount?: Prisma.WebAdminAccountCreateNestedOneWithoutUserInput
   wallet?: Prisma.WalletCreateNestedOneWithoutUserInput
   payments?: Prisma.TelegramPaymentCreateNestedManyWithoutUserInput
   achievements?: Prisma.UserAchievementCreateNestedManyWithoutUserInput
@@ -1119,6 +1153,7 @@ export type UserUncheckedCreateWithoutRegistrationsInput = {
   updatedAt?: Date | string
   lastLogin?: Date | string | null
   profile?: Prisma.UserProfileUncheckedCreateNestedOneWithoutUserInput
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedCreateNestedOneWithoutUserInput
   wallet?: Prisma.WalletUncheckedCreateNestedOneWithoutUserInput
   payments?: Prisma.TelegramPaymentUncheckedCreateNestedManyWithoutUserInput
   achievements?: Prisma.UserAchievementUncheckedCreateNestedManyWithoutUserInput
@@ -1160,6 +1195,7 @@ export type UserUpdateWithoutRegistrationsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profile?: Prisma.UserProfileUpdateOneWithoutUserNestedInput
+  webAdminAccount?: Prisma.WebAdminAccountUpdateOneWithoutUserNestedInput
   wallet?: Prisma.WalletUpdateOneWithoutUserNestedInput
   payments?: Prisma.TelegramPaymentUpdateManyWithoutUserNestedInput
   achievements?: Prisma.UserAchievementUpdateManyWithoutUserNestedInput
@@ -1185,6 +1221,7 @@ export type UserUncheckedUpdateWithoutRegistrationsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profile?: Prisma.UserProfileUncheckedUpdateOneWithoutUserNestedInput
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedUpdateOneWithoutUserNestedInput
   wallet?: Prisma.WalletUncheckedUpdateOneWithoutUserNestedInput
   payments?: Prisma.TelegramPaymentUncheckedUpdateManyWithoutUserNestedInput
   achievements?: Prisma.UserAchievementUncheckedUpdateManyWithoutUserNestedInput
@@ -1210,6 +1247,7 @@ export type UserCreateWithoutTeamMembershipsInput = {
   updatedAt?: Date | string
   lastLogin?: Date | string | null
   profile?: Prisma.UserProfileCreateNestedOneWithoutUserInput
+  webAdminAccount?: Prisma.WebAdminAccountCreateNestedOneWithoutUserInput
   wallet?: Prisma.WalletCreateNestedOneWithoutUserInput
   registrations?: Prisma.TournamentRegistrationCreateNestedManyWithoutUserInput
   payments?: Prisma.TelegramPaymentCreateNestedManyWithoutUserInput
@@ -1235,6 +1273,7 @@ export type UserUncheckedCreateWithoutTeamMembershipsInput = {
   updatedAt?: Date | string
   lastLogin?: Date | string | null
   profile?: Prisma.UserProfileUncheckedCreateNestedOneWithoutUserInput
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedCreateNestedOneWithoutUserInput
   wallet?: Prisma.WalletUncheckedCreateNestedOneWithoutUserInput
   registrations?: Prisma.TournamentRegistrationUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.TelegramPaymentUncheckedCreateNestedManyWithoutUserInput
@@ -1276,6 +1315,7 @@ export type UserUpdateWithoutTeamMembershipsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profile?: Prisma.UserProfileUpdateOneWithoutUserNestedInput
+  webAdminAccount?: Prisma.WebAdminAccountUpdateOneWithoutUserNestedInput
   wallet?: Prisma.WalletUpdateOneWithoutUserNestedInput
   registrations?: Prisma.TournamentRegistrationUpdateManyWithoutUserNestedInput
   payments?: Prisma.TelegramPaymentUpdateManyWithoutUserNestedInput
@@ -1301,6 +1341,7 @@ export type UserUncheckedUpdateWithoutTeamMembershipsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profile?: Prisma.UserProfileUncheckedUpdateOneWithoutUserNestedInput
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedUpdateOneWithoutUserNestedInput
   wallet?: Prisma.WalletUncheckedUpdateOneWithoutUserNestedInput
   registrations?: Prisma.TournamentRegistrationUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.TelegramPaymentUncheckedUpdateManyWithoutUserNestedInput
@@ -1326,6 +1367,7 @@ export type UserCreateWithoutAchievementsInput = {
   updatedAt?: Date | string
   lastLogin?: Date | string | null
   profile?: Prisma.UserProfileCreateNestedOneWithoutUserInput
+  webAdminAccount?: Prisma.WebAdminAccountCreateNestedOneWithoutUserInput
   wallet?: Prisma.WalletCreateNestedOneWithoutUserInput
   registrations?: Prisma.TournamentRegistrationCreateNestedManyWithoutUserInput
   payments?: Prisma.TelegramPaymentCreateNestedManyWithoutUserInput
@@ -1351,6 +1393,7 @@ export type UserUncheckedCreateWithoutAchievementsInput = {
   updatedAt?: Date | string
   lastLogin?: Date | string | null
   profile?: Prisma.UserProfileUncheckedCreateNestedOneWithoutUserInput
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedCreateNestedOneWithoutUserInput
   wallet?: Prisma.WalletUncheckedCreateNestedOneWithoutUserInput
   registrations?: Prisma.TournamentRegistrationUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.TelegramPaymentUncheckedCreateNestedManyWithoutUserInput
@@ -1392,6 +1435,7 @@ export type UserUpdateWithoutAchievementsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profile?: Prisma.UserProfileUpdateOneWithoutUserNestedInput
+  webAdminAccount?: Prisma.WebAdminAccountUpdateOneWithoutUserNestedInput
   wallet?: Prisma.WalletUpdateOneWithoutUserNestedInput
   registrations?: Prisma.TournamentRegistrationUpdateManyWithoutUserNestedInput
   payments?: Prisma.TelegramPaymentUpdateManyWithoutUserNestedInput
@@ -1417,6 +1461,7 @@ export type UserUncheckedUpdateWithoutAchievementsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profile?: Prisma.UserProfileUncheckedUpdateOneWithoutUserNestedInput
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedUpdateOneWithoutUserNestedInput
   wallet?: Prisma.WalletUncheckedUpdateOneWithoutUserNestedInput
   registrations?: Prisma.TournamentRegistrationUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.TelegramPaymentUncheckedUpdateManyWithoutUserNestedInput
@@ -1442,6 +1487,7 @@ export type UserCreateWithoutNotificationsInput = {
   updatedAt?: Date | string
   lastLogin?: Date | string | null
   profile?: Prisma.UserProfileCreateNestedOneWithoutUserInput
+  webAdminAccount?: Prisma.WebAdminAccountCreateNestedOneWithoutUserInput
   wallet?: Prisma.WalletCreateNestedOneWithoutUserInput
   registrations?: Prisma.TournamentRegistrationCreateNestedManyWithoutUserInput
   payments?: Prisma.TelegramPaymentCreateNestedManyWithoutUserInput
@@ -1467,6 +1513,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   updatedAt?: Date | string
   lastLogin?: Date | string | null
   profile?: Prisma.UserProfileUncheckedCreateNestedOneWithoutUserInput
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedCreateNestedOneWithoutUserInput
   wallet?: Prisma.WalletUncheckedCreateNestedOneWithoutUserInput
   registrations?: Prisma.TournamentRegistrationUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.TelegramPaymentUncheckedCreateNestedManyWithoutUserInput
@@ -1508,6 +1555,7 @@ export type UserUpdateWithoutNotificationsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profile?: Prisma.UserProfileUpdateOneWithoutUserNestedInput
+  webAdminAccount?: Prisma.WebAdminAccountUpdateOneWithoutUserNestedInput
   wallet?: Prisma.WalletUpdateOneWithoutUserNestedInput
   registrations?: Prisma.TournamentRegistrationUpdateManyWithoutUserNestedInput
   payments?: Prisma.TelegramPaymentUpdateManyWithoutUserNestedInput
@@ -1533,6 +1581,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profile?: Prisma.UserProfileUncheckedUpdateOneWithoutUserNestedInput
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedUpdateOneWithoutUserNestedInput
   wallet?: Prisma.WalletUncheckedUpdateOneWithoutUserNestedInput
   registrations?: Prisma.TournamentRegistrationUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.TelegramPaymentUncheckedUpdateManyWithoutUserNestedInput
@@ -1558,6 +1607,7 @@ export type UserCreateWithoutSentReferralsInput = {
   updatedAt?: Date | string
   lastLogin?: Date | string | null
   profile?: Prisma.UserProfileCreateNestedOneWithoutUserInput
+  webAdminAccount?: Prisma.WebAdminAccountCreateNestedOneWithoutUserInput
   wallet?: Prisma.WalletCreateNestedOneWithoutUserInput
   registrations?: Prisma.TournamentRegistrationCreateNestedManyWithoutUserInput
   payments?: Prisma.TelegramPaymentCreateNestedManyWithoutUserInput
@@ -1583,6 +1633,7 @@ export type UserUncheckedCreateWithoutSentReferralsInput = {
   updatedAt?: Date | string
   lastLogin?: Date | string | null
   profile?: Prisma.UserProfileUncheckedCreateNestedOneWithoutUserInput
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedCreateNestedOneWithoutUserInput
   wallet?: Prisma.WalletUncheckedCreateNestedOneWithoutUserInput
   registrations?: Prisma.TournamentRegistrationUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.TelegramPaymentUncheckedCreateNestedManyWithoutUserInput
@@ -1613,6 +1664,7 @@ export type UserCreateWithoutReceivedReferralInput = {
   updatedAt?: Date | string
   lastLogin?: Date | string | null
   profile?: Prisma.UserProfileCreateNestedOneWithoutUserInput
+  webAdminAccount?: Prisma.WebAdminAccountCreateNestedOneWithoutUserInput
   wallet?: Prisma.WalletCreateNestedOneWithoutUserInput
   registrations?: Prisma.TournamentRegistrationCreateNestedManyWithoutUserInput
   payments?: Prisma.TelegramPaymentCreateNestedManyWithoutUserInput
@@ -1638,6 +1690,7 @@ export type UserUncheckedCreateWithoutReceivedReferralInput = {
   updatedAt?: Date | string
   lastLogin?: Date | string | null
   profile?: Prisma.UserProfileUncheckedCreateNestedOneWithoutUserInput
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedCreateNestedOneWithoutUserInput
   wallet?: Prisma.WalletUncheckedCreateNestedOneWithoutUserInput
   registrations?: Prisma.TournamentRegistrationUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.TelegramPaymentUncheckedCreateNestedManyWithoutUserInput
@@ -1679,6 +1732,7 @@ export type UserUpdateWithoutSentReferralsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profile?: Prisma.UserProfileUpdateOneWithoutUserNestedInput
+  webAdminAccount?: Prisma.WebAdminAccountUpdateOneWithoutUserNestedInput
   wallet?: Prisma.WalletUpdateOneWithoutUserNestedInput
   registrations?: Prisma.TournamentRegistrationUpdateManyWithoutUserNestedInput
   payments?: Prisma.TelegramPaymentUpdateManyWithoutUserNestedInput
@@ -1704,6 +1758,7 @@ export type UserUncheckedUpdateWithoutSentReferralsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profile?: Prisma.UserProfileUncheckedUpdateOneWithoutUserNestedInput
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedUpdateOneWithoutUserNestedInput
   wallet?: Prisma.WalletUncheckedUpdateOneWithoutUserNestedInput
   registrations?: Prisma.TournamentRegistrationUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.TelegramPaymentUncheckedUpdateManyWithoutUserNestedInput
@@ -1740,6 +1795,7 @@ export type UserUpdateWithoutReceivedReferralInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profile?: Prisma.UserProfileUpdateOneWithoutUserNestedInput
+  webAdminAccount?: Prisma.WebAdminAccountUpdateOneWithoutUserNestedInput
   wallet?: Prisma.WalletUpdateOneWithoutUserNestedInput
   registrations?: Prisma.TournamentRegistrationUpdateManyWithoutUserNestedInput
   payments?: Prisma.TelegramPaymentUpdateManyWithoutUserNestedInput
@@ -1765,11 +1821,132 @@ export type UserUncheckedUpdateWithoutReceivedReferralInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profile?: Prisma.UserProfileUncheckedUpdateOneWithoutUserNestedInput
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedUpdateOneWithoutUserNestedInput
   wallet?: Prisma.WalletUncheckedUpdateOneWithoutUserNestedInput
   registrations?: Prisma.TournamentRegistrationUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.TelegramPaymentUncheckedUpdateManyWithoutUserNestedInput
   achievements?: Prisma.UserAchievementUncheckedUpdateManyWithoutUserNestedInput
   sentReferrals?: Prisma.ReferralUncheckedUpdateManyWithoutReferrerNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  teamMemberships?: Prisma.TeamMemberUncheckedUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutAdminNestedInput
+}
+
+export type UserCreateWithoutWebAdminAccountInput = {
+  id?: string
+  telegramId: string
+  username?: string | null
+  firstName?: string | null
+  lastName?: string | null
+  languageCode?: string | null
+  profileImage?: string | null
+  isPremium?: boolean
+  role?: $Enums.Role
+  status?: $Enums.UserStatus
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lastLogin?: Date | string | null
+  profile?: Prisma.UserProfileCreateNestedOneWithoutUserInput
+  wallet?: Prisma.WalletCreateNestedOneWithoutUserInput
+  registrations?: Prisma.TournamentRegistrationCreateNestedManyWithoutUserInput
+  payments?: Prisma.TelegramPaymentCreateNestedManyWithoutUserInput
+  achievements?: Prisma.UserAchievementCreateNestedManyWithoutUserInput
+  sentReferrals?: Prisma.ReferralCreateNestedManyWithoutReferrerInput
+  receivedReferral?: Prisma.ReferralCreateNestedOneWithoutReferredUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  teamMemberships?: Prisma.TeamMemberCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutAdminInput
+}
+
+export type UserUncheckedCreateWithoutWebAdminAccountInput = {
+  id?: string
+  telegramId: string
+  username?: string | null
+  firstName?: string | null
+  lastName?: string | null
+  languageCode?: string | null
+  profileImage?: string | null
+  isPremium?: boolean
+  role?: $Enums.Role
+  status?: $Enums.UserStatus
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lastLogin?: Date | string | null
+  profile?: Prisma.UserProfileUncheckedCreateNestedOneWithoutUserInput
+  wallet?: Prisma.WalletUncheckedCreateNestedOneWithoutUserInput
+  registrations?: Prisma.TournamentRegistrationUncheckedCreateNestedManyWithoutUserInput
+  payments?: Prisma.TelegramPaymentUncheckedCreateNestedManyWithoutUserInput
+  achievements?: Prisma.UserAchievementUncheckedCreateNestedManyWithoutUserInput
+  sentReferrals?: Prisma.ReferralUncheckedCreateNestedManyWithoutReferrerInput
+  receivedReferral?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  teamMemberships?: Prisma.TeamMemberUncheckedCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutAdminInput
+}
+
+export type UserCreateOrConnectWithoutWebAdminAccountInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutWebAdminAccountInput, Prisma.UserUncheckedCreateWithoutWebAdminAccountInput>
+}
+
+export type UserUpsertWithoutWebAdminAccountInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutWebAdminAccountInput, Prisma.UserUncheckedUpdateWithoutWebAdminAccountInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutWebAdminAccountInput, Prisma.UserUncheckedCreateWithoutWebAdminAccountInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutWebAdminAccountInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutWebAdminAccountInput, Prisma.UserUncheckedUpdateWithoutWebAdminAccountInput>
+}
+
+export type UserUpdateWithoutWebAdminAccountInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  telegramId?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  firstName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  languageCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isPremium?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  profile?: Prisma.UserProfileUpdateOneWithoutUserNestedInput
+  wallet?: Prisma.WalletUpdateOneWithoutUserNestedInput
+  registrations?: Prisma.TournamentRegistrationUpdateManyWithoutUserNestedInput
+  payments?: Prisma.TelegramPaymentUpdateManyWithoutUserNestedInput
+  achievements?: Prisma.UserAchievementUpdateManyWithoutUserNestedInput
+  sentReferrals?: Prisma.ReferralUpdateManyWithoutReferrerNestedInput
+  receivedReferral?: Prisma.ReferralUpdateOneWithoutReferredUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  teamMemberships?: Prisma.TeamMemberUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutAdminNestedInput
+}
+
+export type UserUncheckedUpdateWithoutWebAdminAccountInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  telegramId?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  firstName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  languageCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isPremium?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  profile?: Prisma.UserProfileUncheckedUpdateOneWithoutUserNestedInput
+  wallet?: Prisma.WalletUncheckedUpdateOneWithoutUserNestedInput
+  registrations?: Prisma.TournamentRegistrationUncheckedUpdateManyWithoutUserNestedInput
+  payments?: Prisma.TelegramPaymentUncheckedUpdateManyWithoutUserNestedInput
+  achievements?: Prisma.UserAchievementUncheckedUpdateManyWithoutUserNestedInput
+  sentReferrals?: Prisma.ReferralUncheckedUpdateManyWithoutReferrerNestedInput
+  receivedReferral?: Prisma.ReferralUncheckedUpdateOneWithoutReferredUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   teamMemberships?: Prisma.TeamMemberUncheckedUpdateManyWithoutUserNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutAdminNestedInput
@@ -1790,6 +1967,7 @@ export type UserCreateWithoutAuditLogsInput = {
   updatedAt?: Date | string
   lastLogin?: Date | string | null
   profile?: Prisma.UserProfileCreateNestedOneWithoutUserInput
+  webAdminAccount?: Prisma.WebAdminAccountCreateNestedOneWithoutUserInput
   wallet?: Prisma.WalletCreateNestedOneWithoutUserInput
   registrations?: Prisma.TournamentRegistrationCreateNestedManyWithoutUserInput
   payments?: Prisma.TelegramPaymentCreateNestedManyWithoutUserInput
@@ -1815,6 +1993,7 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   updatedAt?: Date | string
   lastLogin?: Date | string | null
   profile?: Prisma.UserProfileUncheckedCreateNestedOneWithoutUserInput
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedCreateNestedOneWithoutUserInput
   wallet?: Prisma.WalletUncheckedCreateNestedOneWithoutUserInput
   registrations?: Prisma.TournamentRegistrationUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.TelegramPaymentUncheckedCreateNestedManyWithoutUserInput
@@ -1856,6 +2035,7 @@ export type UserUpdateWithoutAuditLogsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profile?: Prisma.UserProfileUpdateOneWithoutUserNestedInput
+  webAdminAccount?: Prisma.WebAdminAccountUpdateOneWithoutUserNestedInput
   wallet?: Prisma.WalletUpdateOneWithoutUserNestedInput
   registrations?: Prisma.TournamentRegistrationUpdateManyWithoutUserNestedInput
   payments?: Prisma.TelegramPaymentUpdateManyWithoutUserNestedInput
@@ -1881,6 +2061,7 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   profile?: Prisma.UserProfileUncheckedUpdateOneWithoutUserNestedInput
+  webAdminAccount?: Prisma.WebAdminAccountUncheckedUpdateOneWithoutUserNestedInput
   wallet?: Prisma.WalletUncheckedUpdateOneWithoutUserNestedInput
   registrations?: Prisma.TournamentRegistrationUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.TelegramPaymentUncheckedUpdateManyWithoutUserNestedInput
@@ -1991,6 +2172,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   updatedAt?: boolean
   lastLogin?: boolean
   profile?: boolean | Prisma.User$profileArgs<ExtArgs>
+  webAdminAccount?: boolean | Prisma.User$webAdminAccountArgs<ExtArgs>
   wallet?: boolean | Prisma.User$walletArgs<ExtArgs>
   registrations?: boolean | Prisma.User$registrationsArgs<ExtArgs>
   payments?: boolean | Prisma.User$paymentsArgs<ExtArgs>
@@ -2054,6 +2236,7 @@ export type UserSelectScalar = {
 export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "telegramId" | "username" | "firstName" | "lastName" | "languageCode" | "profileImage" | "isPremium" | "role" | "status" | "createdAt" | "updatedAt" | "lastLogin", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   profile?: boolean | Prisma.User$profileArgs<ExtArgs>
+  webAdminAccount?: boolean | Prisma.User$webAdminAccountArgs<ExtArgs>
   wallet?: boolean | Prisma.User$walletArgs<ExtArgs>
   registrations?: boolean | Prisma.User$registrationsArgs<ExtArgs>
   payments?: boolean | Prisma.User$paymentsArgs<ExtArgs>
@@ -2072,6 +2255,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   name: "User"
   objects: {
     profile: Prisma.$UserProfilePayload<ExtArgs> | null
+    webAdminAccount: Prisma.$WebAdminAccountPayload<ExtArgs> | null
     wallet: Prisma.$WalletPayload<ExtArgs> | null
     registrations: Prisma.$TournamentRegistrationPayload<ExtArgs>[]
     payments: Prisma.$TelegramPaymentPayload<ExtArgs>[]
@@ -2491,6 +2675,7 @@ readonly fields: UserFieldRefs;
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   profile<T extends Prisma.User$profileArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$profileArgs<ExtArgs>>): Prisma.Prisma__UserProfileClient<runtime.Types.Result.GetResult<Prisma.$UserProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  webAdminAccount<T extends Prisma.User$webAdminAccountArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$webAdminAccountArgs<ExtArgs>>): Prisma.Prisma__WebAdminAccountClient<runtime.Types.Result.GetResult<Prisma.$WebAdminAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   wallet<T extends Prisma.User$walletArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$walletArgs<ExtArgs>>): Prisma.Prisma__WalletClient<runtime.Types.Result.GetResult<Prisma.$WalletPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   registrations<T extends Prisma.User$registrationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$registrationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TournamentRegistrationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   payments<T extends Prisma.User$paymentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$paymentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TelegramPaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -2951,6 +3136,25 @@ export type User$profileArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    */
   include?: Prisma.UserProfileInclude<ExtArgs> | null
   where?: Prisma.UserProfileWhereInput
+}
+
+/**
+ * User.webAdminAccount
+ */
+export type User$webAdminAccountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WebAdminAccount
+   */
+  select?: Prisma.WebAdminAccountSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WebAdminAccount
+   */
+  omit?: Prisma.WebAdminAccountOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WebAdminAccountInclude<ExtArgs> | null
+  where?: Prisma.WebAdminAccountWhereInput
 }
 
 /**

@@ -422,6 +422,7 @@ export const ModelName = {
   Notification: 'Notification',
   Referral: 'Referral',
   AdminUser: 'AdminUser',
+  WebAdminAccount: 'WebAdminAccount',
   AuditLog: 'AuditLog',
   SystemSetting: 'SystemSetting'
 } as const
@@ -439,7 +440,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "userProfile" | "game" | "wallet" | "walletTransaction" | "telegramPayment" | "paymentEvent" | "refund" | "tournament" | "tournamentRule" | "tournamentScoringRule" | "tournamentPrize" | "tournamentRegistration" | "team" | "teamMember" | "teamInvite" | "match" | "matchResult" | "matchEvidence" | "dispute" | "achievement" | "userAchievement" | "notification" | "referral" | "adminUser" | "auditLog" | "systemSetting"
+    modelProps: "user" | "userProfile" | "game" | "wallet" | "walletTransaction" | "telegramPayment" | "paymentEvent" | "refund" | "tournament" | "tournamentRule" | "tournamentScoringRule" | "tournamentPrize" | "tournamentRegistration" | "team" | "teamMember" | "teamInvite" | "match" | "matchResult" | "matchEvidence" | "dispute" | "achievement" | "userAchievement" | "notification" | "referral" | "adminUser" | "webAdminAccount" | "auditLog" | "systemSetting"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2293,6 +2294,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    WebAdminAccount: {
+      payload: Prisma.$WebAdminAccountPayload<ExtArgs>
+      fields: Prisma.WebAdminAccountFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WebAdminAccountFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAdminAccountPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WebAdminAccountFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAdminAccountPayload>
+        }
+        findFirst: {
+          args: Prisma.WebAdminAccountFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAdminAccountPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WebAdminAccountFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAdminAccountPayload>
+        }
+        findMany: {
+          args: Prisma.WebAdminAccountFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAdminAccountPayload>[]
+        }
+        create: {
+          args: Prisma.WebAdminAccountCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAdminAccountPayload>
+        }
+        createMany: {
+          args: Prisma.WebAdminAccountCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WebAdminAccountCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAdminAccountPayload>[]
+        }
+        delete: {
+          args: Prisma.WebAdminAccountDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAdminAccountPayload>
+        }
+        update: {
+          args: Prisma.WebAdminAccountUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAdminAccountPayload>
+        }
+        deleteMany: {
+          args: Prisma.WebAdminAccountDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WebAdminAccountUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WebAdminAccountUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAdminAccountPayload>[]
+        }
+        upsert: {
+          args: Prisma.WebAdminAccountUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAdminAccountPayload>
+        }
+        aggregate: {
+          args: Prisma.WebAdminAccountAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWebAdminAccount>
+        }
+        groupBy: {
+          args: Prisma.WebAdminAccountGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WebAdminAccountGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WebAdminAccountCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WebAdminAccountCountAggregateOutputType> | number
+        }
+      }
+    }
     AuditLog: {
       payload: Prisma.$AuditLogPayload<ExtArgs>
       fields: Prisma.AuditLogFieldRefs
@@ -2852,6 +2927,23 @@ export const AdminUserScalarFieldEnum = {
 export type AdminUserScalarFieldEnum = (typeof AdminUserScalarFieldEnum)[keyof typeof AdminUserScalarFieldEnum]
 
 
+export const WebAdminAccountScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  username: 'username',
+  passwordHash: 'passwordHash',
+  role: 'role',
+  isActive: 'isActive',
+  failedLoginCount: 'failedLoginCount',
+  lockedUntil: 'lockedUntil',
+  lastLoginAt: 'lastLoginAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WebAdminAccountScalarFieldEnum = (typeof WebAdminAccountScalarFieldEnum)[keyof typeof WebAdminAccountScalarFieldEnum]
+
+
 export const AuditLogScalarFieldEnum = {
   id: 'id',
   adminId: 'adminId',
@@ -3408,6 +3500,7 @@ export type GlobalOmitConfig = {
   notification?: Prisma.NotificationOmit
   referral?: Prisma.ReferralOmit
   adminUser?: Prisma.AdminUserOmit
+  webAdminAccount?: Prisma.WebAdminAccountOmit
   auditLog?: Prisma.AuditLogOmit
   systemSetting?: Prisma.SystemSettingOmit
 }

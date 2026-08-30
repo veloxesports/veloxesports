@@ -76,6 +76,7 @@ export const ModelName = {
   Notification: 'Notification',
   Referral: 'Referral',
   AdminUser: 'AdminUser',
+  WebAdminAccount: 'WebAdminAccount',
   AuditLog: 'AuditLog',
   SystemSetting: 'SystemSetting'
 } as const
@@ -466,6 +467,23 @@ export const AdminUserScalarFieldEnum = {
 } as const
 
 export type AdminUserScalarFieldEnum = (typeof AdminUserScalarFieldEnum)[keyof typeof AdminUserScalarFieldEnum]
+
+
+export const WebAdminAccountScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  username: 'username',
+  passwordHash: 'passwordHash',
+  role: 'role',
+  isActive: 'isActive',
+  failedLoginCount: 'failedLoginCount',
+  lockedUntil: 'lockedUntil',
+  lastLoginAt: 'lastLoginAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WebAdminAccountScalarFieldEnum = (typeof WebAdminAccountScalarFieldEnum)[keyof typeof WebAdminAccountScalarFieldEnum]
 
 
 export const AuditLogScalarFieldEnum = {

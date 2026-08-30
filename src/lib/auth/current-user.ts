@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/database/prisma";
 import { getSession } from "@/lib/auth/session";
+import { getCurrentWebAdmin, type WebAdminRole } from "@/lib/auth/web-admin";
 
 export async function getCurrentUser() {
   const session = await getSession();
@@ -32,9 +33,15 @@ export async function requireCurrentUser() {
   return user;
 }
 
-export async function requireRole(roles: Array<"SUPER_ADMIN" | "ADMIN" | "TOURNAMENT_MANAGER" | "FINANCE_MANAGER" | "MODERATOR" | "SUPPORT">) {
+export async function requireRole(roles: Array<WebAdminRole>) {
+  const webAdmin = await getCurrentWebAdmin();
+  if (webAdmin) {
+    if (!roles.includes(webAdmin.role)) throw new Error("FORBIDDEN");
+    return webAdmin;
+  }
+
   const user = await requireCurrentUser();
-  if (!roles.includes(user.role as (typeof roles)[number])) {
+  if (!roles.includes(user.role as WebAdminRole)) {
     throw new Error("FORBIDDEN");
   }
 

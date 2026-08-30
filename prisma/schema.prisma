@@ -23,6 +23,7 @@ model User {
   lastLogin         DateTime?
 
   profile           UserProfile?
+  webAdminAccount   WebAdminAccount?
   wallet            Wallet?
   registrations     TournamentRegistration[]
   payments          TelegramPayment[]
@@ -382,6 +383,23 @@ model AdminUser {
   role              Role      @default(ADMIN)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+}
+
+model WebAdminAccount {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  username           String   @unique
+  passwordHash       String
+  role               Role     @default(SUPER_ADMIN)
+  isActive           Boolean  @default(true)
+  failedLoginCount   Int      @default(0)
+  lockedUntil        DateTime?
+  lastLoginAt        DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([isActive, lockedUntil])
 }
 
 model AuditLog {

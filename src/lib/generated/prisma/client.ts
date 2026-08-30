@@ -24,7 +24,7 @@ export * as $Enums from './enums'
 export * from "./enums"
 /**
  * ## Prisma Client
- * 
+ *
  * Type-safe database client for TypeScript
  * @example
  * ```
@@ -166,6 +166,11 @@ export type Referral = Prisma.ReferralModel
  * 
  */
 export type AdminUser = Prisma.AdminUserModel
+/**
+ * Model WebAdminAccount
+ * 
+ */
+export type WebAdminAccount = Prisma.WebAdminAccountModel
 /**
  * Model AuditLog
  * 

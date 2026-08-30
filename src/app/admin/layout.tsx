@@ -5,7 +5,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   try {
     await requireRole(["SUPER_ADMIN", "ADMIN", "TOURNAMENT_MANAGER", "FINANCE_MANAGER", "MODERATOR", "SUPPORT"]);
   } catch {
-    redirect("/");
+    redirect("/admin-login");
   }
 
   return children;

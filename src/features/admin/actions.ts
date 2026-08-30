@@ -74,6 +74,7 @@ export async function getAdminStats() {
     await requireRole(["SUPER_ADMIN", "ADMIN", "TOURNAMENT_MANAGER", "FINANCE_MANAGER", "MODERATOR", "SUPPORT"]);
     const activeSince = new Date();
     activeSince.setDate(activeSince.getDate() - 30);
+    const playerAccounts = { NOT: { telegramId: { startsWith: "web-admin:" } } };
 
     const [
       totalUsers,
@@ -95,8 +96,8 @@ export async function getAdminStats() {
       recentActivity,
       tournamentStatusCounts,
     ] = await Promise.all([
-      prisma.user.count(),
-      prisma.user.count({ where: { status: "ACTIVE", lastLogin: { gte: activeSince } } }),
+      prisma.user.count({ where: playerAccounts }),
+      prisma.user.count({ where: { ...playerAccounts, status: "ACTIVE", lastLogin: { gte: activeSince } } }),
       prisma.tournament.count(),
       prisma.tournament.count({ where: { status: { in: ["REGISTRATION_OPEN", "UPCOMING", "CHECK_IN", "LIVE"] } } }),
       prisma.tournament.count({ where: { status: "LIVE" } }),
