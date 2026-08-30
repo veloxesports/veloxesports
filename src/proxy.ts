@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Simple mock middleware to demonstrate RBAC
-export function middleware(request: NextRequest) {
+// Simple mock proxy to demonstrate RBAC
+export function proxy(request: NextRequest) {
   // In a real application, you would decrypt the session cookie here,
   // extract the user's role, and verify if they can access the path.
 

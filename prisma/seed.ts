@@ -1,6 +1,12 @@
 import { PrismaClient, TournamentFormat, TournamentStatus } from "../src/lib/generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
-const prisma = new PrismaClient();
+const connectionString = process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/velox";
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log("Seeding database...");
