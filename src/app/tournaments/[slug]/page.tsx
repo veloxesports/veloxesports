@@ -1,6 +1,6 @@
 import { getTournamentBySlug } from "@/features/tournaments/actions";
 import { notFound } from "next/navigation";
-import { ChevronLeft, Trophy, Users, Calendar, Info, ShieldAlert } from "lucide-react";
+import { ChevronLeft, Trophy, Users, Calendar, Info } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 

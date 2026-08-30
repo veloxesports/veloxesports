@@ -66,6 +66,7 @@ export const ModelName = {
   TournamentRegistration: 'TournamentRegistration',
   Team: 'Team',
   TeamMember: 'TeamMember',
+  TeamInvite: 'TeamInvite',
   Match: 'Match',
   MatchResult: 'MatchResult',
   MatchEvidence: 'MatchEvidence',
@@ -75,7 +76,8 @@ export const ModelName = {
   Notification: 'Notification',
   Referral: 'Referral',
   AdminUser: 'AdminUser',
-  AuditLog: 'AuditLog'
+  AuditLog: 'AuditLog',
+  SystemSetting: 'SystemSetting'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -126,6 +128,9 @@ export const UserProfileScalarFieldEnum = {
   tournamentWins: 'tournamentWins',
   favoriteGames: 'favoriteGames',
   gamerIds: 'gamerIds',
+  discordId: 'discordId',
+  discordUsername: 'discordUsername',
+  discordAvatarUrl: 'discordAvatarUrl',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -183,6 +188,7 @@ export const TelegramPaymentScalarFieldEnum = {
   tournamentId: 'tournamentId',
   amount: 'amount',
   currency: 'currency',
+  invoicePayload: 'invoicePayload',
   telegramPaymentRef: 'telegramPaymentRef',
   status: 'status',
   createdAt: 'createdAt',
@@ -320,10 +326,25 @@ export const TeamMemberScalarFieldEnum = {
 export type TeamMemberScalarFieldEnum = (typeof TeamMemberScalarFieldEnum)[keyof typeof TeamMemberScalarFieldEnum]
 
 
+export const TeamInviteScalarFieldEnum = {
+  id: 'id',
+  teamId: 'teamId',
+  code: 'code',
+  createdById: 'createdById',
+  expiresAt: 'expiresAt',
+  maxUses: 'maxUses',
+  uses: 'uses',
+  createdAt: 'createdAt'
+} as const
+
+export type TeamInviteScalarFieldEnum = (typeof TeamInviteScalarFieldEnum)[keyof typeof TeamInviteScalarFieldEnum]
+
+
 export const MatchScalarFieldEnum = {
   id: 'id',
   tournamentId: 'tournamentId',
   round: 'round',
+  bracketPosition: 'bracketPosition',
   player1Id: 'player1Id',
   player2Id: 'player2Id',
   team1Id: 'team1Id',
@@ -360,8 +381,9 @@ export const MatchEvidenceScalarFieldEnum = {
   id: 'id',
   matchId: 'matchId',
   uploaderId: 'uploaderId',
-  fileUrl: 'fileUrl',
+  storagePath: 'storagePath',
   fileType: 'fileType',
+  fileSize: 'fileSize',
   createdAt: 'createdAt'
 } as const
 
@@ -389,6 +411,7 @@ export const AchievementScalarFieldEnum = {
   description: 'description',
   iconUrl: 'iconUrl',
   xpReward: 'xpReward',
+  criteria: 'criteria',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -458,6 +481,17 @@ export const AuditLogScalarFieldEnum = {
 } as const
 
 export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
+export const SystemSettingScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  value: 'value',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SystemSettingScalarFieldEnum = (typeof SystemSettingScalarFieldEnum)[keyof typeof SystemSettingScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -20,16 +20,27 @@ export type MatchEvidenceModel = runtime.Types.Result.DefaultSelection<Prisma.$M
 
 export type AggregateMatchEvidence = {
   _count: MatchEvidenceCountAggregateOutputType | null
+  _avg: MatchEvidenceAvgAggregateOutputType | null
+  _sum: MatchEvidenceSumAggregateOutputType | null
   _min: MatchEvidenceMinAggregateOutputType | null
   _max: MatchEvidenceMaxAggregateOutputType | null
+}
+
+export type MatchEvidenceAvgAggregateOutputType = {
+  fileSize: number | null
+}
+
+export type MatchEvidenceSumAggregateOutputType = {
+  fileSize: number | null
 }
 
 export type MatchEvidenceMinAggregateOutputType = {
   id: string | null
   matchId: string | null
   uploaderId: string | null
-  fileUrl: string | null
+  storagePath: string | null
   fileType: string | null
+  fileSize: number | null
   createdAt: Date | null
 }
 
@@ -37,8 +48,9 @@ export type MatchEvidenceMaxAggregateOutputType = {
   id: string | null
   matchId: string | null
   uploaderId: string | null
-  fileUrl: string | null
+  storagePath: string | null
   fileType: string | null
+  fileSize: number | null
   createdAt: Date | null
 }
 
@@ -46,19 +58,29 @@ export type MatchEvidenceCountAggregateOutputType = {
   id: number
   matchId: number
   uploaderId: number
-  fileUrl: number
+  storagePath: number
   fileType: number
+  fileSize: number
   createdAt: number
   _all: number
 }
 
 
+export type MatchEvidenceAvgAggregateInputType = {
+  fileSize?: true
+}
+
+export type MatchEvidenceSumAggregateInputType = {
+  fileSize?: true
+}
+
 export type MatchEvidenceMinAggregateInputType = {
   id?: true
   matchId?: true
   uploaderId?: true
-  fileUrl?: true
+  storagePath?: true
   fileType?: true
+  fileSize?: true
   createdAt?: true
 }
 
@@ -66,8 +88,9 @@ export type MatchEvidenceMaxAggregateInputType = {
   id?: true
   matchId?: true
   uploaderId?: true
-  fileUrl?: true
+  storagePath?: true
   fileType?: true
+  fileSize?: true
   createdAt?: true
 }
 
@@ -75,8 +98,9 @@ export type MatchEvidenceCountAggregateInputType = {
   id?: true
   matchId?: true
   uploaderId?: true
-  fileUrl?: true
+  storagePath?: true
   fileType?: true
+  fileSize?: true
   createdAt?: true
   _all?: true
 }
@@ -119,6 +143,18 @@ export type MatchEvidenceAggregateArgs<ExtArgs extends runtime.Types.Extensions.
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: MatchEvidenceAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: MatchEvidenceSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: MatchEvidenceMinAggregateInputType
@@ -149,6 +185,8 @@ export type MatchEvidenceGroupByArgs<ExtArgs extends runtime.Types.Extensions.In
   take?: number
   skip?: number
   _count?: MatchEvidenceCountAggregateInputType | true
+  _avg?: MatchEvidenceAvgAggregateInputType
+  _sum?: MatchEvidenceSumAggregateInputType
   _min?: MatchEvidenceMinAggregateInputType
   _max?: MatchEvidenceMaxAggregateInputType
 }
@@ -157,10 +195,13 @@ export type MatchEvidenceGroupByOutputType = {
   id: string
   matchId: string
   uploaderId: string
-  fileUrl: string
+  storagePath: string
   fileType: string
+  fileSize: number
   createdAt: Date
   _count: MatchEvidenceCountAggregateOutputType | null
+  _avg: MatchEvidenceAvgAggregateOutputType | null
+  _sum: MatchEvidenceSumAggregateOutputType | null
   _min: MatchEvidenceMinAggregateOutputType | null
   _max: MatchEvidenceMaxAggregateOutputType | null
 }
@@ -187,8 +228,9 @@ export type MatchEvidenceWhereInput = {
   id?: Prisma.StringFilter<"MatchEvidence"> | string
   matchId?: Prisma.StringFilter<"MatchEvidence"> | string
   uploaderId?: Prisma.StringFilter<"MatchEvidence"> | string
-  fileUrl?: Prisma.StringFilter<"MatchEvidence"> | string
+  storagePath?: Prisma.StringFilter<"MatchEvidence"> | string
   fileType?: Prisma.StringFilter<"MatchEvidence"> | string
+  fileSize?: Prisma.IntFilter<"MatchEvidence"> | number
   createdAt?: Prisma.DateTimeFilter<"MatchEvidence"> | Date | string
   match?: Prisma.XOR<Prisma.MatchScalarRelationFilter, Prisma.MatchWhereInput>
 }
@@ -197,8 +239,9 @@ export type MatchEvidenceOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   matchId?: Prisma.SortOrder
   uploaderId?: Prisma.SortOrder
-  fileUrl?: Prisma.SortOrder
+  storagePath?: Prisma.SortOrder
   fileType?: Prisma.SortOrder
+  fileSize?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   match?: Prisma.MatchOrderByWithRelationInput
 }
@@ -210,8 +253,9 @@ export type MatchEvidenceWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.MatchEvidenceWhereInput | Prisma.MatchEvidenceWhereInput[]
   matchId?: Prisma.StringFilter<"MatchEvidence"> | string
   uploaderId?: Prisma.StringFilter<"MatchEvidence"> | string
-  fileUrl?: Prisma.StringFilter<"MatchEvidence"> | string
+  storagePath?: Prisma.StringFilter<"MatchEvidence"> | string
   fileType?: Prisma.StringFilter<"MatchEvidence"> | string
+  fileSize?: Prisma.IntFilter<"MatchEvidence"> | number
   createdAt?: Prisma.DateTimeFilter<"MatchEvidence"> | Date | string
   match?: Prisma.XOR<Prisma.MatchScalarRelationFilter, Prisma.MatchWhereInput>
 }, "id">
@@ -220,12 +264,15 @@ export type MatchEvidenceOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   matchId?: Prisma.SortOrder
   uploaderId?: Prisma.SortOrder
-  fileUrl?: Prisma.SortOrder
+  storagePath?: Prisma.SortOrder
   fileType?: Prisma.SortOrder
+  fileSize?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.MatchEvidenceCountOrderByAggregateInput
+  _avg?: Prisma.MatchEvidenceAvgOrderByAggregateInput
   _max?: Prisma.MatchEvidenceMaxOrderByAggregateInput
   _min?: Prisma.MatchEvidenceMinOrderByAggregateInput
+  _sum?: Prisma.MatchEvidenceSumOrderByAggregateInput
 }
 
 export type MatchEvidenceScalarWhereWithAggregatesInput = {
@@ -235,16 +282,18 @@ export type MatchEvidenceScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"MatchEvidence"> | string
   matchId?: Prisma.StringWithAggregatesFilter<"MatchEvidence"> | string
   uploaderId?: Prisma.StringWithAggregatesFilter<"MatchEvidence"> | string
-  fileUrl?: Prisma.StringWithAggregatesFilter<"MatchEvidence"> | string
+  storagePath?: Prisma.StringWithAggregatesFilter<"MatchEvidence"> | string
   fileType?: Prisma.StringWithAggregatesFilter<"MatchEvidence"> | string
+  fileSize?: Prisma.IntWithAggregatesFilter<"MatchEvidence"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"MatchEvidence"> | Date | string
 }
 
 export type MatchEvidenceCreateInput = {
   id?: string
   uploaderId: string
-  fileUrl: string
+  storagePath: string
   fileType: string
+  fileSize: number
   createdAt?: Date | string
   match: Prisma.MatchCreateNestedOneWithoutEvidenceInput
 }
@@ -253,16 +302,18 @@ export type MatchEvidenceUncheckedCreateInput = {
   id?: string
   matchId: string
   uploaderId: string
-  fileUrl: string
+  storagePath: string
   fileType: string
+  fileSize: number
   createdAt?: Date | string
 }
 
 export type MatchEvidenceUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   uploaderId?: Prisma.StringFieldUpdateOperationsInput | string
-  fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  storagePath?: Prisma.StringFieldUpdateOperationsInput | string
   fileType?: Prisma.StringFieldUpdateOperationsInput | string
+  fileSize?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   match?: Prisma.MatchUpdateOneRequiredWithoutEvidenceNestedInput
 }
@@ -271,8 +322,9 @@ export type MatchEvidenceUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   matchId?: Prisma.StringFieldUpdateOperationsInput | string
   uploaderId?: Prisma.StringFieldUpdateOperationsInput | string
-  fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  storagePath?: Prisma.StringFieldUpdateOperationsInput | string
   fileType?: Prisma.StringFieldUpdateOperationsInput | string
+  fileSize?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -280,16 +332,18 @@ export type MatchEvidenceCreateManyInput = {
   id?: string
   matchId: string
   uploaderId: string
-  fileUrl: string
+  storagePath: string
   fileType: string
+  fileSize: number
   createdAt?: Date | string
 }
 
 export type MatchEvidenceUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   uploaderId?: Prisma.StringFieldUpdateOperationsInput | string
-  fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  storagePath?: Prisma.StringFieldUpdateOperationsInput | string
   fileType?: Prisma.StringFieldUpdateOperationsInput | string
+  fileSize?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -297,8 +351,9 @@ export type MatchEvidenceUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   matchId?: Prisma.StringFieldUpdateOperationsInput | string
   uploaderId?: Prisma.StringFieldUpdateOperationsInput | string
-  fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  storagePath?: Prisma.StringFieldUpdateOperationsInput | string
   fileType?: Prisma.StringFieldUpdateOperationsInput | string
+  fileSize?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -316,17 +371,23 @@ export type MatchEvidenceCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   matchId?: Prisma.SortOrder
   uploaderId?: Prisma.SortOrder
-  fileUrl?: Prisma.SortOrder
+  storagePath?: Prisma.SortOrder
   fileType?: Prisma.SortOrder
+  fileSize?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+}
+
+export type MatchEvidenceAvgOrderByAggregateInput = {
+  fileSize?: Prisma.SortOrder
 }
 
 export type MatchEvidenceMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   matchId?: Prisma.SortOrder
   uploaderId?: Prisma.SortOrder
-  fileUrl?: Prisma.SortOrder
+  storagePath?: Prisma.SortOrder
   fileType?: Prisma.SortOrder
+  fileSize?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -334,9 +395,14 @@ export type MatchEvidenceMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   matchId?: Prisma.SortOrder
   uploaderId?: Prisma.SortOrder
-  fileUrl?: Prisma.SortOrder
+  storagePath?: Prisma.SortOrder
   fileType?: Prisma.SortOrder
+  fileSize?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+}
+
+export type MatchEvidenceSumOrderByAggregateInput = {
+  fileSize?: Prisma.SortOrder
 }
 
 export type MatchEvidenceCreateNestedManyWithoutMatchInput = {
@@ -384,16 +450,18 @@ export type MatchEvidenceUncheckedUpdateManyWithoutMatchNestedInput = {
 export type MatchEvidenceCreateWithoutMatchInput = {
   id?: string
   uploaderId: string
-  fileUrl: string
+  storagePath: string
   fileType: string
+  fileSize: number
   createdAt?: Date | string
 }
 
 export type MatchEvidenceUncheckedCreateWithoutMatchInput = {
   id?: string
   uploaderId: string
-  fileUrl: string
+  storagePath: string
   fileType: string
+  fileSize: number
   createdAt?: Date | string
 }
 
@@ -430,40 +498,45 @@ export type MatchEvidenceScalarWhereInput = {
   id?: Prisma.StringFilter<"MatchEvidence"> | string
   matchId?: Prisma.StringFilter<"MatchEvidence"> | string
   uploaderId?: Prisma.StringFilter<"MatchEvidence"> | string
-  fileUrl?: Prisma.StringFilter<"MatchEvidence"> | string
+  storagePath?: Prisma.StringFilter<"MatchEvidence"> | string
   fileType?: Prisma.StringFilter<"MatchEvidence"> | string
+  fileSize?: Prisma.IntFilter<"MatchEvidence"> | number
   createdAt?: Prisma.DateTimeFilter<"MatchEvidence"> | Date | string
 }
 
 export type MatchEvidenceCreateManyMatchInput = {
   id?: string
   uploaderId: string
-  fileUrl: string
+  storagePath: string
   fileType: string
+  fileSize: number
   createdAt?: Date | string
 }
 
 export type MatchEvidenceUpdateWithoutMatchInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   uploaderId?: Prisma.StringFieldUpdateOperationsInput | string
-  fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  storagePath?: Prisma.StringFieldUpdateOperationsInput | string
   fileType?: Prisma.StringFieldUpdateOperationsInput | string
+  fileSize?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type MatchEvidenceUncheckedUpdateWithoutMatchInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   uploaderId?: Prisma.StringFieldUpdateOperationsInput | string
-  fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  storagePath?: Prisma.StringFieldUpdateOperationsInput | string
   fileType?: Prisma.StringFieldUpdateOperationsInput | string
+  fileSize?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type MatchEvidenceUncheckedUpdateManyWithoutMatchInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   uploaderId?: Prisma.StringFieldUpdateOperationsInput | string
-  fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  storagePath?: Prisma.StringFieldUpdateOperationsInput | string
   fileType?: Prisma.StringFieldUpdateOperationsInput | string
+  fileSize?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -473,8 +546,9 @@ export type MatchEvidenceSelect<ExtArgs extends runtime.Types.Extensions.Interna
   id?: boolean
   matchId?: boolean
   uploaderId?: boolean
-  fileUrl?: boolean
+  storagePath?: boolean
   fileType?: boolean
+  fileSize?: boolean
   createdAt?: boolean
   match?: boolean | Prisma.MatchDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["matchEvidence"]>
@@ -483,8 +557,9 @@ export type MatchEvidenceSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   id?: boolean
   matchId?: boolean
   uploaderId?: boolean
-  fileUrl?: boolean
+  storagePath?: boolean
   fileType?: boolean
+  fileSize?: boolean
   createdAt?: boolean
   match?: boolean | Prisma.MatchDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["matchEvidence"]>
@@ -493,8 +568,9 @@ export type MatchEvidenceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   id?: boolean
   matchId?: boolean
   uploaderId?: boolean
-  fileUrl?: boolean
+  storagePath?: boolean
   fileType?: boolean
+  fileSize?: boolean
   createdAt?: boolean
   match?: boolean | Prisma.MatchDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["matchEvidence"]>
@@ -503,12 +579,13 @@ export type MatchEvidenceSelectScalar = {
   id?: boolean
   matchId?: boolean
   uploaderId?: boolean
-  fileUrl?: boolean
+  storagePath?: boolean
   fileType?: boolean
+  fileSize?: boolean
   createdAt?: boolean
 }
 
-export type MatchEvidenceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "matchId" | "uploaderId" | "fileUrl" | "fileType" | "createdAt", ExtArgs["result"]["matchEvidence"]>
+export type MatchEvidenceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "matchId" | "uploaderId" | "storagePath" | "fileType" | "fileSize" | "createdAt", ExtArgs["result"]["matchEvidence"]>
 export type MatchEvidenceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   match?: boolean | Prisma.MatchDefaultArgs<ExtArgs>
 }
@@ -528,8 +605,9 @@ export type $MatchEvidencePayload<ExtArgs extends runtime.Types.Extensions.Inter
     id: string
     matchId: string
     uploaderId: string
-    fileUrl: string
+    storagePath: string
     fileType: string
+    fileSize: number
     createdAt: Date
   }, ExtArgs["result"]["matchEvidence"]>
   composites: {}
@@ -958,8 +1036,9 @@ export interface MatchEvidenceFieldRefs {
   readonly id: Prisma.FieldRef<"MatchEvidence", 'String'>
   readonly matchId: Prisma.FieldRef<"MatchEvidence", 'String'>
   readonly uploaderId: Prisma.FieldRef<"MatchEvidence", 'String'>
-  readonly fileUrl: Prisma.FieldRef<"MatchEvidence", 'String'>
+  readonly storagePath: Prisma.FieldRef<"MatchEvidence", 'String'>
   readonly fileType: Prisma.FieldRef<"MatchEvidence", 'String'>
+  readonly fileSize: Prisma.FieldRef<"MatchEvidence", 'Int'>
   readonly createdAt: Prisma.FieldRef<"MatchEvidence", 'DateTime'>
 }
     

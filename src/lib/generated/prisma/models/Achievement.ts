@@ -60,6 +60,7 @@ export type AchievementCountAggregateOutputType = {
   description: number
   iconUrl: number
   xpReward: number
+  criteria: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -100,6 +101,7 @@ export type AchievementCountAggregateInputType = {
   description?: true
   iconUrl?: true
   xpReward?: true
+  criteria?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -197,6 +199,7 @@ export type AchievementGroupByOutputType = {
   description: string
   iconUrl: string | null
   xpReward: number
+  criteria: runtime.JsonValue | null
   createdAt: Date
   updatedAt: Date
   _count: AchievementCountAggregateOutputType | null
@@ -230,6 +233,7 @@ export type AchievementWhereInput = {
   description?: Prisma.StringFilter<"Achievement"> | string
   iconUrl?: Prisma.StringNullableFilter<"Achievement"> | string | null
   xpReward?: Prisma.IntFilter<"Achievement"> | number
+  criteria?: Prisma.JsonNullableFilter<"Achievement">
   createdAt?: Prisma.DateTimeFilter<"Achievement"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Achievement"> | Date | string
   userAchievements?: Prisma.UserAchievementListRelationFilter
@@ -241,6 +245,7 @@ export type AchievementOrderByWithRelationInput = {
   description?: Prisma.SortOrder
   iconUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   xpReward?: Prisma.SortOrder
+  criteria?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   userAchievements?: Prisma.UserAchievementOrderByRelationAggregateInput
@@ -248,17 +253,18 @@ export type AchievementOrderByWithRelationInput = {
 
 export type AchievementWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  name?: string
   AND?: Prisma.AchievementWhereInput | Prisma.AchievementWhereInput[]
   OR?: Prisma.AchievementWhereInput[]
   NOT?: Prisma.AchievementWhereInput | Prisma.AchievementWhereInput[]
-  name?: Prisma.StringFilter<"Achievement"> | string
   description?: Prisma.StringFilter<"Achievement"> | string
   iconUrl?: Prisma.StringNullableFilter<"Achievement"> | string | null
   xpReward?: Prisma.IntFilter<"Achievement"> | number
+  criteria?: Prisma.JsonNullableFilter<"Achievement">
   createdAt?: Prisma.DateTimeFilter<"Achievement"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Achievement"> | Date | string
   userAchievements?: Prisma.UserAchievementListRelationFilter
-}, "id">
+}, "id" | "name">
 
 export type AchievementOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -266,6 +272,7 @@ export type AchievementOrderByWithAggregationInput = {
   description?: Prisma.SortOrder
   iconUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   xpReward?: Prisma.SortOrder
+  criteria?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.AchievementCountOrderByAggregateInput
@@ -284,6 +291,7 @@ export type AchievementScalarWhereWithAggregatesInput = {
   description?: Prisma.StringWithAggregatesFilter<"Achievement"> | string
   iconUrl?: Prisma.StringNullableWithAggregatesFilter<"Achievement"> | string | null
   xpReward?: Prisma.IntWithAggregatesFilter<"Achievement"> | number
+  criteria?: Prisma.JsonNullableWithAggregatesFilter<"Achievement">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Achievement"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Achievement"> | Date | string
 }
@@ -294,6 +302,7 @@ export type AchievementCreateInput = {
   description: string
   iconUrl?: string | null
   xpReward?: number
+  criteria?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   userAchievements?: Prisma.UserAchievementCreateNestedManyWithoutAchievementInput
@@ -305,6 +314,7 @@ export type AchievementUncheckedCreateInput = {
   description: string
   iconUrl?: string | null
   xpReward?: number
+  criteria?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   userAchievements?: Prisma.UserAchievementUncheckedCreateNestedManyWithoutAchievementInput
@@ -316,6 +326,7 @@ export type AchievementUpdateInput = {
   description?: Prisma.StringFieldUpdateOperationsInput | string
   iconUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   xpReward?: Prisma.IntFieldUpdateOperationsInput | number
+  criteria?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userAchievements?: Prisma.UserAchievementUpdateManyWithoutAchievementNestedInput
@@ -327,6 +338,7 @@ export type AchievementUncheckedUpdateInput = {
   description?: Prisma.StringFieldUpdateOperationsInput | string
   iconUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   xpReward?: Prisma.IntFieldUpdateOperationsInput | number
+  criteria?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userAchievements?: Prisma.UserAchievementUncheckedUpdateManyWithoutAchievementNestedInput
@@ -338,6 +350,7 @@ export type AchievementCreateManyInput = {
   description: string
   iconUrl?: string | null
   xpReward?: number
+  criteria?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -348,6 +361,7 @@ export type AchievementUpdateManyMutationInput = {
   description?: Prisma.StringFieldUpdateOperationsInput | string
   iconUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   xpReward?: Prisma.IntFieldUpdateOperationsInput | number
+  criteria?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -358,6 +372,7 @@ export type AchievementUncheckedUpdateManyInput = {
   description?: Prisma.StringFieldUpdateOperationsInput | string
   iconUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   xpReward?: Prisma.IntFieldUpdateOperationsInput | number
+  criteria?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -368,6 +383,7 @@ export type AchievementCountOrderByAggregateInput = {
   description?: Prisma.SortOrder
   iconUrl?: Prisma.SortOrder
   xpReward?: Prisma.SortOrder
+  criteria?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -425,6 +441,7 @@ export type AchievementCreateWithoutUserAchievementsInput = {
   description: string
   iconUrl?: string | null
   xpReward?: number
+  criteria?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -435,6 +452,7 @@ export type AchievementUncheckedCreateWithoutUserAchievementsInput = {
   description: string
   iconUrl?: string | null
   xpReward?: number
+  criteria?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -461,6 +479,7 @@ export type AchievementUpdateWithoutUserAchievementsInput = {
   description?: Prisma.StringFieldUpdateOperationsInput | string
   iconUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   xpReward?: Prisma.IntFieldUpdateOperationsInput | number
+  criteria?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -471,6 +490,7 @@ export type AchievementUncheckedUpdateWithoutUserAchievementsInput = {
   description?: Prisma.StringFieldUpdateOperationsInput | string
   iconUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   xpReward?: Prisma.IntFieldUpdateOperationsInput | number
+  criteria?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -512,6 +532,7 @@ export type AchievementSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   description?: boolean
   iconUrl?: boolean
   xpReward?: boolean
+  criteria?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   userAchievements?: boolean | Prisma.Achievement$userAchievementsArgs<ExtArgs>
@@ -524,6 +545,7 @@ export type AchievementSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   description?: boolean
   iconUrl?: boolean
   xpReward?: boolean
+  criteria?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["achievement"]>
@@ -534,6 +556,7 @@ export type AchievementSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   description?: boolean
   iconUrl?: boolean
   xpReward?: boolean
+  criteria?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["achievement"]>
@@ -544,11 +567,12 @@ export type AchievementSelectScalar = {
   description?: boolean
   iconUrl?: boolean
   xpReward?: boolean
+  criteria?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type AchievementOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "iconUrl" | "xpReward" | "createdAt" | "updatedAt", ExtArgs["result"]["achievement"]>
+export type AchievementOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "iconUrl" | "xpReward" | "criteria" | "createdAt" | "updatedAt", ExtArgs["result"]["achievement"]>
 export type AchievementInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   userAchievements?: boolean | Prisma.Achievement$userAchievementsArgs<ExtArgs>
   _count?: boolean | Prisma.AchievementCountOutputTypeDefaultArgs<ExtArgs>
@@ -567,6 +591,7 @@ export type $AchievementPayload<ExtArgs extends runtime.Types.Extensions.Interna
     description: string
     iconUrl: string | null
     xpReward: number
+    criteria: runtime.JsonValue | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["achievement"]>
@@ -998,6 +1023,7 @@ export interface AchievementFieldRefs {
   readonly description: Prisma.FieldRef<"Achievement", 'String'>
   readonly iconUrl: Prisma.FieldRef<"Achievement", 'String'>
   readonly xpReward: Prisma.FieldRef<"Achievement", 'Int'>
+  readonly criteria: Prisma.FieldRef<"Achievement", 'Json'>
   readonly createdAt: Prisma.FieldRef<"Achievement", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Achievement", 'DateTime'>
 }

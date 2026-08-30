@@ -117,6 +117,11 @@ export type Team = Prisma.TeamModel
  */
 export type TeamMember = Prisma.TeamMemberModel
 /**
+ * Model TeamInvite
+ * 
+ */
+export type TeamInvite = Prisma.TeamInviteModel
+/**
  * Model Match
  * 
  */
@@ -166,3 +171,8 @@ export type AdminUser = Prisma.AdminUserModel
  * 
  */
 export type AuditLog = Prisma.AuditLogModel
+/**
+ * Model SystemSetting
+ * 
+ */
+export type SystemSetting = Prisma.SystemSettingModel

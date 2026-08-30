@@ -4,7 +4,10 @@ import { Pool } from "pg";
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
-const connectionString = process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/velox";
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error("DATABASE_URL must be configured before starting VELOX.");
+}
 
 // Create a connection pool and adapter
 const pool = new Pool({ connectionString });

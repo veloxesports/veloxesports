@@ -257,18 +257,18 @@ export type RefundOrderByWithRelationInput = {
 
 export type RefundWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  paymentId?: string
   telegramRefundRef?: string
   AND?: Prisma.RefundWhereInput | Prisma.RefundWhereInput[]
   OR?: Prisma.RefundWhereInput[]
   NOT?: Prisma.RefundWhereInput | Prisma.RefundWhereInput[]
-  paymentId?: Prisma.StringFilter<"Refund"> | string
   amount?: Prisma.IntFilter<"Refund"> | number
   status?: Prisma.EnumRefundStatusFilter<"Refund"> | $Enums.RefundStatus
   reason?: Prisma.StringNullableFilter<"Refund"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Refund"> | Date | string
   completedAt?: Prisma.DateTimeNullableFilter<"Refund"> | Date | string | null
   payment?: Prisma.XOR<Prisma.TelegramPaymentScalarRelationFilter, Prisma.TelegramPaymentWhereInput>
-}, "id" | "telegramRefundRef">
+}, "id" | "paymentId" | "telegramRefundRef">
 
 export type RefundOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -308,7 +308,7 @@ export type RefundCreateInput = {
   telegramRefundRef?: string | null
   createdAt?: Date | string
   completedAt?: Date | string | null
-  payment: Prisma.TelegramPaymentCreateNestedOneWithoutRefundsInput
+  payment: Prisma.TelegramPaymentCreateNestedOneWithoutRefundInput
 }
 
 export type RefundUncheckedCreateInput = {
@@ -330,7 +330,7 @@ export type RefundUpdateInput = {
   telegramRefundRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  payment?: Prisma.TelegramPaymentUpdateOneRequiredWithoutRefundsNestedInput
+  payment?: Prisma.TelegramPaymentUpdateOneRequiredWithoutRefundNestedInput
 }
 
 export type RefundUncheckedUpdateInput = {
@@ -376,14 +376,9 @@ export type RefundUncheckedUpdateManyInput = {
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
-export type RefundListRelationFilter = {
-  every?: Prisma.RefundWhereInput
-  some?: Prisma.RefundWhereInput
-  none?: Prisma.RefundWhereInput
-}
-
-export type RefundOrderByRelationAggregateInput = {
-  _count?: Prisma.SortOrder
+export type RefundNullableScalarRelationFilter = {
+  is?: Prisma.RefundWhereInput | null
+  isNot?: Prisma.RefundWhereInput | null
 }
 
 export type RefundCountOrderByAggregateInput = {
@@ -427,46 +422,36 @@ export type RefundSumOrderByAggregateInput = {
   amount?: Prisma.SortOrder
 }
 
-export type RefundCreateNestedManyWithoutPaymentInput = {
-  create?: Prisma.XOR<Prisma.RefundCreateWithoutPaymentInput, Prisma.RefundUncheckedCreateWithoutPaymentInput> | Prisma.RefundCreateWithoutPaymentInput[] | Prisma.RefundUncheckedCreateWithoutPaymentInput[]
-  connectOrCreate?: Prisma.RefundCreateOrConnectWithoutPaymentInput | Prisma.RefundCreateOrConnectWithoutPaymentInput[]
-  createMany?: Prisma.RefundCreateManyPaymentInputEnvelope
-  connect?: Prisma.RefundWhereUniqueInput | Prisma.RefundWhereUniqueInput[]
+export type RefundCreateNestedOneWithoutPaymentInput = {
+  create?: Prisma.XOR<Prisma.RefundCreateWithoutPaymentInput, Prisma.RefundUncheckedCreateWithoutPaymentInput>
+  connectOrCreate?: Prisma.RefundCreateOrConnectWithoutPaymentInput
+  connect?: Prisma.RefundWhereUniqueInput
 }
 
-export type RefundUncheckedCreateNestedManyWithoutPaymentInput = {
-  create?: Prisma.XOR<Prisma.RefundCreateWithoutPaymentInput, Prisma.RefundUncheckedCreateWithoutPaymentInput> | Prisma.RefundCreateWithoutPaymentInput[] | Prisma.RefundUncheckedCreateWithoutPaymentInput[]
-  connectOrCreate?: Prisma.RefundCreateOrConnectWithoutPaymentInput | Prisma.RefundCreateOrConnectWithoutPaymentInput[]
-  createMany?: Prisma.RefundCreateManyPaymentInputEnvelope
-  connect?: Prisma.RefundWhereUniqueInput | Prisma.RefundWhereUniqueInput[]
+export type RefundUncheckedCreateNestedOneWithoutPaymentInput = {
+  create?: Prisma.XOR<Prisma.RefundCreateWithoutPaymentInput, Prisma.RefundUncheckedCreateWithoutPaymentInput>
+  connectOrCreate?: Prisma.RefundCreateOrConnectWithoutPaymentInput
+  connect?: Prisma.RefundWhereUniqueInput
 }
 
-export type RefundUpdateManyWithoutPaymentNestedInput = {
-  create?: Prisma.XOR<Prisma.RefundCreateWithoutPaymentInput, Prisma.RefundUncheckedCreateWithoutPaymentInput> | Prisma.RefundCreateWithoutPaymentInput[] | Prisma.RefundUncheckedCreateWithoutPaymentInput[]
-  connectOrCreate?: Prisma.RefundCreateOrConnectWithoutPaymentInput | Prisma.RefundCreateOrConnectWithoutPaymentInput[]
-  upsert?: Prisma.RefundUpsertWithWhereUniqueWithoutPaymentInput | Prisma.RefundUpsertWithWhereUniqueWithoutPaymentInput[]
-  createMany?: Prisma.RefundCreateManyPaymentInputEnvelope
-  set?: Prisma.RefundWhereUniqueInput | Prisma.RefundWhereUniqueInput[]
-  disconnect?: Prisma.RefundWhereUniqueInput | Prisma.RefundWhereUniqueInput[]
-  delete?: Prisma.RefundWhereUniqueInput | Prisma.RefundWhereUniqueInput[]
-  connect?: Prisma.RefundWhereUniqueInput | Prisma.RefundWhereUniqueInput[]
-  update?: Prisma.RefundUpdateWithWhereUniqueWithoutPaymentInput | Prisma.RefundUpdateWithWhereUniqueWithoutPaymentInput[]
-  updateMany?: Prisma.RefundUpdateManyWithWhereWithoutPaymentInput | Prisma.RefundUpdateManyWithWhereWithoutPaymentInput[]
-  deleteMany?: Prisma.RefundScalarWhereInput | Prisma.RefundScalarWhereInput[]
+export type RefundUpdateOneWithoutPaymentNestedInput = {
+  create?: Prisma.XOR<Prisma.RefundCreateWithoutPaymentInput, Prisma.RefundUncheckedCreateWithoutPaymentInput>
+  connectOrCreate?: Prisma.RefundCreateOrConnectWithoutPaymentInput
+  upsert?: Prisma.RefundUpsertWithoutPaymentInput
+  disconnect?: Prisma.RefundWhereInput | boolean
+  delete?: Prisma.RefundWhereInput | boolean
+  connect?: Prisma.RefundWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.RefundUpdateToOneWithWhereWithoutPaymentInput, Prisma.RefundUpdateWithoutPaymentInput>, Prisma.RefundUncheckedUpdateWithoutPaymentInput>
 }
 
-export type RefundUncheckedUpdateManyWithoutPaymentNestedInput = {
-  create?: Prisma.XOR<Prisma.RefundCreateWithoutPaymentInput, Prisma.RefundUncheckedCreateWithoutPaymentInput> | Prisma.RefundCreateWithoutPaymentInput[] | Prisma.RefundUncheckedCreateWithoutPaymentInput[]
-  connectOrCreate?: Prisma.RefundCreateOrConnectWithoutPaymentInput | Prisma.RefundCreateOrConnectWithoutPaymentInput[]
-  upsert?: Prisma.RefundUpsertWithWhereUniqueWithoutPaymentInput | Prisma.RefundUpsertWithWhereUniqueWithoutPaymentInput[]
-  createMany?: Prisma.RefundCreateManyPaymentInputEnvelope
-  set?: Prisma.RefundWhereUniqueInput | Prisma.RefundWhereUniqueInput[]
-  disconnect?: Prisma.RefundWhereUniqueInput | Prisma.RefundWhereUniqueInput[]
-  delete?: Prisma.RefundWhereUniqueInput | Prisma.RefundWhereUniqueInput[]
-  connect?: Prisma.RefundWhereUniqueInput | Prisma.RefundWhereUniqueInput[]
-  update?: Prisma.RefundUpdateWithWhereUniqueWithoutPaymentInput | Prisma.RefundUpdateWithWhereUniqueWithoutPaymentInput[]
-  updateMany?: Prisma.RefundUpdateManyWithWhereWithoutPaymentInput | Prisma.RefundUpdateManyWithWhereWithoutPaymentInput[]
-  deleteMany?: Prisma.RefundScalarWhereInput | Prisma.RefundScalarWhereInput[]
+export type RefundUncheckedUpdateOneWithoutPaymentNestedInput = {
+  create?: Prisma.XOR<Prisma.RefundCreateWithoutPaymentInput, Prisma.RefundUncheckedCreateWithoutPaymentInput>
+  connectOrCreate?: Prisma.RefundCreateOrConnectWithoutPaymentInput
+  upsert?: Prisma.RefundUpsertWithoutPaymentInput
+  disconnect?: Prisma.RefundWhereInput | boolean
+  delete?: Prisma.RefundWhereInput | boolean
+  connect?: Prisma.RefundWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.RefundUpdateToOneWithWhereWithoutPaymentInput, Prisma.RefundUpdateWithoutPaymentInput>, Prisma.RefundUncheckedUpdateWithoutPaymentInput>
 }
 
 export type EnumRefundStatusFieldUpdateOperationsInput = {
@@ -498,49 +483,15 @@ export type RefundCreateOrConnectWithoutPaymentInput = {
   create: Prisma.XOR<Prisma.RefundCreateWithoutPaymentInput, Prisma.RefundUncheckedCreateWithoutPaymentInput>
 }
 
-export type RefundCreateManyPaymentInputEnvelope = {
-  data: Prisma.RefundCreateManyPaymentInput | Prisma.RefundCreateManyPaymentInput[]
-  skipDuplicates?: boolean
-}
-
-export type RefundUpsertWithWhereUniqueWithoutPaymentInput = {
-  where: Prisma.RefundWhereUniqueInput
+export type RefundUpsertWithoutPaymentInput = {
   update: Prisma.XOR<Prisma.RefundUpdateWithoutPaymentInput, Prisma.RefundUncheckedUpdateWithoutPaymentInput>
   create: Prisma.XOR<Prisma.RefundCreateWithoutPaymentInput, Prisma.RefundUncheckedCreateWithoutPaymentInput>
+  where?: Prisma.RefundWhereInput
 }
 
-export type RefundUpdateWithWhereUniqueWithoutPaymentInput = {
-  where: Prisma.RefundWhereUniqueInput
+export type RefundUpdateToOneWithWhereWithoutPaymentInput = {
+  where?: Prisma.RefundWhereInput
   data: Prisma.XOR<Prisma.RefundUpdateWithoutPaymentInput, Prisma.RefundUncheckedUpdateWithoutPaymentInput>
-}
-
-export type RefundUpdateManyWithWhereWithoutPaymentInput = {
-  where: Prisma.RefundScalarWhereInput
-  data: Prisma.XOR<Prisma.RefundUpdateManyMutationInput, Prisma.RefundUncheckedUpdateManyWithoutPaymentInput>
-}
-
-export type RefundScalarWhereInput = {
-  AND?: Prisma.RefundScalarWhereInput | Prisma.RefundScalarWhereInput[]
-  OR?: Prisma.RefundScalarWhereInput[]
-  NOT?: Prisma.RefundScalarWhereInput | Prisma.RefundScalarWhereInput[]
-  id?: Prisma.StringFilter<"Refund"> | string
-  paymentId?: Prisma.StringFilter<"Refund"> | string
-  amount?: Prisma.IntFilter<"Refund"> | number
-  status?: Prisma.EnumRefundStatusFilter<"Refund"> | $Enums.RefundStatus
-  reason?: Prisma.StringNullableFilter<"Refund"> | string | null
-  telegramRefundRef?: Prisma.StringNullableFilter<"Refund"> | string | null
-  createdAt?: Prisma.DateTimeFilter<"Refund"> | Date | string
-  completedAt?: Prisma.DateTimeNullableFilter<"Refund"> | Date | string | null
-}
-
-export type RefundCreateManyPaymentInput = {
-  id?: string
-  amount: number
-  status: $Enums.RefundStatus
-  reason?: string | null
-  telegramRefundRef?: string | null
-  createdAt?: Date | string
-  completedAt?: Date | string | null
 }
 
 export type RefundUpdateWithoutPaymentInput = {
@@ -554,16 +505,6 @@ export type RefundUpdateWithoutPaymentInput = {
 }
 
 export type RefundUncheckedUpdateWithoutPaymentInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  amount?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumRefundStatusFieldUpdateOperationsInput | $Enums.RefundStatus
-  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  telegramRefundRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-}
-
-export type RefundUncheckedUpdateManyWithoutPaymentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumRefundStatusFieldUpdateOperationsInput | $Enums.RefundStatus

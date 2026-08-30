@@ -1,149 +1,235 @@
 "use server";
 
+import { z } from "zod";
 import { prisma } from "@/lib/database/prisma";
+import { requireCurrentUser, requireRole } from "@/lib/auth/current-user";
+import { createTournamentInvoice, refundTelegramStarsPayment } from "@/lib/telegram/bot";
+import { createLedgerTransactionInTransaction } from "@/features/wallet/services";
+import { revalidatePath } from "next/cache";
 
-export async function initiateTournamentPayment(tournamentId: string, userId: string) {
-  try {
-    const tournament = await prisma.tournament.findUnique({
-      where: { id: tournamentId },
-    });
+const paymentIdSchema = z.string().uuid();
+const tournamentIdSchema = z.string().uuid();
 
-    if (!tournament) return { success: false, error: "Tournament not found" };
-    if (!tournament.isPaid) return { success: false, error: "Tournament is free" };
-    if (tournament.currentParticipants >= tournament.maxParticipants) {
-      return { success: false, error: "Tournament is full" };
-    }
-
-    // Check if user is already registered
-    const existingReg = await prisma.tournamentRegistration.findUnique({
-      where: { tournamentId_userId: { tournamentId, userId } }
-    });
-    if (existingReg) return { success: false, error: "Already registered" };
-
-    // Create a pending payment record in our DB
-    const payment = await prisma.telegramPayment.create({
-      data: {
-        userId,
-        tournamentId,
-        amount: tournament.entryFee,
-        currency: "XTR",
-        status: "PENDING",
-      }
-    });
-
-    // In a real application, you would generate a Telegram Invoice Link here
-    // using the Bot API `createInvoiceLink` method:
-    // https://core.telegram.org/bots/api#createinvoicelink
-    
-    // Example:
-    // const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    // const res = await fetch(`https://api.telegram.org/bot${botToken}/createInvoiceLink`, { ... })
-    // const invoiceUrl = res.result;
-
-    // For this demonstration, we'll return a mock invoice URL that the frontend
-    // would normally pass to Telegram.WebApp.openInvoice(url)
-    const mockInvoiceUrl = `https://t.me/$invoice_mock_${payment.id}`;
-
-    return { 
-      success: true, 
-      data: { 
-        paymentId: payment.id,
-        invoiceUrl: mockInvoiceUrl 
-      } 
-    };
-  } catch (error) {
-    console.error("Error initiating payment:", error);
-    return { success: false, error: "Failed to initiate payment" };
+class PaymentActionError extends Error {
+  constructor(
+    public code:
+      | "TOURNAMENT_NOT_FOUND"
+      | "NOT_PAID"
+      | "REGISTRATION_CLOSED"
+      | "FULL"
+      | "ALREADY_REGISTERED"
+      | "REFUND_IN_PROGRESS"
+      | "REFUND_NOT_ELIGIBLE",
+  ) {
+    super(code);
   }
 }
 
-export async function refundStarsPayment(paymentId: string, adminId: string) {
+function paymentErrorMessage(code: PaymentActionError["code"]) {
+  const messages = {
+    TOURNAMENT_NOT_FOUND: "Tournament not found.",
+    NOT_PAID: "This tournament is free to enter.",
+    REGISTRATION_CLOSED: "Registration is closed.",
+    FULL: "Tournament is full.",
+    ALREADY_REGISTERED: "You are already registered.",
+    REFUND_IN_PROGRESS: "A refund is already being processed for this payment.",
+    REFUND_NOT_ELIGIBLE: "This payment is not eligible for a refund.",
+  };
+
+  return messages[code];
+}
+
+export async function initiateTournamentPayment(tournamentId: unknown) {
+  const parsedTournamentId = tournamentIdSchema.safeParse(tournamentId);
+  if (!parsedTournamentId.success) return { success: false, error: "Invalid tournament." };
+
   try {
-    const payment = await prisma.telegramPayment.findUnique({
-      where: { id: paymentId },
-    });
+    const user = await requireCurrentUser();
+    const now = new Date();
+    const { payment, title } = await prisma.$transaction(async (tx) => {
+      const tournament = await tx.tournament.findUnique({
+        where: { id: parsedTournamentId.data },
+        select: {
+          id: true,
+          title: true,
+          isPaid: true,
+          entryFee: true,
+          status: true,
+          registrationDeadline: true,
+          maxParticipants: true,
+          currentParticipants: true,
+        },
+      });
 
-    if (!payment || payment.status !== "COMPLETED") {
-      return { success: false, error: "Payment not eligible for refund" };
-    }
+      if (!tournament) throw new PaymentActionError("TOURNAMENT_NOT_FOUND");
+      if (!tournament.isPaid) throw new PaymentActionError("NOT_PAID");
+      if (tournament.status !== "REGISTRATION_OPEN" || tournament.registrationDeadline <= now) {
+        throw new PaymentActionError("REGISTRATION_CLOSED");
+      }
+      if (tournament.currentParticipants >= tournament.maxParticipants) throw new PaymentActionError("FULL");
 
-    if (!payment.telegramPaymentRef) {
-      return { success: false, error: "Missing Telegram payment reference" };
-    }
+      const registration = await tx.tournamentRegistration.findUnique({
+        where: { tournamentId_userId: { tournamentId: tournament.id, userId: user.id } },
+        select: { id: true },
+      });
+      if (registration) throw new PaymentActionError("ALREADY_REGISTERED");
 
-    // Call Telegram API to refund
-    // const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    // const res = await fetch(`https://api.telegram.org/bot${botToken}/refundStarPayment`, {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({
-    //     user_id: payment.userId,
-    //     telegram_payment_charge_id: payment.telegramPaymentRef,
-    //   }),
-    // });
-    
-    // const data = await res.json();
-    // if (!data.ok) throw new Error("Telegram refund failed");
+      const pendingPayment = await tx.telegramPayment.findFirst({
+        where: { userId: user.id, tournamentId: tournament.id, status: "PENDING" },
+        orderBy: { createdAt: "desc" },
+      });
 
-    // Perform DB updates in transaction
-    await prisma.$transaction(async (tx) => {
-      // 1. Create Refund record
-      await tx.refund.create({
+      if (pendingPayment) return { payment: pendingPayment, title: tournament.title };
+
+      const created = await tx.telegramPayment.create({
         data: {
-          paymentId: payment.id,
-          amount: payment.amount,
-          status: "COMPLETED",
-          telegramRefundRef: `mock_refund_ref_${payment.id}`,
-        }
+          userId: user.id,
+          tournamentId: tournament.id,
+          amount: tournament.entryFee,
+          currency: "XTR",
+          status: "PENDING",
+        },
+      });
+      const payment = await tx.telegramPayment.update({
+        where: { id: created.id },
+        data: { invoicePayload: `velox:${created.id}` },
       });
 
-      // 2. Mark original payment as refunded
-      await tx.telegramPayment.update({
-        where: { id: payment.id },
-        data: { status: "REFUNDED" }
-      });
+      return { payment, title: tournament.title };
+    }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
 
-      // 3. Cancel registration if exists
-      if (payment.tournamentId) {
-        await tx.tournamentRegistration.updateMany({
-          where: { paymentId: payment.id },
-          data: { status: "REFUNDED" }
-        });
-        
-        // Decrement participant count
-        await tx.tournament.update({
-          where: { id: payment.tournamentId },
-          data: { currentParticipants: { decrement: 1 } }
-        });
-      }
-
-      // 4. Update Wallet Ledger
-      // We must import createLedgerTransaction from wallet/services, 
-      // but since we are in a transaction here, we might just inline the ledger logic 
-      // to keep it within the single prisma transaction.
-      const wallet = await tx.wallet.findUnique({ where: { userId: payment.userId } });
-      if (wallet) {
-        await tx.walletTransaction.create({
-          data: {
-            walletId: wallet.id,
-            amount: payment.amount,
-            type: "REFUND",
-            status: "COMPLETED",
-            tournamentId: payment.tournamentId,
-            description: "Refund for tournament entry",
-            completedAt: new Date()
-          }
-        });
-        await tx.wallet.update({
-          where: { id: wallet.id },
-          data: { totalRefunds: { increment: payment.amount } }
-        });
-      }
+    const invoiceUrl = await createTournamentInvoice({
+      paymentId: payment.id,
+      title,
+      amount: payment.amount,
     });
 
+    return { success: true, data: { paymentId: payment.id, invoiceUrl } };
+  } catch (error) {
+    if (error instanceof PaymentActionError) {
+      return { success: false, error: paymentErrorMessage(error.code) };
+    }
+    if (error instanceof Error && error.message === "UNAUTHENTICATED") {
+      return { success: false, error: "Open VELOX in Telegram to make a payment." };
+    }
+    if (error instanceof Error && error.message === "TELEGRAM_NOT_CONFIGURED") {
+      return { success: false, error: "Payments are not configured yet." };
+    }
+    console.error("Tournament payment initiation failed", error);
+    return { success: false, error: "We couldn't create your payment request. Please try again." };
+  }
+}
+
+export async function refundStarsPayment(paymentId: unknown) {
+  const parsedPaymentId = paymentIdSchema.safeParse(paymentId);
+  if (!parsedPaymentId.success) return { success: false, error: "Invalid payment." };
+
+  try {
+    await requireRole(["SUPER_ADMIN", "ADMIN", "FINANCE_MANAGER"]);
+
+    const prepared = await prisma.$transaction(async (tx) => {
+      const payment = await tx.telegramPayment.findUnique({
+        where: { id: parsedPaymentId.data },
+        include: { user: { select: { telegramId: true } }, refund: true },
+      });
+
+      if (!payment || payment.status !== "COMPLETED" || !payment.telegramPaymentRef) {
+        throw new PaymentActionError("REFUND_NOT_ELIGIBLE");
+      }
+      if (payment.refund?.status === "PENDING" || payment.refund?.status === "COMPLETED") {
+        throw new PaymentActionError("REFUND_IN_PROGRESS");
+      }
+
+      const refund = payment.refund
+        ? await tx.refund.update({
+            where: { id: payment.refund.id },
+            data: { status: "PENDING", reason: "Administrator-initiated refund retry", telegramRefundRef: null, completedAt: null },
+          })
+        : await tx.refund.create({
+            data: {
+              paymentId: payment.id,
+              amount: payment.amount,
+              status: "PENDING",
+              reason: "Administrator-initiated refund",
+            },
+          });
+
+      return { refundId: refund.id, payment };
+    }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
+
+    try {
+      await refundTelegramStarsPayment({
+        telegramUserId: prepared.payment.user.telegramId,
+        telegramPaymentChargeId: prepared.payment.telegramPaymentRef!,
+      });
+    } catch (error) {
+      await prisma.refund.update({
+        where: { id: prepared.refundId },
+        data: { status: "FAILED" },
+      });
+      throw error;
+    }
+
+    await prisma.$transaction(async (tx) => {
+      const refund = await tx.refund.findUniqueOrThrow({ where: { id: prepared.refundId } });
+      if (refund.status !== "PENDING") throw new PaymentActionError("REFUND_IN_PROGRESS");
+
+      await tx.refund.update({
+        where: { id: refund.id },
+        data: {
+          status: "COMPLETED",
+          telegramRefundRef: prepared.payment.telegramPaymentRef,
+          completedAt: new Date(),
+        },
+      });
+      await tx.telegramPayment.update({
+        where: { id: prepared.payment.id },
+        data: { status: "REFUNDED" },
+      });
+
+      if (prepared.payment.tournamentId) {
+        const cancelled = await tx.tournamentRegistration.updateMany({
+          where: { paymentId: prepared.payment.id, status: "CONFIRMED" },
+          data: { status: "REFUNDED" },
+        });
+        if (cancelled.count > 0) {
+          await tx.tournament.update({
+            where: { id: prepared.payment.tournamentId },
+            data: { currentParticipants: { decrement: cancelled.count } },
+          });
+        }
+      }
+
+      await createLedgerTransactionInTransaction(tx, {
+        userId: prepared.payment.userId,
+        amount: prepared.payment.amount,
+        type: "REFUND",
+        status: "COMPLETED",
+        tournamentId: prepared.payment.tournamentId ?? undefined,
+        telegramPaymentId: prepared.payment.telegramPaymentRef ?? undefined,
+        description: "Tournament entry refund",
+      });
+      await tx.notification.create({
+        data: {
+          userId: prepared.payment.userId,
+          type: "PAYMENT",
+          title: "Tournament refund completed",
+          message: "Your Telegram Stars refund has been processed.",
+          metadata: { paymentId: prepared.payment.id, refundId: refund.id },
+        },
+      });
+    }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
+
+    revalidatePath("/wallet");
     return { success: true };
   } catch (error) {
-    console.error("Refund error:", error);
-    return { success: false, error: "Failed to process refund" };
+    if (error instanceof PaymentActionError) {
+      return { success: false, error: paymentErrorMessage(error.code) };
+    }
+    if (error instanceof Error && (error.message === "UNAUTHENTICATED" || error.message === "FORBIDDEN")) {
+      return { success: false, error: "You do not have permission to refund payments." };
+    }
+    console.error("Telegram Stars refund failed", error);
+    return { success: false, error: "The refund could not be completed. Review the payment before retrying." };
   }
 }

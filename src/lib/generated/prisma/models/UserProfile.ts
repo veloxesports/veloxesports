@@ -53,6 +53,9 @@ export type UserProfileMinAggregateOutputType = {
   wins: number | null
   losses: number | null
   tournamentWins: number | null
+  discordId: string | null
+  discordUsername: string | null
+  discordAvatarUrl: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -68,6 +71,9 @@ export type UserProfileMaxAggregateOutputType = {
   wins: number | null
   losses: number | null
   tournamentWins: number | null
+  discordId: string | null
+  discordUsername: string | null
+  discordAvatarUrl: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -85,6 +91,9 @@ export type UserProfileCountAggregateOutputType = {
   tournamentWins: number
   favoriteGames: number
   gamerIds: number
+  discordId: number
+  discordUsername: number
+  discordAvatarUrl: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -118,6 +127,9 @@ export type UserProfileMinAggregateInputType = {
   wins?: true
   losses?: true
   tournamentWins?: true
+  discordId?: true
+  discordUsername?: true
+  discordAvatarUrl?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -133,6 +145,9 @@ export type UserProfileMaxAggregateInputType = {
   wins?: true
   losses?: true
   tournamentWins?: true
+  discordId?: true
+  discordUsername?: true
+  discordAvatarUrl?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -150,6 +165,9 @@ export type UserProfileCountAggregateInputType = {
   tournamentWins?: true
   favoriteGames?: true
   gamerIds?: true
+  discordId?: true
+  discordUsername?: true
+  discordAvatarUrl?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -254,6 +272,9 @@ export type UserProfileGroupByOutputType = {
   tournamentWins: number
   favoriteGames: string[]
   gamerIds: runtime.JsonValue | null
+  discordId: string | null
+  discordUsername: string | null
+  discordAvatarUrl: string | null
   createdAt: Date
   updatedAt: Date
   _count: UserProfileCountAggregateOutputType | null
@@ -294,6 +315,9 @@ export type UserProfileWhereInput = {
   tournamentWins?: Prisma.IntFilter<"UserProfile"> | number
   favoriteGames?: Prisma.StringNullableListFilter<"UserProfile">
   gamerIds?: Prisma.JsonNullableFilter<"UserProfile">
+  discordId?: Prisma.StringNullableFilter<"UserProfile"> | string | null
+  discordUsername?: Prisma.StringNullableFilter<"UserProfile"> | string | null
+  discordAvatarUrl?: Prisma.StringNullableFilter<"UserProfile"> | string | null
   createdAt?: Prisma.DateTimeFilter<"UserProfile"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserProfile"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -312,6 +336,9 @@ export type UserProfileOrderByWithRelationInput = {
   tournamentWins?: Prisma.SortOrder
   favoriteGames?: Prisma.SortOrder
   gamerIds?: Prisma.SortOrderInput | Prisma.SortOrder
+  discordId?: Prisma.SortOrderInput | Prisma.SortOrder
+  discordUsername?: Prisma.SortOrderInput | Prisma.SortOrder
+  discordAvatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -321,6 +348,7 @@ export type UserProfileWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   userId?: string
   veloxUsername?: string
+  discordId?: string
   AND?: Prisma.UserProfileWhereInput | Prisma.UserProfileWhereInput[]
   OR?: Prisma.UserProfileWhereInput[]
   NOT?: Prisma.UserProfileWhereInput | Prisma.UserProfileWhereInput[]
@@ -333,10 +361,12 @@ export type UserProfileWhereUniqueInput = Prisma.AtLeast<{
   tournamentWins?: Prisma.IntFilter<"UserProfile"> | number
   favoriteGames?: Prisma.StringNullableListFilter<"UserProfile">
   gamerIds?: Prisma.JsonNullableFilter<"UserProfile">
+  discordUsername?: Prisma.StringNullableFilter<"UserProfile"> | string | null
+  discordAvatarUrl?: Prisma.StringNullableFilter<"UserProfile"> | string | null
   createdAt?: Prisma.DateTimeFilter<"UserProfile"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserProfile"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-}, "id" | "userId" | "veloxUsername">
+}, "id" | "userId" | "veloxUsername" | "discordId">
 
 export type UserProfileOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -351,6 +381,9 @@ export type UserProfileOrderByWithAggregationInput = {
   tournamentWins?: Prisma.SortOrder
   favoriteGames?: Prisma.SortOrder
   gamerIds?: Prisma.SortOrderInput | Prisma.SortOrder
+  discordId?: Prisma.SortOrderInput | Prisma.SortOrder
+  discordUsername?: Prisma.SortOrderInput | Prisma.SortOrder
+  discordAvatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserProfileCountOrderByAggregateInput
@@ -376,6 +409,9 @@ export type UserProfileScalarWhereWithAggregatesInput = {
   tournamentWins?: Prisma.IntWithAggregatesFilter<"UserProfile"> | number
   favoriteGames?: Prisma.StringNullableListFilter<"UserProfile">
   gamerIds?: Prisma.JsonNullableWithAggregatesFilter<"UserProfile">
+  discordId?: Prisma.StringNullableWithAggregatesFilter<"UserProfile"> | string | null
+  discordUsername?: Prisma.StringNullableWithAggregatesFilter<"UserProfile"> | string | null
+  discordAvatarUrl?: Prisma.StringNullableWithAggregatesFilter<"UserProfile"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"UserProfile"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"UserProfile"> | Date | string
 }
@@ -392,6 +428,9 @@ export type UserProfileCreateInput = {
   tournamentWins?: number
   favoriteGames?: Prisma.UserProfileCreatefavoriteGamesInput | string[]
   gamerIds?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  discordId?: string | null
+  discordUsername?: string | null
+  discordAvatarUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutProfileInput
@@ -410,6 +449,9 @@ export type UserProfileUncheckedCreateInput = {
   tournamentWins?: number
   favoriteGames?: Prisma.UserProfileCreatefavoriteGamesInput | string[]
   gamerIds?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  discordId?: string | null
+  discordUsername?: string | null
+  discordAvatarUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -426,6 +468,9 @@ export type UserProfileUpdateInput = {
   tournamentWins?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteGames?: Prisma.UserProfileUpdatefavoriteGamesInput | string[]
   gamerIds?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  discordId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordAvatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutProfileNestedInput
@@ -444,6 +489,9 @@ export type UserProfileUncheckedUpdateInput = {
   tournamentWins?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteGames?: Prisma.UserProfileUpdatefavoriteGamesInput | string[]
   gamerIds?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  discordId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordAvatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -461,6 +509,9 @@ export type UserProfileCreateManyInput = {
   tournamentWins?: number
   favoriteGames?: Prisma.UserProfileCreatefavoriteGamesInput | string[]
   gamerIds?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  discordId?: string | null
+  discordUsername?: string | null
+  discordAvatarUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -477,6 +528,9 @@ export type UserProfileUpdateManyMutationInput = {
   tournamentWins?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteGames?: Prisma.UserProfileUpdatefavoriteGamesInput | string[]
   gamerIds?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  discordId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordAvatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -494,6 +548,9 @@ export type UserProfileUncheckedUpdateManyInput = {
   tournamentWins?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteGames?: Prisma.UserProfileUpdatefavoriteGamesInput | string[]
   gamerIds?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  discordId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordAvatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -524,6 +581,9 @@ export type UserProfileCountOrderByAggregateInput = {
   tournamentWins?: Prisma.SortOrder
   favoriteGames?: Prisma.SortOrder
   gamerIds?: Prisma.SortOrder
+  discordId?: Prisma.SortOrder
+  discordUsername?: Prisma.SortOrder
+  discordAvatarUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -547,6 +607,9 @@ export type UserProfileMaxOrderByAggregateInput = {
   wins?: Prisma.SortOrder
   losses?: Prisma.SortOrder
   tournamentWins?: Prisma.SortOrder
+  discordId?: Prisma.SortOrder
+  discordUsername?: Prisma.SortOrder
+  discordAvatarUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -562,6 +625,9 @@ export type UserProfileMinOrderByAggregateInput = {
   wins?: Prisma.SortOrder
   losses?: Prisma.SortOrder
   tournamentWins?: Prisma.SortOrder
+  discordId?: Prisma.SortOrder
+  discordUsername?: Prisma.SortOrder
+  discordAvatarUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -639,6 +705,9 @@ export type UserProfileCreateWithoutUserInput = {
   tournamentWins?: number
   favoriteGames?: Prisma.UserProfileCreatefavoriteGamesInput | string[]
   gamerIds?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  discordId?: string | null
+  discordUsername?: string | null
+  discordAvatarUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -655,6 +724,9 @@ export type UserProfileUncheckedCreateWithoutUserInput = {
   tournamentWins?: number
   favoriteGames?: Prisma.UserProfileCreatefavoriteGamesInput | string[]
   gamerIds?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  discordId?: string | null
+  discordUsername?: string | null
+  discordAvatarUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -687,6 +759,9 @@ export type UserProfileUpdateWithoutUserInput = {
   tournamentWins?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteGames?: Prisma.UserProfileUpdatefavoriteGamesInput | string[]
   gamerIds?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  discordId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordAvatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -703,6 +778,9 @@ export type UserProfileUncheckedUpdateWithoutUserInput = {
   tournamentWins?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteGames?: Prisma.UserProfileUpdatefavoriteGamesInput | string[]
   gamerIds?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  discordId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordAvatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -722,6 +800,9 @@ export type UserProfileSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   tournamentWins?: boolean
   favoriteGames?: boolean
   gamerIds?: boolean
+  discordId?: boolean
+  discordUsername?: boolean
+  discordAvatarUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -740,6 +821,9 @@ export type UserProfileSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   tournamentWins?: boolean
   favoriteGames?: boolean
   gamerIds?: boolean
+  discordId?: boolean
+  discordUsername?: boolean
+  discordAvatarUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -758,6 +842,9 @@ export type UserProfileSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   tournamentWins?: boolean
   favoriteGames?: boolean
   gamerIds?: boolean
+  discordId?: boolean
+  discordUsername?: boolean
+  discordAvatarUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -776,11 +863,14 @@ export type UserProfileSelectScalar = {
   tournamentWins?: boolean
   favoriteGames?: boolean
   gamerIds?: boolean
+  discordId?: boolean
+  discordUsername?: boolean
+  discordAvatarUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "veloxUsername" | "rank" | "level" | "xp" | "country" | "wins" | "losses" | "tournamentWins" | "favoriteGames" | "gamerIds" | "createdAt" | "updatedAt", ExtArgs["result"]["userProfile"]>
+export type UserProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "veloxUsername" | "rank" | "level" | "xp" | "country" | "wins" | "losses" | "tournamentWins" | "favoriteGames" | "gamerIds" | "discordId" | "discordUsername" | "discordAvatarUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["userProfile"]>
 export type UserProfileInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -809,6 +899,9 @@ export type $UserProfilePayload<ExtArgs extends runtime.Types.Extensions.Interna
     tournamentWins: number
     favoriteGames: string[]
     gamerIds: runtime.JsonValue | null
+    discordId: string | null
+    discordUsername: string | null
+    discordAvatarUrl: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["userProfile"]>
@@ -1247,6 +1340,9 @@ export interface UserProfileFieldRefs {
   readonly tournamentWins: Prisma.FieldRef<"UserProfile", 'Int'>
   readonly favoriteGames: Prisma.FieldRef<"UserProfile", 'String[]'>
   readonly gamerIds: Prisma.FieldRef<"UserProfile", 'Json'>
+  readonly discordId: Prisma.FieldRef<"UserProfile", 'String'>
+  readonly discordUsername: Prisma.FieldRef<"UserProfile", 'String'>
+  readonly discordAvatarUrl: Prisma.FieldRef<"UserProfile", 'String'>
   readonly createdAt: Prisma.FieldRef<"UserProfile", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"UserProfile", 'DateTime'>
 }

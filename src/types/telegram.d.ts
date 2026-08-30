@@ -4,10 +4,12 @@ interface TelegramWebApp {
   close(): void;
   setHeaderColor(color: string): void;
   setBackgroundColor(color: string): void;
-  openInvoice(url: string, callback?: (status: string) => void): void;
+  openInvoice(url: string, callback?: (status: 'paid' | 'cancelled' | 'failed' | 'pending') => void): void;
   initData: string;
-  initDataUnsafe: any;
+  initDataUnsafe: unknown;
   colorScheme: 'light' | 'dark';
+  version?: string;
+  isVersionAtLeast?(version: string): boolean;
 }
 
 interface Window {

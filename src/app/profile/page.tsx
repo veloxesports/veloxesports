@@ -1,17 +1,16 @@
 import { getPlayerProfile } from "@/features/profile/actions";
-import { User, Trophy, Gamepad2, Settings, Swords, Medal } from "lucide-react";
+import { User, Trophy, Gamepad2, Settings, Swords, Medal, Gift } from "lucide-react";
 import Link from "next/link";
 
 export default async function ProfilePage() {
-  const mockUserId = "mock-user-id";
-  const res = await getPlayerProfile(mockUserId);
+  const res = await getPlayerProfile();
   
   if (!res.success || !res.data) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-black p-4 text-center">
         <User className="w-16 h-16 text-gray-700 mb-4" />
         <h1 className="text-xl font-bold text-white mb-2">Profile Unavailable</h1>
-        <p className="text-gray-500">We couldn't load your profile data.</p>
+        <p className="text-gray-500">We couldn&apos;t load your profile data.</p>
       </div>
     );
   }
@@ -26,9 +25,9 @@ export default async function ProfilePage() {
       {/* Header Banner */}
       <div className="h-40 bg-gradient-to-br from-indigo-900 to-black relative">
         <div className="absolute top-4 right-4 z-10">
-          <button className="w-10 h-10 rounded-full bg-black/50 backdrop-blur border border-white/10 flex items-center justify-center text-white hover:bg-black/70">
+          <Link href="/settings" aria-label="Open settings" className="w-10 h-10 rounded-full bg-black/50 backdrop-blur border border-white/10 flex items-center justify-center text-white hover:bg-black/70">
             <Settings className="w-5 h-5" />
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -118,6 +117,11 @@ export default async function ProfilePage() {
             )}
           </div>
         </section>
+
+        <Link href="/referrals" className="flex items-center justify-between rounded-2xl border border-violet-400/20 bg-violet-500/5 p-4 transition hover:bg-violet-500/10">
+          <span className="flex items-center gap-3"><Gift className="h-5 w-5 text-violet-300" aria-hidden /><span><span className="block font-bold text-white">Invite friends</span><span className="block text-sm text-slate-400">Share your referral code with your squad.</span></span></span>
+          <span className="text-sm font-semibold text-violet-300">Open</span>
+        </Link>
       </div>
     </div>
   );

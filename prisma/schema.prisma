@@ -48,6 +48,9 @@ model UserProfile {
   tournamentWins    Int       @default(0)
   favoriteGames     String[]
   gamerIds          Json?     // e.g. { "FC26": "PlayerOne", "PUBG": "Player123" }
+  discordId         String?   @unique
+  discordUsername   String?
+  discordAvatarUrl  String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 }
@@ -102,14 +105,18 @@ model TelegramPayment {
   tournament        Tournament? @relation(fields: [tournamentId], references: [id], onDelete: SetNull)
   amount            Int
   currency          String    @default("XTR")
+  invoicePayload    String?   @unique
   telegramPaymentRef String?  @unique
   status            PaymentStatus
   createdAt         DateTime  @default(now())
   completedAt       DateTime?
   metadata          Json?
 
-  refunds           Refund[]
+  refund            Refund?
+  registration      TournamentRegistration?
   paymentEvents     PaymentEvent[]
+
+  @@index([userId, tournamentId, status])
 }
 
 model PaymentEvent {
@@ -124,7 +131,7 @@ model PaymentEvent {
 
 model Refund {
   id                String    @id @default(uuid())
-  paymentId         String
+  paymentId         String    @unique
   payment           TelegramPayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
   amount            Int
   status            RefundStatus
@@ -207,11 +214,13 @@ model TournamentRegistration {
   team              Team?     @relation(fields: [teamId], references: [id])
   status            RegistrationStatus @default(PENDING)
   paymentId         String?   @unique
+  payment           TelegramPayment? @relation(fields: [paymentId], references: [id], onDelete: Restrict)
   checkedIn         Boolean   @default(false)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
   @@unique([tournamentId, userId])
+  @@index([tournamentId, status])
 }
 
 model Team {
@@ -223,6 +232,7 @@ model Team {
   updatedAt         DateTime  @updatedAt
 
   members           TeamMember[]
+  invites           TeamInvite[]
   registrations     TournamentRegistration[]
 }
 
@@ -238,11 +248,26 @@ model TeamMember {
   @@unique([teamId, userId])
 }
 
+model TeamInvite {
+  id                String    @id @default(uuid())
+  teamId            String
+  team              Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  code              String    @unique
+  createdById       String
+  expiresAt         DateTime
+  maxUses           Int       @default(1)
+  uses              Int       @default(0)
+  createdAt         DateTime  @default(now())
+
+  @@index([teamId, expiresAt])
+}
+
 model Match {
   id                String    @id @default(uuid())
   tournamentId      String
   tournament        Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   round             Int       // Bracket round (1, 2, 3...)
+  bracketPosition   Int?
   player1Id         String?
   player2Id         String?
   team1Id           String?
@@ -258,6 +283,8 @@ model Match {
   results           MatchResult[]
   evidence          MatchEvidence[]
   disputes          Dispute[]
+
+  @@unique([tournamentId, round, bracketPosition])
 }
 
 model MatchResult {
@@ -279,8 +306,9 @@ model MatchEvidence {
   matchId           String
   match             Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
   uploaderId        String
-  fileUrl           String
+  storagePath       String
   fileType          String
+  fileSize          Int
   createdAt         DateTime  @default(now())
 }
 
@@ -303,10 +331,13 @@ model Achievement {
   description       String
   iconUrl           String?
   xpReward          Int       @default(0)
+  criteria          Json?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
   userAchievements  UserAchievement[]
+
+  @@unique([name])
 }
 
 model UserAchievement {
@@ -364,6 +395,14 @@ model AuditLog {
   newValue          Json?
   ipAddress         String?
   createdAt         DateTime  @default(now())
+}
+
+model SystemSetting {
+  id                String    @id @default(uuid())
+  key               String    @unique
+  value             Json
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }
 
 enum Role {

@@ -1,5 +1,5 @@
 import { getGlobalLeaderboard } from "@/features/leaderboard/actions";
-import { Trophy, Medal, Crown } from "lucide-react";
+import { Crown } from "lucide-react";
 
 export default async function LeaderboardPage() {
   const res = await getGlobalLeaderboard();

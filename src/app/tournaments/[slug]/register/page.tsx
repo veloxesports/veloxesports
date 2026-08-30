@@ -3,24 +3,36 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { getTournamentBySlug, registerForFreeTournament } from "@/features/tournaments/actions";
+import { initiateTournamentPayment } from "@/features/payments/actions";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+
+type RegistrationTournament = {
+  id: string;
+  title: string;
+  isPaid: boolean;
+  entryFee: number;
+  maxParticipants: number;
+  currentParticipants: number;
+};
 
 export default function RegisterPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const router = useRouter();
   
-  const [tournament, setTournament] = useState<any>(null);
+  const [tournament, setTournament] = useState<RegistrationTournament | null>(null);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [paymentSubmitted, setPaymentSubmitted] = useState(false);
+  const [acceptedRules, setAcceptedRules] = useState(false);
 
   useEffect(() => {
     async function load() {
       const res = await getTournamentBySlug(slug);
-      if (res.success) {
+      if (res.success && res.data) {
         setTournament(res.data);
       } else {
         setError("Tournament not found.");
@@ -31,32 +43,61 @@ export default function RegisterPage({ params }: { params: Promise<{ slug: strin
   }, [slug]);
 
   const handleRegister = async () => {
+    if (!tournament) return;
+
+    if (!acceptedRules) {
+      setError("Please accept the tournament rules before continuing.");
+      return;
+    }
+
     setRegistering(true);
     setError(null);
-    
-    // In a real app, you would get the userId from the authenticated session
-    // For now, we mock a user ID since we haven't implemented full Telegram Auth flow yet.
-    const mockUserId = "mock-user-id"; 
 
-    const res = await registerForFreeTournament(tournament.id, mockUserId);
-    
-    if (res.success) {
-      setSuccess(true);
+    if (tournament.isPaid) {
+      const res = await initiateTournamentPayment(tournament.id);
+      if (res.success && res.data) {
+        if (window.Telegram?.WebApp) {
+          window.Telegram.WebApp.openInvoice(res.data.invoiceUrl, (status) => {
+            if (status === "paid") {
+              setPaymentSubmitted(true);
+              router.refresh();
+            } else if (status === "failed") {
+              setError("Telegram couldn't complete the payment. No registration was created.");
+            }
+          });
+        } else {
+          setError("Telegram Stars payments must be completed inside the Telegram app.");
+        }
+      } else {
+        setError(res.error || "An error occurred");
+      }
     } else {
-      setError(res.error || "An error occurred");
+      const res = await registerForFreeTournament(tournament.id);
+      if (res.success) {
+        setSuccess(true);
+      } else {
+        setError(res.error || "An error occurred");
+      }
     }
     setRegistering(false);
   };
 
   if (loading) return <div className="p-8 text-center text-gray-400">Loading...</div>;
   if (error && !tournament) return <div className="p-8 text-center text-red-400">{error}</div>;
+  if (!tournament) return <div className="p-8 text-center text-gray-400">Tournament unavailable.</div>;
 
-  if (success) {
+  if (success || paymentSubmitted) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-black p-6">
         <CheckCircle2 className="w-20 h-20 text-green-500 mb-6" />
-        <h1 className="text-2xl font-bold text-white text-center mb-2">Registration Confirmed!</h1>
-        <p className="text-gray-400 text-center mb-8">You are officially registered for {tournament.title}.</p>
+        <h1 className="text-2xl font-bold text-white text-center mb-2">
+          {success ? "Registration Confirmed!" : "Payment received"}
+        </h1>
+        <p className="text-gray-400 text-center mb-8">
+          {success
+            ? `You are officially registered for ${tournament.title}.`
+            : "Your registration will be confirmed after VELOX verifies Telegram's payment event."}
+        </p>
         <Link href={`/tournaments/${slug}`} className="w-full">
           <Button className="w-full bg-gray-800 text-white hover:bg-gray-700 font-bold py-6">
             Back to Tournament
@@ -94,16 +135,22 @@ export default function RegisterPage({ params }: { params: Promise<{ slug: strin
         
         {error && <div className="bg-red-500/10 text-red-500 p-3 rounded-xl text-sm border border-red-500/20">{error}</div>}
 
-        <p className="text-xs text-gray-500 text-center">
-          By registering, you agree to the VELOX tournament rules and terms of service.
-        </p>
+        <label className="flex items-start gap-3 rounded-xl bg-black/30 p-3 text-sm text-gray-300 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={acceptedRules}
+            onChange={(event) => setAcceptedRules(event.target.checked)}
+            className="mt-0.5 h-4 w-4 accent-purple-500"
+          />
+          <span>I have read and accept the VELOX tournament rules and terms of service.</span>
+        </label>
 
         <Button 
           onClick={handleRegister} 
-          disabled={registering || tournament.isPaid}
+          disabled={registering || !acceptedRules}
           className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-6 text-lg shadow-[0_0_20px_rgba(147,51,234,0.3)] mt-2"
         >
-          {registering ? "Confirming..." : tournament.isPaid ? "Use Paid Registration (Phase 3)" : "Confirm Free Registration"}
+          {registering ? "Preparing..." : tournament.isPaid ? `Pay ⭐ ${tournament.entryFee} with Telegram Stars` : "Confirm Free Registration"}
         </Button>
       </div>
     </div>

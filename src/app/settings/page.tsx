@@ -1,20 +1,74 @@
 "use client";
 
-import { useState } from "react";
-import { User, Shield, Gamepad2, Globe, LogOut, ChevronLeft } from "lucide-react";
+import { useEffect, useState } from "react";
+import { User, Gamepad2, Globe, LogOut, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { disconnectDiscord, getPlayerProfile, updateCurrentProfile } from "@/features/profile/actions";
+import { logout } from "@/features/auth/actions";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("Alex_Pro");
-  const [country, setCountry] = useState("United States");
+  const [username, setUsername] = useState("");
+  const [country, setCountry] = useState("");
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState<string | null>(null);
+  const [discordUsername, setDiscordUsername] = useState<string | null>(null);
+  const [disconnectingDiscord, setDisconnectingDiscord] = useState(false);
+
+  useEffect(() => {
+    void getPlayerProfile().then((result) => {
+      if (result.success && result.data) {
+        setUsername(result.data.profile.veloxUsername || "");
+        setCountry(result.data.profile.country || "");
+        setDiscordUsername(result.data.profile.discordUsername || null);
+      } else {
+        setMessage(result.error || "We couldn't load your profile.");
+      }
+      const discordStatus = new URLSearchParams(window.location.search).get("discord");
+      if (discordStatus === "connected") setMessage("Discord connected.");
+      if (discordStatus === "already_connected") setMessage("That Discord account is already linked to another VELOX account.");
+      if (discordStatus === "unavailable") setMessage("Discord connection is not configured yet.");
+      if (discordStatus === "failed") setMessage("Discord connection failed. Please try again.");
+      if (discordStatus === "cancelled") setMessage("Discord connection was cancelled or expired.");
+      if (discordStatus === "auth_required") setMessage("Sign in with Telegram before connecting Discord.");
+      setLoading(false);
+    });
+  }, []);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setTimeout(() => setSaving(false), 1000);
+    setMessage(null);
+    void updateCurrentProfile({ veloxUsername: username, country }).then((result) => {
+      setSaving(false);
+      setMessage(result.success ? "Profile saved." : result.error || "We couldn't save your profile.");
+    });
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace("/");
+    router.refresh();
+  };
+
+  const handleDiscord = async () => {
+    if (!discordUsername) {
+      router.push("/api/discord/connect");
+      return;
+    }
+
+    setDisconnectingDiscord(true);
+    setMessage(null);
+    const result = await disconnectDiscord();
+    setDisconnectingDiscord(false);
+    if (result.success) {
+      setDiscordUsername(null);
+      setMessage("Discord disconnected.");
+    } else {
+      setMessage(result.error || "We couldn't disconnect Discord.");
+    }
   };
 
   return (
@@ -36,10 +90,12 @@ export default function SettingsPage() {
           <form onSubmit={handleSave} className="bg-gray-900 border border-white/5 rounded-2xl p-4 flex flex-col gap-4 shadow-lg">
             <div className="flex flex-col gap-2">
               <label className="text-xs font-bold text-gray-400">VELOX Username</label>
-              <input 
+              <input
                 type="text" 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                disabled={loading}
+                placeholder="Your VELOX username"
                 className="bg-black border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-medium focus:outline-none focus:border-purple-500 transition-colors"
               />
             </div>
@@ -50,13 +106,16 @@ export default function SettingsPage() {
                 type="text" 
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
+                disabled={loading}
+                placeholder="Country or region"
                 className="bg-black border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-medium focus:outline-none focus:border-purple-500 transition-colors"
               />
             </div>
 
-            <Button type="submit" disabled={saving} className="bg-purple-600 hover:bg-purple-700 text-white font-bold w-full mt-2">
-              {saving ? "Saving..." : "Save Changes"}
+            <Button type="submit" disabled={saving || loading} className="bg-purple-600 hover:bg-purple-700 text-white font-bold w-full mt-2">
+              {saving ? "Saving..." : loading ? "Loading..." : "Save Changes"}
             </Button>
+            {message && <p className="text-sm text-gray-400 text-center" role="status">{message}</p>}
           </form>
         </section>
 
@@ -74,11 +133,11 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex flex-col">
                   <span className="font-bold text-white text-sm">Discord</span>
-                  <span className="text-xs text-gray-400">Not connected</span>
+                  <span className="text-xs text-gray-400">{discordUsername ? `Connected as ${discordUsername}` : "Not connected"}</span>
                 </div>
               </div>
-              <Button size="sm" variant="outline" className="border-[#5865F2] text-[#5865F2] hover:bg-[#5865F2] hover:text-white">
-                Connect
+              <Button onClick={handleDiscord} disabled={loading || disconnectingDiscord} size="sm" variant="outline" className="border-[#5865F2] text-[#5865F2] hover:bg-[#5865F2] hover:text-white">
+                {disconnectingDiscord ? "Disconnecting..." : discordUsername ? "Disconnect" : "Connect"}
               </Button>
             </div>
           </div>
@@ -86,7 +145,7 @@ export default function SettingsPage() {
 
         {/* Danger Zone */}
         <section className="flex flex-col gap-4 mt-4">
-          <Button variant="outline" className="w-full border-red-500/20 text-red-500 hover:bg-red-500/10 font-bold flex items-center gap-2">
+          <Button onClick={handleLogout} variant="outline" className="w-full border-red-500/20 text-red-500 hover:bg-red-500/10 font-bold flex items-center gap-2">
             <LogOut className="w-4 h-4" /> Logout
           </Button>
         </section>
