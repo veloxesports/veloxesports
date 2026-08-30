@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Providers } from "@/components/providers";
+import { TelegramInit } from "@/components/telegram-init";
+import Script from "next/script";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,7 +28,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark h-full">
+      <head>
+        <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
+      </head>
       <body className={`${inter.className} min-h-full flex flex-col bg-black text-gray-100 antialiased`}>
+        <TelegramInit />
         <Providers>
           <main className="flex-1 pb-16">
             {children}
