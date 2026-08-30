@@ -1,0 +1,502 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                String    @id @default(uuid())
+  telegramId        String    @unique
+  username          String?
+  firstName         String?
+  lastName          String?
+  languageCode      String?
+  profileImage      String?
+  isPremium         Boolean   @default(false)
+  role              Role      @default(PLAYER)
+  status            UserStatus @default(ACTIVE)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  lastLogin         DateTime?
+
+  profile           UserProfile?
+  wallet            Wallet?
+  registrations     TournamentRegistration[]
+  payments          TelegramPayment[]
+  achievements      UserAchievement[]
+  sentReferrals     Referral[] @relation("Referrer")
+  receivedReferral  Referral?  @relation("ReferredUser")
+  notifications     Notification[]
+  teamMemberships   TeamMember[]
+  auditLogs         AuditLog[]
+}
+
+model UserProfile {
+  id                String    @id @default(uuid())
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  veloxUsername     String?   @unique
+  rank              Rank      @default(BRONZE)
+  level             Int       @default(1)
+  xp                Int       @default(0)
+  country           String?
+  wins              Int       @default(0)
+  losses            Int       @default(0)
+  tournamentWins    Int       @default(0)
+  favoriteGames     String[]
+  gamerIds          Json?     // e.g. { "FC26": "PlayerOne", "PUBG": "Player123" }
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model Game {
+  id                String    @id @default(uuid())
+  name              String    @unique
+  slug              String    @unique
+  isActive          Boolean   @default(true)
+  imageUrl          String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  tournaments       Tournament[]
+}
+
+model Wallet {
+  id                String    @id @default(uuid())
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalSpent        Int       @default(0)
+  totalRewards      Int       @default(0)
+  totalRefunds      Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  transactions      WalletTransaction[]
+}
+
+model WalletTransaction {
+  id                String    @id @default(uuid())
+  walletId          String
+  wallet            Wallet    @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  tournamentId      String?
+  tournament        Tournament? @relation(fields: [tournamentId], references: [id], onDelete: SetNull)
+  amount            Int
+  currency          String    @default("XTR")
+  type              TransactionType
+  status            TransactionStatus
+  telegramPaymentId String?
+  description       String?
+  createdAt         DateTime  @default(now())
+  completedAt       DateTime?
+  metadata          Json?
+}
+
+model TelegramPayment {
+  id                String    @id @default(uuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tournamentId      String?
+  tournament        Tournament? @relation(fields: [tournamentId], references: [id], onDelete: SetNull)
+  amount            Int
+  currency          String    @default("XTR")
+  telegramPaymentRef String?  @unique
+  status            PaymentStatus
+  createdAt         DateTime  @default(now())
+  completedAt       DateTime?
+  metadata          Json?
+
+  refunds           Refund[]
+  paymentEvents     PaymentEvent[]
+}
+
+model PaymentEvent {
+  id                String    @id @default(uuid())
+  paymentId         String
+  payment           TelegramPayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  eventType         String
+  payload           Json
+  processedAt       DateTime  @default(now())
+  idempotencyKey    String?   @unique
+}
+
+model Refund {
+  id                String    @id @default(uuid())
+  paymentId         String
+  payment           TelegramPayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  amount            Int
+  status            RefundStatus
+  reason            String?
+  telegramRefundRef String?   @unique
+  createdAt         DateTime  @default(now())
+  completedAt       DateTime?
+}
+
+model Tournament {
+  id                String    @id @default(uuid())
+  title             String
+  slug              String    @unique
+  gameId            String
+  game              Game      @relation(fields: [gameId], references: [id])
+  bannerUrl         String?
+  organizerId       String?
+  prizePool         Int       @default(0)
+  entryFee          Int       @default(0)
+  isPaid            Boolean   @default(false)
+  maxParticipants   Int
+  currentParticipants Int     @default(0)
+  registrationDeadline DateTime
+  startDate         DateTime
+  format            TournamentFormat
+  region            String?
+  status            TournamentStatus @default(DRAFT)
+  gameMode          String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  rules             TournamentRule?
+  scoringRules      TournamentScoringRule?
+  prizes            TournamentPrize[]
+  registrations     TournamentRegistration[]
+  matches           Match[]
+  walletTransactions WalletTransaction[]
+  payments          TelegramPayment[]
+}
+
+model TournamentRule {
+  id                String    @id @default(uuid())
+  tournamentId      String    @unique
+  tournament        Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  content           String
+  checkInPeriodMins Int       @default(60)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model TournamentScoringRule {
+  id                String    @id @default(uuid())
+  tournamentId      String    @unique
+  tournament        Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  placementPoints   Json?
+  killPoints        Int?      @default(0)
+  bonusPoints       Json?
+  penalties         Json?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model TournamentPrize {
+  id                String    @id @default(uuid())
+  tournamentId      String
+  tournament        Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  placement         Int       // e.g., 1 for 1st place
+  amount            Int
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model TournamentRegistration {
+  id                String    @id @default(uuid())
+  tournamentId      String
+  tournament        Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teamId            String?
+  team              Team?     @relation(fields: [teamId], references: [id])
+  status            RegistrationStatus @default(PENDING)
+  paymentId         String?   @unique
+  checkedIn         Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([tournamentId, userId])
+}
+
+model Team {
+  id                String    @id @default(uuid())
+  name              String    @unique
+  logoUrl           String?
+  captainId         String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  members           TeamMember[]
+  registrations     TournamentRegistration[]
+}
+
+model TeamMember {
+  id                String    @id @default(uuid())
+  teamId            String
+  team              Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role              TeamRole  @default(MEMBER)
+  joinedAt          DateTime  @default(now())
+
+  @@unique([teamId, userId])
+}
+
+model Match {
+  id                String    @id @default(uuid())
+  tournamentId      String
+  tournament        Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  round             Int       // Bracket round (1, 2, 3...)
+  player1Id         String?
+  player2Id         String?
+  team1Id           String?
+  team2Id           String?
+  scheduledTime     DateTime?
+  status            MatchStatus @default(SCHEDULED)
+  score1            Int?
+  score2            Int?
+  winnerId          String?   // User or Team ID
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  results           MatchResult[]
+  evidence          MatchEvidence[]
+  disputes          Dispute[]
+}
+
+model MatchResult {
+  id                String    @id @default(uuid())
+  matchId           String
+  match             Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  submitterId       String    // User ID who submitted
+  score1            Int
+  score2            Int
+  winnerId          String
+  status            ResultStatus @default(PENDING_CONFIRMATION)
+  comment           String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model MatchEvidence {
+  id                String    @id @default(uuid())
+  matchId           String
+  match             Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  uploaderId        String
+  fileUrl           String
+  fileType          String
+  createdAt         DateTime  @default(now())
+}
+
+model Dispute {
+  id                String    @id @default(uuid())
+  matchId           String
+  match             Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  creatorId         String
+  resolverId        String?
+  reason            String
+  status            DisputeStatus @default(OPEN)
+  resolutionNotes   String?
+  createdAt         DateTime  @default(now())
+  resolvedAt        DateTime?
+}
+
+model Achievement {
+  id                String    @id @default(uuid())
+  name              String
+  description       String
+  iconUrl           String?
+  xpReward          Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  userAchievements  UserAchievement[]
+}
+
+model UserAchievement {
+  id                String    @id @default(uuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId     String
+  achievement       Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  earnedAt          DateTime  @default(now())
+
+  @@unique([userId, achievementId])
+}
+
+model Notification {
+  id                String    @id @default(uuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              NotificationType
+  title             String
+  message           String
+  isRead            Boolean   @default(false)
+  metadata          Json?
+  createdAt         DateTime  @default(now())
+}
+
+model Referral {
+  id                String    @id @default(uuid())
+  referrerId        String
+  referrer          User      @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredUserId    String?   @unique
+  referredUser      User?     @relation("ReferredUser", fields: [referredUserId], references: [id], onDelete: SetNull)
+  code              String    @unique
+  status            ReferralStatus @default(PENDING)
+  rewardAmount      Int       @default(0)
+  createdAt         DateTime  @default(now())
+  completedAt       DateTime?
+}
+
+model AdminUser {
+  id                String    @id @default(uuid())
+  userId            String    @unique
+  role              Role      @default(ADMIN)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model AuditLog {
+  id                String    @id @default(uuid())
+  adminId           String
+  admin             User      @relation(fields: [adminId], references: [id])
+  action            String
+  entity            String
+  entityId          String
+  oldValue          Json?
+  newValue          Json?
+  ipAddress         String?
+  createdAt         DateTime  @default(now())
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  TOURNAMENT_MANAGER
+  FINANCE_MANAGER
+  MODERATOR
+  SUPPORT
+  PLAYER
+}
+
+enum UserStatus {
+  ACTIVE
+  RESTRICTED
+  SUSPENDED
+  BANNED
+  UNDER_REVIEW
+}
+
+enum Rank {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+  DIAMOND
+  MASTER
+  GRANDMASTER
+  LEGEND
+}
+
+enum TransactionType {
+  STAR_PAYMENT
+  TOURNAMENT_ENTRY
+  PRIZE_REWARD
+  REFUND
+  BONUS
+  ADMIN_CREDIT
+  ADMIN_DEBIT
+  REVERSAL
+}
+
+enum TransactionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+  REVERSED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum RefundStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum TournamentFormat {
+  SINGLE_ELIMINATION
+  DOUBLE_ELIMINATION
+  ROUND_ROBIN
+  LEAGUE
+  SWISS
+  BATTLE_ROYALE
+  CUSTOM
+}
+
+enum TournamentStatus {
+  DRAFT
+  REGISTRATION_OPEN
+  REGISTRATION_CLOSED
+  UPCOMING
+  CHECK_IN
+  LIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum RegistrationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  REFUNDED
+}
+
+enum TeamRole {
+  CAPTAIN
+  MEMBER
+}
+
+enum MatchStatus {
+  SCHEDULED
+  READY
+  LIVE
+  AWAITING_RESULT
+  UNDER_REVIEW
+  COMPLETED
+  DISPUTED
+  CANCELLED
+}
+
+enum ResultStatus {
+  PENDING_CONFIRMATION
+  CONFIRMED
+  REJECTED
+  DISPUTED
+}
+
+enum DisputeStatus {
+  OPEN
+  RESOLVED
+  CLOSED
+}
+
+enum NotificationType {
+  SYSTEM
+  TOURNAMENT
+  PAYMENT
+  MATCH
+  TEAM
+  ACHIEVEMENT
+}
+
+enum ReferralStatus {
+  PENDING
+  COMPLETED
+  REJECTED
+}
