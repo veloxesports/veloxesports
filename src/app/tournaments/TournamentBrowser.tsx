@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
-import { Calendar, Search, Trophy, Users } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calendar, ChevronRight, Gamepad2, Search, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 
 type Game = { id: string; name: string };
@@ -64,25 +64,78 @@ export function TournamentBrowser({ tournaments, games }: { tournaments: Tournam
   }, [category, format, gameId, query, region, tournaments]);
 
   return (
-    <main className="min-h-screen bg-black p-4 pb-24 text-slate-100">
-      <header className="pt-2"><h1 className="text-3xl font-black tracking-tight text-white">Tournaments</h1><p className="mt-1 text-sm text-slate-400">Discover your next competition.</p></header>
-      <div className="relative mt-5"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden /><input aria-label="Search tournaments" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tournaments or games" className="w-full rounded-xl border border-white/10 bg-slate-900 py-3 pl-10 pr-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-violet-400" /></div>
-      <div className="mt-4 flex gap-2 overflow-x-auto pb-2" aria-label="Tournament categories">{categories.map((item) => <button key={item.id} onClick={() => setCategory(item.id)} className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition ${category === item.id ? "bg-violet-600 text-white" : "border border-white/10 bg-slate-900 text-slate-300 hover:bg-slate-800"}`}>{item.label}</button>)}</div>
-      <div className="mt-2 grid grid-cols-3 gap-2"><FilterSelect ariaLabel="Game" value={gameId} onChange={setGameId} options={[{ value: "all", label: "All games" }, ...games.map((game) => ({ value: game.id, label: game.name }))]} /><FilterSelect ariaLabel="Format" value={format} onChange={setFormat} options={[{ value: "all", label: "All formats" }, ...formats.map((value) => ({ value, label: formatLabel(value) }))]} /><FilterSelect ariaLabel="Region" value={region} onChange={setRegion} options={[{ value: "all", label: "All regions" }, ...regions.map((value) => ({ value, label: value }))]} /></div>
-      <p className="mt-5 text-xs font-medium text-slate-500">{filtered.length} {filtered.length === 1 ? "tournament" : "tournaments"} found</p>
-      <section className="mt-3 flex flex-col gap-4">{filtered.length === 0 ? <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-8 text-center"><Trophy className="mx-auto h-12 w-12 text-slate-700" aria-hidden /><h2 className="mt-3 text-lg font-bold text-slate-200">No tournaments found</h2><p className="mt-1 text-sm text-slate-500">Try a different search or filter. New competitions are added regularly.</p></div> : filtered.map((tournament) => <TournamentCard key={tournament.id} tournament={tournament} />)}</section>
+    <main className="velox-page">
+      <header>
+        <p className="velox-eyebrow">Compete</p>
+        <h1 className="mt-2 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">Tournaments</h1>
+        <p className="mt-2 text-sm text-[#8e998f]">Find the next lobby, build your run.</p>
+      </header>
+
+      <label className="relative mt-7 block">
+        <span className="sr-only">Search tournaments</span>
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#8e998f]" aria-hidden />
+        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tournaments" className="h-16 w-full rounded-[22px] border border-[#2a352b] bg-[#111811] py-3 pl-12 pr-4 text-base text-white outline-none placeholder:text-[#7f897f] focus:border-[#c5f94d]" />
+      </label>
+
+      <div className="mt-5 flex w-full gap-2 overflow-x-auto pb-2" aria-label="Tournament categories">
+        {categories.map((item) => <button key={item.id} onClick={() => setCategory(item.id)} className={`h-12 shrink-0 rounded-xl px-5 text-sm font-black transition ${category === item.id ? "bg-[#c5f94d] text-[#090d09]" : "border border-[#2a352b] bg-[#111811] text-[#aeb8ad] hover:border-[#51644c] hover:text-white"}`}>{item.label}</button>)}
+      </div>
+
+      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <FilterSelect ariaLabel="Game" value={gameId} onChange={setGameId} options={[{ value: "all", label: "All games" }, ...games.map((game) => ({ value: game.id, label: game.name }))]} />
+        <FilterSelect ariaLabel="Format" value={format} onChange={setFormat} options={[{ value: "all", label: "All formats" }, ...formats.map((value) => ({ value, label: formatLabel(value) }))]} />
+        <FilterSelect ariaLabel="Region" value={region} onChange={setRegion} options={[{ value: "all", label: "All regions" }, ...regions.map((value) => ({ value, label: value }))]} />
+      </div>
+
+      <div className="mt-8 flex items-baseline justify-between gap-3">
+        <h2 className="text-lg font-black uppercase tracking-[0.07em] text-white">Open for registration</h2>
+        <p className="text-xs font-black uppercase tracking-[0.1em] text-[#8e998f]">{filtered.length} {filtered.length === 1 ? "event" : "events"}</p>
+      </div>
+      <section className="mt-4 grid gap-4 sm:grid-cols-2">
+        {filtered.length === 0 ? <EmptyState /> : filtered.map((tournament) => <TournamentCard key={tournament.id} tournament={tournament} />)}
+      </section>
     </main>
   );
 }
 
 function TournamentCard({ tournament }: { tournament: Tournament }) {
-  return <Link href={`/tournaments/${tournament.slug}`} className="block rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 to-black shadow-xl transition hover:border-violet-400/40"><article><div className="relative flex h-28 items-center justify-center overflow-hidden bg-indigo-950"><div className="absolute inset-0 bg-gradient-to-r from-violet-900/50 to-indigo-900/50" /><Trophy className="absolute -bottom-5 -right-3 h-20 w-20 rotate-12 text-white/10" aria-hidden /><span className="relative text-2xl font-black italic tracking-widest text-white/60">{tournament.game.name.toUpperCase()}</span></div><div className="relative p-4"><span className={`absolute -top-5 right-4 rounded-xl border border-white/10 bg-black px-3 py-1.5 text-xs font-bold text-white shadow-lg`}>{tournament.status === "REGISTRATION_OPEN" ? "OPEN" : formatLabel(tournament.status)}</span><h2 className="pr-12 text-lg font-bold text-white">{tournament.title}</h2><p className="mt-1 text-xs text-slate-500">{formatLabel(tournament.format)} · {tournament.region ?? "Global"}</p><div className="mt-4 grid grid-cols-2 gap-y-3"><Metric icon={<Trophy className="h-4 w-4 text-amber-400" />} label="Prize pool" value={`⭐ ${tournament.prizePool}`} /><Metric icon={<span className="text-[10px] font-black text-slate-200">FEE</span>} label="Entry" value={tournament.isPaid ? `⭐ ${tournament.entryFee}` : "FREE"} /><Metric icon={<Users className="h-4 w-4 text-blue-300" />} label="Players" value={`${tournament.currentParticipants} / ${tournament.maxParticipants}`} /><Metric icon={<Calendar className="h-4 w-4 text-violet-300" />} label="Starts" value={new Date(tournament.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })} /></div></div></article></Link>;
+  const date = new Date(tournament.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const isOpen = tournament.status === "REGISTRATION_OPEN";
+
+  return (
+    <Link href={`/tournaments/${tournament.slug}`} className="group block min-w-0 rounded-[24px] border border-[#2a352b] bg-[#111811] p-4 transition hover:-translate-y-0.5 hover:border-[#577246] hover:bg-[#151e15] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c5f94d]">
+      <article className="flex h-full min-w-0 gap-4">
+        <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl border border-[#3b5035] bg-[#1c3216] text-[#c5f94d]">
+          <Gamepad2 className="h-7 w-7" aria-hidden />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.13em] text-[#aeb8ad]">{tournament.game.name}</span>
+              <span className={`rounded-md px-2 py-1 text-[9px] font-black uppercase tracking-wide ${isOpen ? "bg-[#263c1c] text-[#d4ff76]" : "bg-[#202820] text-[#b7c0b5]"}`}>{isOpen ? "Registration open" : formatLabel(tournament.status)}</span>
+            </div>
+            <ChevronRight className="h-5 w-5 shrink-0 text-[#8e998f] transition group-hover:text-[#c5f94d]" aria-hidden />
+          </div>
+          <h3 className="mt-2 truncate text-xl font-black tracking-[-0.03em] text-white">{tournament.title}</h3>
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-bold text-[#aeb8ad]">
+            <span className="text-[#c5f94d]">⭐ {tournament.prizePool} pool</span>
+            <span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" aria-hidden /> {tournament.currentParticipants} / {tournament.maxParticipants}</span>
+            <span className="inline-flex items-center gap-1"><Calendar className="h-3.5 w-3.5" aria-hidden /> {date}</span>
+          </div>
+          <div className="mt-4 flex min-w-0 items-center justify-between gap-3 border-t border-[#29342a] pt-3 text-[10px] font-black uppercase tracking-[0.1em] text-[#7f897f]">
+            <span className="min-w-0 truncate">{formatLabel(tournament.format)} · {tournament.region ?? "Global"}</span>
+            <span className="text-[#dce3d6]">{tournament.isPaid ? `⭐ ${tournament.entryFee}` : "Free"}</span>
+          </div>
+        </div>
+      </article>
+    </Link>
+  );
 }
 
-function Metric({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
-  return <div className="flex items-center gap-2"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800">{icon}</span><span><span className="block text-[10px] font-bold uppercase text-slate-500">{label}</span><span className="text-sm font-bold text-white">{value}</span></span></div>;
+function EmptyState() {
+  return <div className="velox-card col-span-full p-9 text-center"><Trophy className="mx-auto h-11 w-11 text-[#536053]" aria-hidden /><h2 className="mt-3 text-lg font-black text-white">No tournaments found</h2><p className="mx-auto mt-1 max-w-sm text-sm leading-relaxed text-[#8e998f]">Try a different search or filter. New competitions are added regularly.</p></div>;
 }
 
 function FilterSelect({ ariaLabel, value, onChange, options }: { ariaLabel: string; value: string; onChange: (value: string) => void; options: Array<{ value: string; label: string }> }) {
-  return <select aria-label={ariaLabel} value={value} onChange={(event) => onChange(event.target.value)} className="min-w-0 rounded-lg border border-white/10 bg-slate-900 px-2 py-2 text-xs text-slate-200 outline-none focus:border-violet-400">{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>;
+  return <select aria-label={ariaLabel} value={value} onChange={(event) => onChange(event.target.value)} className="h-11 min-w-0 rounded-xl border border-[#2a352b] bg-[#111811] px-3 text-sm font-semibold text-[#c8d0c5] outline-none focus:border-[#c5f94d]">{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>;
 }

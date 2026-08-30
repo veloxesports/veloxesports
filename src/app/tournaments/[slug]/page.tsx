@@ -17,7 +17,7 @@ export default async function TournamentDetailsPage({ params }: { params: Promis
   return (
     <div className="flex flex-col pb-24 min-h-screen bg-black">
       {/* Hero Banner */}
-      <div className="h-48 bg-gradient-to-br from-purple-900 to-black relative">
+      <div className="h-48 bg-gradient-to-br from-[#284d1c] to-[#090d09] relative">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
         
         <div className="absolute top-4 left-4 z-10">
@@ -30,7 +30,7 @@ export default async function TournamentDetailsPage({ params }: { params: Promis
         
         <div className="absolute bottom-4 left-4 z-10">
           <div className="flex items-center gap-2 mb-2">
-            <span className="bg-purple-600 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded">
+            <span className="bg-[#c5f94d] text-[#090d09] text-[10px] uppercase font-bold px-2 py-0.5 rounded">
               {tournament.game.name}
             </span>
             <span className="bg-black/50 backdrop-blur border border-white/10 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded">
@@ -75,7 +75,7 @@ export default async function TournamentDetailsPage({ params }: { params: Promis
           <div className="bg-gray-900 border border-white/5 rounded-xl p-3 flex flex-col">
             <span className="text-[10px] text-gray-500 font-bold uppercase mb-1">Start Date</span>
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-purple-400" />
+              <Calendar className="w-4 h-4 text-[#c5f94d]" />
               <span className="font-bold text-white text-sm">
                 {new Date(tournament.startDate).toLocaleDateString()}
               </span>
@@ -117,7 +117,7 @@ export default async function TournamentDetailsPage({ params }: { params: Promis
       <div className="fixed bottom-16 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent pb-6 z-40">
         {tournament.status === 'REGISTRATION_OPEN' ? (
           <Link href={`/tournaments/${tournament.slug}/register`}>
-            <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-6 text-lg shadow-[0_0_30px_rgba(147,51,234,0.4)]">
+            <Button className="w-full bg-[#c5f94d] hover:bg-[#d5ff70] text-[#090d09] font-bold py-6 text-lg shadow-[0_0_30px_rgba(197,249,77,0.2)]">
               {tournament.isPaid ? `Join with ⭐ ${tournament.entryFee}` : 'Join Tournament (Free)'}
             </Button>
           </Link>

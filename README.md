@@ -81,7 +81,11 @@ To test the Telegram Webhook logic locally, you must expose your local server to
 - Vercel will automatically run `npm run build` which triggers `prisma generate`.
 
 ### 3. Telegram Webhook Configuration
-- Once deployed, register the production Vercel URL with your Telegram Bot via the `setWebhook` API.
+- Set `NEXT_PUBLIC_APP_URL` to the production HTTPS URL, then run the following from a machine that can reach `api.telegram.org`:
+  ```bash
+  npm run telegram:configure
+  ```
+  The script registers the protected `/api/telegram/webhook` endpoint and the bot's **Open VELOX** menu button without printing any credentials.
 
 ### 4. Optional Discord connection
 - Create a Discord OAuth2 application with the `identify` scope.

@@ -18,7 +18,7 @@ const notificationVisuals = {
   SYSTEM: { icon: Bell, color: "text-blue-400" },
   TOURNAMENT: { icon: Trophy, color: "text-yellow-500" },
   PAYMENT: { icon: Wallet, color: "text-green-400" },
-  MATCH: { icon: Swords, color: "text-purple-400" },
+  MATCH: { icon: Swords, color: "text-[#c5f94d]" },
   TEAM: { icon: Swords, color: "text-cyan-400" },
   ACHIEVEMENT: { icon: CheckCircle2, color: "text-yellow-500" },
 };
@@ -47,7 +47,7 @@ export function NotificationsList({ initialNotifications }: { initialNotificatio
   return (
     <div className="flex flex-col gap-3">
       <div className="flex justify-end">
-        <Button onClick={markAllRead} disabled={markingRead || notifications.every((item) => item.isRead)} variant="ghost" className="h-auto p-0 text-xs text-purple-400 hover:bg-transparent hover:text-purple-300">
+        <Button onClick={markAllRead} disabled={markingRead || notifications.every((item) => item.isRead)} variant="ghost" className="h-auto p-0 text-xs text-[#c5f94d] hover:bg-transparent hover:text-[#d5ff70]">
           {markingRead ? "Updating…" : "Mark all read"}
         </Button>
       </div>
@@ -55,7 +55,7 @@ export function NotificationsList({ initialNotifications }: { initialNotificatio
         const visual = notificationVisuals[notification.type];
         const Icon = visual.icon;
         return (
-          <article key={notification.id} className={`flex gap-4 rounded-2xl border p-4 ${notification.isRead ? "border-white/5 bg-gray-900/70 opacity-70" : "border-purple-500/20 bg-gray-900"}`}>
+          <article key={notification.id} className={`flex gap-4 rounded-2xl border p-4 ${notification.isRead ? "border-[#2a352b] bg-[#111811]/70 opacity-70" : "border-[#4b663e] bg-[#111811]"}`}>
             <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-black ${visual.color}`}>
               <Icon className="h-5 w-5" />
             </div>

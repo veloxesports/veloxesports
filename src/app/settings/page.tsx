@@ -72,9 +72,9 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-black">
-      <header className="p-4 flex items-center gap-4 bg-gray-900 border-b border-white/10 sticky top-0 z-10">
-        <button onClick={() => router.back()} className="w-10 h-10 rounded-full bg-black flex items-center justify-center text-white border border-white/10 hover:bg-gray-800">
+    <div className="min-h-screen bg-[#080d09]">
+      <header className="sticky top-0 z-10 flex items-center gap-4 border-b border-[#2a352b] bg-[#080d09]/95 p-4 backdrop-blur">
+        <button onClick={() => router.back()} className="w-10 h-10 rounded-full bg-[#111811] flex items-center justify-center text-white border border-[#2a352b] hover:border-[#c5f94d]">
           <ChevronLeft className="w-6 h-6" />
         </button>
         <h1 className="font-bold text-white text-lg">Settings</h1>
@@ -87,7 +87,7 @@ export default function SettingsPage() {
             <User className="w-4 h-4" /> Profile
           </h2>
           
-          <form onSubmit={handleSave} className="bg-gray-900 border border-white/5 rounded-2xl p-4 flex flex-col gap-4 shadow-lg">
+          <form onSubmit={handleSave} className="velox-card p-4 flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <label className="text-xs font-bold text-gray-400">VELOX Username</label>
               <input
@@ -96,7 +96,7 @@ export default function SettingsPage() {
                 onChange={(e) => setUsername(e.target.value)}
                 disabled={loading}
                 placeholder="Your VELOX username"
-                className="bg-black border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-medium focus:outline-none focus:border-purple-500 transition-colors"
+                className="bg-[#090d09] border border-[#2a352b] rounded-xl px-4 py-3 text-white text-sm font-medium focus:outline-none focus:border-[#c5f94d] transition-colors"
               />
             </div>
             
@@ -108,11 +108,11 @@ export default function SettingsPage() {
                 onChange={(e) => setCountry(e.target.value)}
                 disabled={loading}
                 placeholder="Country or region"
-                className="bg-black border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-medium focus:outline-none focus:border-purple-500 transition-colors"
+                className="bg-[#090d09] border border-[#2a352b] rounded-xl px-4 py-3 text-white text-sm font-medium focus:outline-none focus:border-[#c5f94d] transition-colors"
               />
             </div>
 
-            <Button type="submit" disabled={saving || loading} className="bg-purple-600 hover:bg-purple-700 text-white font-bold w-full mt-2">
+            <Button type="submit" disabled={saving || loading} className="bg-[#c5f94d] hover:bg-[#d5ff70] text-[#090d09] font-bold w-full mt-2">
               {saving ? "Saving..." : loading ? "Loading..." : "Save Changes"}
             </Button>
             {message && <p className="text-sm text-gray-400 text-center" role="status">{message}</p>}
@@ -125,7 +125,7 @@ export default function SettingsPage() {
             <Globe className="w-4 h-4" /> Connections
           </h2>
           
-          <div className="bg-gray-900 border border-white/5 rounded-2xl p-4 flex flex-col gap-4 shadow-lg">
+          <div className="velox-card p-4 flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[#5865F2]/20 flex items-center justify-center text-[#5865F2]">

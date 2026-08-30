@@ -13,8 +13,8 @@ export default async function MatchDetailsPage({ params }: PageProps<"/matches/[
         <Swords className="mb-4 h-14 w-14 text-slate-700" aria-hidden />
         <h1 className="text-xl font-bold text-white">Match unavailable</h1>
         <p className="mt-2 max-w-sm text-sm text-slate-400">{result.error ?? "We couldn't load this match."}</p>
-        <Link href="/tournaments" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-violet-300">
-          <ChevronLeft className="h-4 w-4" aria-hidden /> Back to tournaments
+        <Link href="/matches" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#c5f94d]">
+          <ChevronLeft className="h-4 w-4" aria-hidden /> Back to Match Center
         </Link>
       </main>
     );

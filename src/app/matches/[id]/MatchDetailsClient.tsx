@@ -111,9 +111,9 @@ export function MatchDetailsClient({ match }: { match: MatchDetails }) {
   const displayScore2 = match.pendingResult?.score2 ?? match.score2;
 
   return (
-    <main className="flex min-h-screen flex-col bg-black pb-24 text-slate-100">
-      <header className="sticky top-0 z-10 flex items-center gap-4 border-b border-white/10 bg-slate-950/95 p-4 backdrop-blur">
-        <button onClick={() => router.back()} aria-label="Go back" className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black text-white">
+    <main className="min-h-screen bg-[#080d09] pb-24 text-slate-100">
+      <header className="sticky top-0 z-10 flex items-center gap-4 border-b border-[#2a352b] bg-[#080d09]/95 p-4 backdrop-blur">
+        <button onClick={() => router.back()} aria-label="Go back" className="flex h-10 w-10 items-center justify-center rounded-full border border-[#2a352b] bg-[#111811] text-white hover:border-[#c5f94d]">
           <ChevronLeft className="h-6 w-6" aria-hidden />
         </button>
         <div>
@@ -122,15 +122,15 @@ export function MatchDetailsClient({ match }: { match: MatchDetails }) {
         </div>
       </header>
 
-      <div className="flex flex-col gap-5 p-4">
-        <section className="relative overflow-hidden rounded-2xl border border-white/5 bg-slate-900 p-6 text-center shadow-xl">
-          <span className="text-xs font-bold uppercase tracking-widest text-violet-300">Round {match.round}</span>
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 p-5 sm:p-8">
+        <section className="relative overflow-hidden rounded-[26px] border border-[#2a352b] bg-[#111811] p-6 text-center shadow-xl">
+          <span className="text-xs font-bold uppercase tracking-widest text-[#c5f94d]">Round {match.round}</span>
           <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
             <Participant name={match.player1.name} tone="blue" score={displayScore1} />
             <span className="text-2xl font-black italic text-slate-600">VS</span>
             <Participant name={match.player2.name} tone="red" score={displayScore2} />
           </div>
-          <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-black px-4 py-1.5 text-xs font-bold tracking-wide text-white">
+          <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-[#2a352b] bg-[#090d09] px-4 py-1.5 text-xs font-bold tracking-wide text-white">
             <span className={`h-2 w-2 rounded-full ${match.status === "LIVE" ? "animate-pulse bg-red-500" : "bg-amber-400"}`} />
             {match.status.replaceAll("_", " ")}
           </div>
@@ -155,7 +155,7 @@ export function MatchDetailsClient({ match }: { match: MatchDetails }) {
         )}
 
         {match.canSubmit && (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4 rounded-2xl border border-white/5 bg-slate-900 p-5">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 rounded-[24px] border border-[#2a352b] bg-[#111811] p-5">
             <div>
               <h2 className="text-lg font-bold text-white">Submit result</h2>
               <p className="mt-1 text-sm text-slate-400">Scores are verified by your opponent before the bracket changes.</p>
@@ -165,19 +165,19 @@ export function MatchDetailsClient({ match }: { match: MatchDetails }) {
               <span className="pb-3 text-slate-500">–</span>
               <ScoreInput label={`${match.player2.name} score`} value={score2} onChange={setScore2} />
             </div>
-            <label className="text-sm font-medium text-slate-300">Comment <span className="text-slate-500">(optional)</span><textarea value={comment} onChange={(event) => setComment(event.target.value)} maxLength={1000} rows={3} className="mt-2 w-full resize-none rounded-xl border border-white/10 bg-black px-3 py-2 text-white outline-none focus:border-violet-400" /></label>
-            <label className="cursor-pointer rounded-xl border-2 border-dashed border-white/10 bg-black/40 p-4 text-center transition hover:border-violet-400/70">
-              <Upload className="mx-auto h-6 w-6 text-violet-300" aria-hidden />
+            <label className="text-sm font-medium text-slate-300">Comment <span className="text-slate-500">(optional)</span><textarea value={comment} onChange={(event) => setComment(event.target.value)} maxLength={1000} rows={3} className="mt-2 w-full resize-none rounded-xl border border-[#2a352b] bg-[#090d09] px-3 py-2 text-white outline-none focus:border-[#c5f94d]" /></label>
+            <label className="cursor-pointer rounded-xl border-2 border-dashed border-[#354235] bg-black/40 p-4 text-center transition hover:border-[#c5f94d]/70">
+              <Upload className="mx-auto h-6 w-6 text-[#c5f94d]" aria-hidden />
               <span className="mt-2 block text-sm font-semibold text-slate-200">{evidence ? evidence.name : "Add optional screenshot evidence"}</span>
               <span className="mt-1 block text-xs text-slate-500">JPG, PNG, or WebP · up to 5 MB</span>
               <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => setEvidence(event.target.files?.[0] ?? null)} />
             </label>
-            <Button type="submit" disabled={isSubmitting} className="min-h-12 bg-violet-600 font-bold hover:bg-violet-500">{isSubmitting ? "Submitting…" : "Submit match result"}</Button>
+            <Button type="submit" disabled={isSubmitting} className="min-h-12 bg-[#c5f94d] font-bold text-[#090d09] hover:bg-[#d5ff70]">{isSubmitting ? "Submitting…" : "Submit match result"}</Button>
           </form>
         )}
 
         {match.evidence.length > 0 && (
-          <section className="rounded-2xl border border-white/5 bg-slate-900 p-4">
+          <section className="rounded-[24px] border border-[#2a352b] bg-[#111811] p-4">
             <h2 className="font-bold text-white">Match evidence</h2>
             <div className="mt-3 grid grid-cols-2 gap-3">
               {match.evidence.map((item) => item.signedUrl ? (
@@ -205,12 +205,12 @@ export function MatchDetailsClient({ match }: { match: MatchDetails }) {
 }
 
 function Participant({ name, tone, score }: { name: string; tone: "blue" | "red"; score: number | null }) {
-  const colors = tone === "blue" ? "border-blue-500 bg-blue-950" : "border-red-500 bg-red-950";
+  const colors = tone === "blue" ? "border-[#c5f94d] bg-[#1f3619]" : "border-red-500 bg-red-950";
   return <div className="min-w-0"><div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full border-2 ${colors} text-xl font-black text-white`}>{name[0]?.toUpperCase() ?? "?"}</div><p className="mt-2 truncate text-sm font-bold text-white">{name}</p>{score !== null && <p className="mt-1 text-2xl font-black text-white">{score}</p>}</div>;
 }
 
 function ScoreInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return <label className="text-xs font-bold uppercase text-slate-400">{label}<input type="number" min="0" max="999" inputMode="numeric" value={value} onChange={(event) => onChange(event.target.value)} required className="mt-2 w-full rounded-xl border border-white/10 bg-black px-3 py-3 text-center text-xl font-bold text-white outline-none focus:border-violet-400" /></label>;
+  return <label className="text-xs font-bold uppercase text-slate-400">{label}<input type="number" min="0" max="999" inputMode="numeric" value={value} onChange={(event) => onChange(event.target.value)} required className="mt-2 w-full rounded-xl border border-[#2a352b] bg-[#090d09] px-3 py-3 text-center text-xl font-bold text-white outline-none focus:border-[#c5f94d]" /></label>;
 }
 
 function StatusNotice({ tone, message }: { tone: "error" | "success" | "warning"; message: string }) {

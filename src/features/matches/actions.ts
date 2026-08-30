@@ -315,6 +315,7 @@ export async function submitMatchResult(input: unknown) {
     const user = await requireCurrentUser();
     await createPendingResult(user.id, parsed.data);
     revalidatePath(`/matches/${parsed.data.matchId}`);
+    revalidatePath("/matches");
     return { success: true };
   } catch (error) {
     const knownError = knownMatchError(error);
@@ -344,6 +345,7 @@ export async function submitMatchResultWithEvidence(formData: FormData) {
 
     await createPendingResult(user.id, parsed.data, evidence);
     revalidatePath(`/matches/${parsed.data.matchId}`);
+    revalidatePath("/matches");
     return { success: true };
   } catch (error) {
     const knownError = knownMatchError(error);
@@ -407,6 +409,7 @@ export async function confirmMatchResult(matchId: unknown) {
     ]);
     await Promise.all([...outcome.winnerIds, ...outcome.loserIds].map((userId) => checkAndAwardAchievements(userId)));
     revalidatePath(`/matches/${parsedMatchId.data}`);
+    revalidatePath("/matches");
     return { success: true };
   } catch (error) {
     const knownError = knownMatchError(error);
@@ -443,6 +446,7 @@ export async function rejectMatchResult(matchId: unknown) {
       });
     }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
     revalidatePath(`/matches/${parsedMatchId.data}`);
+    revalidatePath("/matches");
     return { success: true };
   } catch (error) {
     const knownError = knownMatchError(error);
@@ -470,6 +474,7 @@ export async function createDispute(input: unknown) {
       await tx.match.update({ where: { id: match.id }, data: { status: "DISPUTED" } });
     }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
     revalidatePath(`/matches/${parsed.data.matchId}`);
+    revalidatePath("/matches");
     return { success: true };
   } catch (error) {
     const knownError = knownMatchError(error);

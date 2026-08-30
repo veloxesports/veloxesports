@@ -118,7 +118,7 @@ export default function RegisterPage({ params }: { params: Promise<{ slug: strin
 
       <div className="bg-gray-900 border border-white/10 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
         <div>
-          <span className="text-purple-400 font-bold text-xs uppercase mb-1 block">Selected Tournament</span>
+          <span className="text-[#c5f94d] font-bold text-xs uppercase mb-1 block">Selected Tournament</span>
           <h2 className="text-2xl font-black text-white">{tournament.title}</h2>
         </div>
 
@@ -140,7 +140,7 @@ export default function RegisterPage({ params }: { params: Promise<{ slug: strin
             type="checkbox"
             checked={acceptedRules}
             onChange={(event) => setAcceptedRules(event.target.checked)}
-            className="mt-0.5 h-4 w-4 accent-purple-500"
+            className="mt-0.5 h-4 w-4 accent-[#c5f94d]"
           />
           <span>I have read and accept the VELOX tournament rules and terms of service.</span>
         </label>
@@ -148,7 +148,7 @@ export default function RegisterPage({ params }: { params: Promise<{ slug: strin
         <Button 
           onClick={handleRegister} 
           disabled={registering || !acceptedRules}
-          className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-6 text-lg shadow-[0_0_20px_rgba(147,51,234,0.3)] mt-2"
+          className="w-full bg-[#c5f94d] hover:bg-[#d5ff70] text-[#090d09] font-bold py-6 text-lg shadow-[0_0_20px_rgba(197,249,77,0.22)] mt-2"
         >
           {registering ? "Preparing..." : tournament.isPaid ? `Pay ⭐ ${tournament.entryFee} with Telegram Stars` : "Confirm Free Registration"}
         </Button>

@@ -1,6 +1,6 @@
-import { Trophy, ArrowRight, Gamepad2 } from "lucide-react";
+import { ArrowUpRight, Bell, ChevronRight, Gamepad2, Trophy, Zap } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import type { ReactNode } from "react";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { getTournaments } from "@/features/tournaments/actions";
 import { getWalletSummary } from "@/features/wallet/services";
@@ -15,113 +15,95 @@ export default async function Home() {
   const wallet = walletResult.success && walletResult.data ? walletResult.data.wallet : null;
   const displayName = user?.firstName || "Player";
   const profile = user?.profile;
+  const winRate = "—";
 
   return (
-    <div className="flex flex-col gap-6 p-4">
-      <header className="flex items-center justify-between">
+    <main className="velox-page">
+      <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
-            Welcome back, <span className="text-purple-400">{displayName}</span> 👋
+          <div className="flex items-center gap-2 text-white">
+            <span className="grid h-9 w-9 place-items-center rounded-sm bg-[#c5f94d] text-lg font-black tracking-tighter text-[#090d09]">{"//"}</span>
+            <span className="text-xl font-black tracking-[0.24em]">VELOX</span>
+          </div>
+          <p className="mt-7 velox-eyebrow">Ready to compete</p>
+          <h1 className="mt-2 text-3xl font-black tracking-[-0.045em] text-white sm:text-4xl">
+            Welcome back, <span className="text-[#c5f94d]">{displayName}</span>
           </h1>
-          <p className="text-sm text-gray-400">Ready to dominate today?</p>
         </div>
-        <div className="w-10 h-10 rounded-full bg-purple-900 flex items-center justify-center text-purple-200 border border-purple-500/30 font-bold">
-          {displayName.slice(0, 1).toUpperCase()}
-        </div>
+        <Link href="/notifications" aria-label="Open notifications" className="mt-1 grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-[#2a352b] bg-[#111811] text-[#dce3d6] transition hover:border-[#c5f94d]/50 hover:text-[#c5f94d]">
+          <Bell className="h-5 w-5" aria-hidden />
+        </Link>
       </header>
 
-      {/* User Stats Card */}
-      <section className="bg-gradient-to-br from-gray-900 to-black border border-white/5 rounded-2xl p-4 shadow-lg flex justify-between items-center relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl -mr-10 -mt-10" />
-        
-        <div className="flex flex-col gap-1 z-10">
-          <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Rank</span>
-          <div className="flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-yellow-500" />
-            <span className="text-xl font-bold text-white">{profile?.rank || "Unranked"}</span>
-          </div>
-        </div>
-        
-        <div className="flex flex-col gap-1 z-10 text-right">
-          <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Level {profile?.level || 1}</span>
-          <span className="text-xl font-bold text-purple-400">{profile?.xp || 0} XP</span>
-        </div>
+      <section className="velox-card mt-7 grid grid-cols-3 divide-x divide-[#2a352b] px-1 py-4">
+        <Stat label="Current rank" value={profile?.rank ?? "Unranked"} icon={<Trophy className="h-4 w-4" />} />
+        <Stat label="Win rate" value={winRate} icon={<ArrowUpRight className="h-4 w-4" />} />
+        <Stat label="XP level" value={String(profile?.level ?? 1)} icon={<Zap className="h-4 w-4" />} />
       </section>
 
-      {/* Featured Tournament */}
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-white">Featured Tournament</h2>
-          <Link href="/tournaments" className="text-sm text-purple-400 font-medium flex items-center gap-1 hover:text-purple-300">
-            View All <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-        
-        <div className="bg-gray-900 border border-purple-500/20 rounded-2xl overflow-hidden relative shadow-lg shadow-purple-900/10">
-          {/* Banner Placeholder */}
-          <div className="h-32 bg-gradient-to-r from-indigo-900 to-purple-900 flex items-center justify-center">
-            <Gamepad2 className="w-16 h-16 text-white/20" />
-          </div>
-          
-          <div className="p-4 flex flex-col gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="bg-blue-500/20 text-blue-400 text-xs px-2 py-0.5 rounded-full font-medium">{featuredTournament?.game.name || "Coming Soon"}</span>
-                <span className="bg-red-500/20 text-red-400 text-xs px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
-                  Open
-                </span>
-              </div>
-              <h3 className="text-xl font-bold text-white">{featuredTournament?.title || "New tournaments are on the way"}</h3>
+      <section className="mt-9">
+        <SectionHeader title="Featured tournament" href="/tournaments" label="Explore" />
+        {featuredTournament ? (
+          <article className="relative mt-4 overflow-hidden rounded-[28px] border border-[#38512e] bg-[#1d3518] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.28)] sm:p-7">
+            <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full border border-[#5f8947]/35 bg-[#2d5321]" />
+            <div className="absolute -right-10 top-28 h-36 w-36 rounded-full border border-[#5f8947]/25" />
+            <div className="relative flex items-center justify-between gap-4">
+              <span className="inline-flex items-center gap-2 rounded-lg bg-[#2a4a1f] px-3 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-[#d4ff76]">
+                <Gamepad2 className="h-4 w-4" aria-hidden /> {featuredTournament.game.name}
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-lg bg-[#101b0d]/70 px-3 py-2 text-[11px] font-black uppercase tracking-[0.13em] text-[#d4ff76]">
+                <span className="h-2 w-2 rounded-full bg-[#c5f94d]" /> Open
+              </span>
             </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1">
-                <span className="text-xs text-gray-400">Prize Pool</span>
-                <span className="text-sm font-bold text-yellow-500">⭐ {featuredTournament?.prizePool || 0}</span>
+            <h2 className="relative mt-8 max-w-[15ch] text-3xl font-black uppercase leading-[0.93] tracking-[-0.05em] text-white sm:text-4xl">
+              {featuredTournament.title}
+            </h2>
+            <p className="relative mt-4 text-[11px] font-bold uppercase tracking-[0.16em] text-[#bdc8b6]">Your next battle starts here</p>
+            <div className="relative mt-8 flex flex-wrap items-end justify-between gap-5">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#bdc8b6]">Prize pool</p>
+                <p className="mt-1 text-4xl font-black tracking-[-0.06em] text-[#c5f94d]">⭐ {featuredTournament.prizePool}</p>
               </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-xs text-gray-400">Entry Fee</span>
-                <span className="text-sm font-bold text-white">{featuredTournament ? featuredTournament.isPaid ? `⭐ ${featuredTournament.entryFee}` : "Free" : "—"}</span>
-              </div>
-            </div>
-
-            {featuredTournament ? (
-              <Link href={`/tournaments/${featuredTournament.slug}/register`} className="w-full">
-                <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-6 shadow-[0_0_20px_rgba(147,51,234,0.3)]">
-                  {featuredTournament.isPaid ? `Join with ⭐ ${featuredTournament.entryFee}` : "Join Free Tournament"}
-                </Button>
+              <Link href={`/tournaments/${featuredTournament.slug}/register`} className="velox-action min-w-[142px] gap-2">
+                {featuredTournament.isPaid ? `Join · ⭐ ${featuredTournament.entryFee}` : "Join now"} <ArrowUpRight className="h-4 w-4" aria-hidden />
               </Link>
-            ) : (
-              <Button disabled className="w-full bg-gray-800 text-gray-500 font-bold py-6">No open tournaments</Button>
-            )}
+            </div>
+          </article>
+        ) : (
+          <div className="velox-card mt-4 p-6 text-center">
+            <Gamepad2 className="mx-auto h-9 w-9 text-[#5a675b]" aria-hidden />
+            <h2 className="mt-3 font-black text-white">New competition is on the way</h2>
+            <p className="mt-1 text-sm text-[#8e998f]">Check back soon for the next open bracket.</p>
           </div>
-        </div>
+        )}
       </section>
 
-      {/* Wallet Summary */}
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-bold text-white">VELOX Wallet</h2>
-        <div className="bg-gray-900 border border-white/5 rounded-2xl p-4 flex flex-col gap-4">
+      <section className="mt-9">
+        <SectionHeader title="Your VELOX activity" href="/wallet" label="Wallet" />
+        <div className="velox-card mt-4 overflow-hidden">
           {wallet ? (
-            <>
-              <div className="flex justify-between items-center border-b border-white/5 pb-3">
-                <span className="text-sm text-gray-400">Stars Spent</span>
-                <span className="font-bold text-white">⭐ {wallet.totalSpent}</span>
-              </div>
-              <div className="flex justify-between items-center border-b border-white/5 pb-3">
-                <span className="text-sm text-gray-400">Tournament Rewards</span>
-                <span className="font-bold text-green-400">+ ⭐ {wallet.totalRewards}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-400">Refunds</span>
-                <span className="font-bold text-blue-400">+ ⭐ {wallet.totalRefunds}</span>
-              </div>
-            </>
+            <div className="divide-y divide-[#263128]">
+              <ActivityRow label="Stars spent" value={`⭐ ${wallet.totalSpent}`} />
+              <ActivityRow label="Tournament rewards" value={`+ ⭐ ${wallet.totalRewards}`} highlight />
+              <ActivityRow label="Refunds" value={`+ ⭐ ${wallet.totalRefunds}`} highlight />
+            </div>
           ) : (
-            <p className="text-sm text-gray-400">Open VELOX in Telegram to view your verified tournament activity.</p>
+            <p className="p-5 text-sm leading-relaxed text-[#8e998f]">Open VELOX in Telegram to view your verified tournament activity.</p>
           )}
         </div>
       </section>
-    </div>
+    </main>
   );
+}
+
+function Stat({ label, value, icon }: { label: string; value: string; icon: ReactNode }) {
+  return <div className="min-w-0 px-3 sm:px-5"><p className="truncate text-[9px] font-black uppercase tracking-[0.13em] text-[#899489]">{label}</p><p className="mt-2 flex items-center gap-1.5 truncate text-base font-black text-white sm:text-lg">{value}<span className="text-[#c5f94d]">{icon}</span></p></div>;
+}
+
+function SectionHeader({ title, href, label }: { title: string; href: string; label: string }) {
+  return <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-black uppercase tracking-[0.06em] text-white">{title}</h2><Link href={href} className="inline-flex shrink-0 items-center gap-1 text-xs font-black uppercase tracking-[0.1em] text-[#c5f94d] hover:text-[#d5ff70]">{label}<ChevronRight className="h-4 w-4" aria-hidden /></Link></div>;
+}
+
+function ActivityRow({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
+  return <div className="flex items-center justify-between gap-4 px-5 py-4"><span className="text-sm font-medium text-[#aeb8ad]">{label}</span><span className={`text-sm font-black ${highlight ? "text-[#c5f94d]" : "text-white"}`}>{value}</span></div>;
 }

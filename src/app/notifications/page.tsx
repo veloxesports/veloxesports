@@ -6,11 +6,11 @@ export default async function NotificationsPage() {
   const result = await getNotifications();
 
   return (
-    <div className="flex min-h-screen flex-col bg-black p-4 pb-24">
-      <header className="mb-6 pt-2">
+    <div className="velox-page">
+      <header className="mb-7">
         <div className="flex items-center gap-2">
-          <Bell className="h-6 w-6 text-purple-400" />
-          <h1 className="text-3xl font-bold tracking-tight text-white">Alerts</h1>
+          <Bell className="h-6 w-6 text-[#c5f94d]" />
+          <h1 className="text-4xl font-black tracking-[-0.05em] text-white">Alerts</h1>
         </div>
         <p className="mt-1 text-gray-400">Stay updated on your competitions</p>
       </header>

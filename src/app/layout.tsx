@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: "#080d09",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -31,10 +31,10 @@ export default function RootLayout({
       <head>
         <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
       </head>
-      <body className={`${inter.className} min-h-full flex flex-col bg-black text-gray-100 antialiased`}>
+      <body className={`${inter.className} min-h-full flex flex-col bg-[#080d09] text-gray-100 antialiased`}>
         <TelegramInit />
         <Providers>
-          <main className="flex-1 pb-16">
+          <main className="flex-1 pb-20">
             {children}
           </main>
           <BottomNav />
