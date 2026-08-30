@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { VeloxGuide } from "@/components/assistant/VeloxGuide";
 import { Providers } from "@/components/providers";
 import { TelegramInit } from "@/components/telegram-init";
 import Script from "next/script";
@@ -38,6 +39,7 @@ export default function RootLayout({
             {children}
           </main>
           <BottomNav />
+          <VeloxGuide />
         </Providers>
       </body>
     </html>
