@@ -37,6 +37,7 @@ export type AdminInsight = {
   itemLabel: string;
   total: number;
   totalAmount?: number;
+  canModeratePlayers?: boolean;
   items: AdminInsightItem[];
 };
 
@@ -49,7 +50,7 @@ export function isAdminInsightMetric(value: string): value is AdminInsightMetric
 
 export async function getAdminInsight(metric: AdminInsightMetric): Promise<{ success: true; data: AdminInsight } | { success: false; error: string }> {
   try {
-    await requireRole([...webAdminRoles]);
+    const admin = await requireRole([...webAdminRoles]);
 
     const activeSince = new Date();
     activeSince.setDate(activeSince.getDate() - 30);
@@ -65,7 +66,7 @@ export async function getAdminInsight(metric: AdminInsightMetric): Promise<{ suc
             select: playerSelect,
           }),
         ]);
-        return { success: true, data: playerInsight({ total, players, activeOnly: false }) };
+        return { success: true, data: { ...playerInsight({ total, players, activeOnly: false }), canModeratePlayers: admin.role === "SUPER_ADMIN" } };
       }
       case "active-players": {
         const where = { ...playerAccountFilter, status: "ACTIVE" as const, lastLogin: { gte: activeSince } };
@@ -73,7 +74,7 @@ export async function getAdminInsight(metric: AdminInsightMetric): Promise<{ suc
           prisma.user.count({ where }),
           prisma.user.findMany({ where, orderBy: { lastLogin: "desc" }, take: listLimit, select: playerSelect }),
         ]);
-        return { success: true, data: playerInsight({ total, players, activeOnly: true }) };
+        return { success: true, data: { ...playerInsight({ total, players, activeOnly: true }), canModeratePlayers: admin.role === "SUPER_ADMIN" } };
       }
       case "tournaments":
         return { success: true, data: await tournamentInsight({}) };

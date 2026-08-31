@@ -2,6 +2,7 @@ import { CalendarDays, ChevronLeft, CircleDollarSign, ClipboardList, Trophy, Use
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAdminInsight, isAdminInsightMetric, type AdminInsightItem } from "@/features/admin/insights";
+import { PlayerModerationControls } from "./PlayerModerationControls";
 
 export default async function AdminInsightPage({ params }: { params: Promise<{ metric: string }> }) {
   const { metric } = await params;
@@ -32,17 +33,17 @@ export default async function AdminInsightPage({ params }: { params: Promise<{ m
       <section className="mt-7">
         <div className="flex items-end justify-between gap-3"><div><p className="velox-eyebrow">{data.eyebrow}</p><h2 className="mt-1 text-xl font-black text-white">Records</h2></div><p className="text-xs font-bold uppercase tracking-[0.08em] text-[#8e998f]">{data.items.length === data.total ? "All records" : `Latest ${data.items.length}`}</p></div>
         <div className="mt-3 grid gap-3">
-          {data.items.length === 0 ? <Empty itemLabel={data.itemLabel} /> : data.items.map((item) => <InsightRecord key={item.id} item={item} />)}
+          {data.items.length === 0 ? <Empty itemLabel={data.itemLabel} /> : data.items.map((item) => <InsightRecord key={item.id} item={item} allowModeration={data.canModeratePlayers === true} />)}
         </div>
       </section>
     </main>
   );
 }
 
-function InsightRecord({ item }: { item: AdminInsightItem }) {
+function InsightRecord({ item, allowModeration }: { item: AdminInsightItem; allowModeration: boolean }) {
   const content = <><Avatar imageUrl={item.imageUrl} label={item.title} /><div className="min-w-0 flex-1"><p className="truncate text-base font-black text-white">{item.title}</p><p className="mt-1 truncate text-sm text-[#8e998f]">{item.detail}</p>{item.meta && <p className="mt-2 text-xs font-medium text-[#718071]">{item.meta}</p>}</div><div className="shrink-0 text-right">{item.amount !== undefined && <p className="text-lg font-black text-white">⭐ {item.amount.toLocaleString()}</p>}<StatusBadge value={item.status} /><p className="mt-2 inline-flex items-center gap-1 text-[11px] text-[#718071]"><CalendarDays className="h-3.5 w-3.5" aria-hidden />{item.dateLabel}: {formatDate(item.date)}</p></div></>;
 
-  return item.href ? <Link href={item.href} className="velox-card flex items-start gap-3 p-4 transition hover:border-[#5e7b4b] hover:bg-[#162016] sm:p-5">{content}</Link> : <article className="velox-card flex items-start gap-3 p-4 sm:p-5">{content}</article>;
+  return item.href ? <Link href={item.href} className="velox-card flex items-start gap-3 p-4 transition hover:border-[#5e7b4b] hover:bg-[#162016] sm:p-5">{content}</Link> : <article className="velox-card p-4 sm:p-5"><div className="flex items-start gap-3">{content}</div>{allowModeration && <PlayerModerationControls playerId={item.id} playerName={item.title} status={item.status} />}</article>;
 }
 
 function Avatar({ imageUrl, label }: { imageUrl?: string | null; label: string }) {
@@ -50,7 +51,7 @@ function Avatar({ imageUrl, label }: { imageUrl?: string | null; label: string }
 }
 
 function StatusBadge({ value }: { value: string }) {
-  const styles: Record<string, string> = { ACTIVE: "bg-[#20331b] text-[#c5f94d]", CONFIRMED: "bg-[#20331b] text-[#c5f94d]", COMPLETED: "bg-[#20331b] text-[#c5f94d]", REFUNDED: "bg-[#1c3134] text-[#8ee7ec]", LIVE: "bg-[#20331b] text-[#c5f94d]", PENDING: "bg-[#392f1c] text-[#f0cf78]", CANCELLED: "bg-[#3b211e] text-[#ffad9a]" };
+  const styles: Record<string, string> = { ACTIVE: "bg-[#20331b] text-[#c5f94d]", CONFIRMED: "bg-[#20331b] text-[#c5f94d]", COMPLETED: "bg-[#20331b] text-[#c5f94d]", REFUNDED: "bg-[#1c3134] text-[#8ee7ec]", LIVE: "bg-[#20331b] text-[#c5f94d]", PENDING: "bg-[#392f1c] text-[#f0cf78]", CANCELLED: "bg-[#3b211e] text-[#ffad9a]", RESTRICTED: "bg-[#392f1c] text-[#f0cf78]", SUSPENDED: "bg-[#3b211e] text-[#ffad9a]", BANNED: "bg-[#3b211e] text-[#ffad9a]", UNDER_REVIEW: "bg-[#273127] text-[#d6dfbf]" };
   return <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] ${styles[value] ?? "bg-[#242b25] text-[#a4aea3]"}`}>{labelFor(value)}</span>;
 }
 

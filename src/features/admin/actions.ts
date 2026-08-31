@@ -38,6 +38,10 @@ const tournamentSchema = z.object({
 });
 const statusSchema = z.object({ tournamentId: z.string().uuid(), status: z.nativeEnum(TournamentStatus) });
 const tournamentIdSchema = z.string().uuid();
+const playerModerationSchema = z.object({
+  userId: z.string().uuid(),
+  action: z.enum(["BAN", "UNBAN", "FREEZE", "UNFREEZE", "RESTRICT"]),
+});
 
 function toAuditJson(value: unknown) {
   return value === undefined ? Prisma.JsonNull : JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
@@ -67,6 +71,63 @@ export async function createAuditLog(
     console.error("Failed to write audit log", error);
     return { success: false };
   }
+}
+
+export async function moderatePlayerStatus(input: unknown) {
+  const parsed = playerModerationSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: "Invalid player moderation request." };
+
+  try {
+    const admin = await requireRole(["SUPER_ADMIN"]);
+    const nextStatus = moderationStatusFor(parsed.data.action);
+    const actionLabel = moderationActionLabel(parsed.data.action);
+
+    await prisma.$transaction(async (tx) => {
+      const player = await tx.user.findUnique({
+        where: { id: parsed.data.userId },
+        select: { id: true, role: true, status: true, telegramId: true, webAdminAccount: { select: { id: true } } },
+      });
+
+      if (!player) throw new Error("PLAYER_NOT_FOUND");
+      if (player.role !== "PLAYER" || player.telegramId.startsWith("web-admin:") || player.webAdminAccount) throw new Error("PROTECTED_ACCOUNT");
+      if (player.status === nextStatus) throw new Error("STATUS_UNCHANGED");
+
+      await tx.user.update({ where: { id: player.id }, data: { status: nextStatus } });
+      await tx.auditLog.create({
+        data: {
+          adminId: admin.id,
+          action: `PLAYER_${parsed.data.action}`,
+          entity: "User",
+          entityId: player.id,
+          oldValue: toAuditJson({ status: player.status }),
+          newValue: toAuditJson({ status: nextStatus }),
+        },
+      });
+    }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/insights/[metric]", "page");
+    return { success: true, message: `${actionLabel} recorded for this player.` };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (message === "PLAYER_NOT_FOUND") return { success: false, error: "Player not found." };
+    if (message === "PROTECTED_ACCOUNT") return { success: false, error: "Administrative accounts cannot be moderated from the player desk." };
+    if (message === "STATUS_UNCHANGED") return { success: false, error: "This player already has that access status." };
+    if (["UNAUTHENTICATED", "FORBIDDEN"].includes(message)) return { success: false, error: "Only a Super Admin can change player access." };
+    console.error("Player moderation failed", error);
+    return { success: false, error: "We couldn't update this player's access status." };
+  }
+}
+
+function moderationStatusFor(action: "BAN" | "UNBAN" | "FREEZE" | "UNFREEZE" | "RESTRICT") {
+  if (action === "BAN") return "BANNED" as const;
+  if (action === "FREEZE") return "SUSPENDED" as const;
+  if (action === "RESTRICT") return "RESTRICTED" as const;
+  return "ACTIVE" as const;
+}
+
+function moderationActionLabel(action: "BAN" | "UNBAN" | "FREEZE" | "UNFREEZE" | "RESTRICT") {
+  return { BAN: "Ban", UNBAN: "Unban", FREEZE: "Freeze", UNFREEZE: "Restore", RESTRICT: "Restriction" }[action];
 }
 
 export async function getAdminStats() {
