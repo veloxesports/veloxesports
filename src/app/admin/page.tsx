@@ -55,14 +55,14 @@ export default async function AdminDashboard() {
       </section>
 
       <section className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Platform metrics">
-        <Kpi icon={<Users className="h-5 w-5" aria-hidden />} label="Players" value={stats.totalUsers} detail="Platform accounts" />
-        <Kpi icon={<Activity className="h-5 w-5" aria-hidden />} label="Active players" value={stats.activeUsers} detail="Seen in the last 30 days" />
-        <Kpi icon={<Trophy className="h-5 w-5" aria-hidden />} label="Tournaments" value={stats.totalTournaments} detail={`${stats.activeTournaments} in the operating queue`} />
-        <Kpi icon={<Swords className="h-5 w-5" aria-hidden />} label="Live events" value={stats.liveTournaments} detail="Currently competing" />
-        <Kpi icon={<Activity className="h-5 w-5" aria-hidden />} label="Confirmed entries" value={stats.registrations} detail="Competition ready" />
-        <Kpi icon={<CreditCard className="h-5 w-5" aria-hidden />} label="Verified Stars" value={stats.totalPaymentStars} detail="Completed Telegram payments" amount />
-        <Kpi icon={<CreditCard className="h-5 w-5" aria-hidden />} label="Refunded Stars" value={stats.totalRefundStars} detail="Completed refund value" amount warning={stats.totalRefundStars > 0} />
-        <Kpi icon={<Trophy className="h-5 w-5" aria-hidden />} label="Prize rewards" value={stats.tournamentRewardStars} detail="Completed player rewards" amount />
+        <Kpi href="/admin/insights/players" icon={<Users className="h-5 w-5" aria-hidden />} label="Players" value={stats.totalUsers} detail="Platform accounts" />
+        <Kpi href="/admin/insights/active-players" icon={<Activity className="h-5 w-5" aria-hidden />} label="Active players" value={stats.activeUsers} detail="Seen in the last 30 days" />
+        <Kpi href="/admin/insights/tournaments" icon={<Trophy className="h-5 w-5" aria-hidden />} label="Tournaments" value={stats.totalTournaments} detail={`${stats.activeTournaments} in the operating queue`} />
+        <Kpi href="/admin/insights/live-events" icon={<Swords className="h-5 w-5" aria-hidden />} label="Live events" value={stats.liveTournaments} detail="Currently competing" />
+        <Kpi href="/admin/insights/confirmed-entries" icon={<Activity className="h-5 w-5" aria-hidden />} label="Confirmed entries" value={stats.registrations} detail="Competition ready" />
+        <Kpi href="/admin/insights/verified-stars" icon={<CreditCard className="h-5 w-5" aria-hidden />} label="Verified Stars" value={stats.totalPaymentStars} detail="Completed Telegram payments" amount />
+        <Kpi href="/admin/insights/refunded-stars" icon={<CreditCard className="h-5 w-5" aria-hidden />} label="Refunded Stars" value={stats.totalRefundStars} detail="Completed refund value" amount warning={stats.totalRefundStars > 0} />
+        <Kpi href="/admin/insights/prize-rewards" icon={<Trophy className="h-5 w-5" aria-hidden />} label="Prize rewards" value={stats.tournamentRewardStars} detail="Completed player rewards" amount />
       </section>
 
       <section className="mt-7 grid gap-5 lg:grid-cols-[1.28fr_0.72fr]">
@@ -84,7 +84,7 @@ export default async function AdminDashboard() {
           ) : (
             <div className="divide-y divide-[#29342a]">
               {stats.activeEvents.map((event) => (
-                <Link key={event.id} href="/admin/tournaments" className="group flex items-center gap-3 px-5 py-4 transition hover:bg-[#172117]">
+                <Link key={event.id} href={`/admin/tournaments/${event.id}`} className="group flex items-center gap-3 px-5 py-4 transition hover:bg-[#172117]">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1f3119] text-[#c5f94d]"><Trophy className="h-5 w-5" aria-hidden /></span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-black text-white">{event.title}</span>
@@ -192,14 +192,14 @@ export default async function AdminDashboard() {
   );
 }
 
-function Kpi({ icon, label, value, detail, warning = false, amount = false }: { icon: React.ReactNode; label: string; value: number; detail: string; warning?: boolean; amount?: boolean }) {
+function Kpi({ href, icon, label, value, detail, warning = false, amount = false }: { href: string; icon: React.ReactNode; label: string; value: number; detail: string; warning?: boolean; amount?: boolean }) {
   return (
-    <div className="velox-card p-4 sm:p-5">
+    <Link href={href} className="velox-card block p-4 transition hover:-translate-y-0.5 hover:border-[#5e7b4b] hover:bg-[#162016] sm:p-5" aria-label={`View ${label.toLowerCase()} data`}>
       <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${warning ? "bg-[#3b2720] text-[#ff9d85]" : "bg-[#1f3119] text-[#c5f94d]"}`}>{icon}</span>
       <p className="mt-4 text-2xl font-black tracking-[-0.04em] text-white">{amount ? "⭐ " : ""}{value.toLocaleString()}</p>
       <p className="mt-1 text-[11px] font-black uppercase tracking-[0.11em] text-[#c3ceb9]">{label}</p>
       <p className="mt-1 text-xs text-[#718072]">{detail}</p>
-    </div>
+    </Link>
   );
 }
 
