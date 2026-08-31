@@ -1,17 +1,18 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { ChevronLeft, Plus, Swords } from "lucide-react";
+import { useState, type FormEvent, type InputHTMLAttributes } from "react";
+import { CalendarDays, ChevronLeft, CircleAlert, Gamepad2, Plus, Swords, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { cancelTournamentAndRefund, createGame, createTournament, setGameActive, setTournamentStatus } from "@/features/admin/actions";
 import { generateSingleEliminationBracket } from "@/features/matches/actions";
 
 type Game = { id: string; name: string; slug: string; isActive: boolean };
 type Tournament = { id: string; title: string; status: string; format: string; isPaid: boolean; entryFee: number; startDate: Date; game: { name: string }; _count: { registrations: number; matches: number } };
+
 const formats = ["SINGLE_ELIMINATION", "DOUBLE_ELIMINATION", "ROUND_ROBIN", "LEAGUE", "SWISS", "BATTLE_ROYALE", "CUSTOM"];
 const statuses = ["DRAFT", "REGISTRATION_OPEN", "REGISTRATION_CLOSED", "UPCOMING", "CHECK_IN", "LIVE", "COMPLETED"];
+const controlClass = "w-full rounded-2xl border border-[#344335] bg-[#080d09] px-3.5 py-3 text-sm text-white outline-none transition placeholder:text-[#6f796f] focus:border-[#c5f94d] focus:ring-2 focus:ring-[#c5f94d]/15 disabled:cursor-not-allowed disabled:opacity-60";
 
 export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; tournaments: Tournament[] }) {
   const router = useRouter();
@@ -22,10 +23,16 @@ export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; 
   const [error, setError] = useState<string | null>(null);
 
   async function execute(action: () => Promise<{ success: boolean; error?: string; warning?: string }>, successMessage: string) {
-    setPending(true); setError(null);
+    setPending(true);
+    setError(null);
     const result = await action();
     setPending(false);
-    if (!result.success) { setError(result.error ?? "Operation failed."); return false; }
+
+    if (!result.success) {
+      setError(result.error ?? "Operation failed.");
+      return false;
+    }
+
     setMessage(result.warning ? `${successMessage} ${result.warning}` : successMessage);
     router.refresh();
     return true;
@@ -34,24 +41,185 @@ export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; 
   async function handleGame(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const success = await execute(() => createGame({ name: form.get("name"), slug: form.get("slug") }), "Game added.");
-    if (success) { event.currentTarget.reset(); setShowGame(false); }
+    const success = await execute(() => createGame({ name: form.get("name"), slug: form.get("slug") }), "Game added to the tournament catalog.");
+    if (success) {
+      event.currentTarget.reset();
+      setShowGame(false);
+    }
   }
 
   async function handleTournament(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const isPaid = form.get("isPaid") === "on";
+    const registrationDeadline = new Date(String(form.get("registrationDeadline")));
+    const startDate = new Date(String(form.get("startDate")));
+
+    if (Number.isNaN(registrationDeadline.getTime()) || Number.isNaN(startDate.getTime())) {
+      setError("Select both the registration deadline and tournament start date from the calendar picker.");
+      return;
+    }
+
     const success = await execute(() => createTournament({
-      title: form.get("title"), gameId: form.get("gameId"), prizePool: form.get("prizePool"), entryFee: form.get("entryFee"), isPaid,
-      maxParticipants: form.get("maxParticipants"), registrationDeadline: new Date(String(form.get("registrationDeadline"))), startDate: new Date(String(form.get("startDate"))),
-      format: form.get("format"), region: form.get("region"), gameMode: form.get("gameMode"), rules: form.get("rules"), status: form.get("status"),
-    }), "Tournament created.");
-    if (success) { event.currentTarget.reset(); setShowCreate(false); }
+      title: form.get("title"),
+      gameId: form.get("gameId"),
+      prizePool: form.get("prizePool"),
+      entryFee: form.get("entryFee"),
+      isPaid: form.get("isPaid") === "on",
+      maxParticipants: form.get("maxParticipants"),
+      registrationDeadline,
+      startDate,
+      format: form.get("format"),
+      region: form.get("region"),
+      gameMode: form.get("gameMode"),
+      rules: form.get("rules"),
+      status: form.get("status"),
+    }), "Tournament created and added to the operating queue.");
+
+    if (success) {
+      event.currentTarget.reset();
+      setShowCreate(false);
+    }
   }
 
-  return <main className="min-h-screen bg-black p-4 pb-24 text-slate-100"><header className="flex items-center gap-3 pt-2"><Link href="/admin" className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-900"><ChevronLeft className="h-5 w-5" aria-hidden /></Link><div><h1 className="text-2xl font-black text-white">Tournament administration</h1><p className="text-sm text-slate-400">Games, events, brackets, and safe lifecycle changes.</p></div></header><div className="mt-5 grid grid-cols-2 gap-3"><Button onClick={() => setShowCreate((value) => !value)} className="bg-violet-600 font-bold hover:bg-violet-500"><Plus className="mr-1 h-4 w-4" aria-hidden />Tournament</Button><Button onClick={() => setShowGame((value) => !value)} variant="outline" className="border-white/10 bg-slate-900 text-slate-200 hover:bg-slate-800">Add game</Button></div>{error && <Notice tone="error" message={error} />}{message && <Notice tone="success" message={message} />}{showGame && <form onSubmit={handleGame} className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-slate-900 p-4"><h2 className="font-bold text-white">Add game</h2><Input name="name" label="Game name" placeholder="Rocket League" required /><Input name="slug" label="URL slug" placeholder="rocket-league" required /><Button disabled={pending} type="submit" className="bg-violet-600 font-bold hover:bg-violet-500">Save game</Button></form>}{showCreate && <form onSubmit={handleTournament} className="mt-4 grid gap-3 rounded-2xl border border-violet-400/20 bg-slate-900 p-4"><h2 className="font-bold text-white">Create tournament</h2><Input name="title" label="Title" required /><label className="grid gap-1 text-sm font-semibold text-slate-300">Game<select name="gameId" required className="rounded-xl border border-white/10 bg-black px-3 py-3 text-white">{games.filter((game) => game.isActive).map((game) => <option key={game.id} value={game.id}>{game.name}</option>)}</select></label><div className="grid grid-cols-2 gap-3"><Input name="prizePool" label="Prize pool (XTR)" type="number" defaultValue="0" min="0" required /><Input name="entryFee" label="Entry fee (XTR)" type="number" defaultValue="0" min="0" required /></div><label className="flex items-center gap-2 text-sm text-slate-300"><input name="isPaid" type="checkbox" className="h-4 w-4 accent-violet-500" />Paid tournament</label><div className="grid grid-cols-2 gap-3"><Input name="maxParticipants" label="Max players" type="number" defaultValue="16" min="2" required /><label className="grid gap-1 text-sm font-semibold text-slate-300">Format<select name="format" defaultValue="SINGLE_ELIMINATION" className="rounded-xl border border-white/10 bg-black px-3 py-3 text-white">{formats.map((format) => <option key={format} value={format}>{format.replaceAll("_", " ")}</option>)}</select></label></div><div className="grid grid-cols-2 gap-3"><Input name="registrationDeadline" label="Registration closes" type="datetime-local" required /><Input name="startDate" label="Starts" type="datetime-local" required /></div><div className="grid grid-cols-2 gap-3"><Input name="region" label="Region" placeholder="Global" /><Input name="gameMode" label="Game mode" placeholder="1v1" /></div><label className="grid gap-1 text-sm font-semibold text-slate-300">Initial status<select name="status" defaultValue="DRAFT" className="rounded-xl border border-white/10 bg-black px-3 py-3 text-white">{statuses.map((status) => <option key={status} value={status}>{status.replaceAll("_", " ")}</option>)}</select></label><label className="grid gap-1 text-sm font-semibold text-slate-300">Rules<textarea name="rules" minLength={10} maxLength={10000} rows={4} className="rounded-xl border border-white/10 bg-black px-3 py-3 text-white" placeholder="Tournament rules and check-in requirements" /></label><Button disabled={pending} type="submit" className="bg-violet-600 font-bold hover:bg-violet-500">Create tournament</Button></form>}<section className="mt-6"><h2 className="text-lg font-bold text-white">Games</h2><div className="mt-3 space-y-2">{games.map((game) => <div key={game.id} className="flex items-center justify-between rounded-xl border border-white/5 bg-slate-900 p-3"><div><p className="font-semibold text-white">{game.name}</p><p className="text-xs text-slate-500">/{game.slug}</p></div><Button onClick={() => execute(() => setGameActive({ gameId: game.id, isActive: !game.isActive }), game.isActive ? "Game hidden from discovery." : "Game restored to discovery.")} disabled={pending} variant="outline" className="border-white/10 text-xs text-slate-200">{game.isActive ? "Deactivate" : "Activate"}</Button></div>)}</div></section><section className="mt-6"><h2 className="text-lg font-bold text-white">Tournaments</h2><div className="mt-3 space-y-3">{tournaments.map((tournament) => <article key={tournament.id} className="rounded-2xl border border-white/5 bg-slate-900 p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="font-bold text-white">{tournament.title}</p><p className="mt-1 text-xs uppercase text-slate-500">{tournament.game.name} · {tournament.format.replaceAll("_", " ")} · {tournament._count.registrations} entries · {tournament._count.matches} matches</p></div><span className="rounded-full bg-black px-2 py-1 text-[10px] font-bold text-slate-300">{tournament.status.replaceAll("_", " ")}</span></div><div className="mt-4 grid grid-cols-2 gap-2"><select aria-label={`Status for ${tournament.title}`} defaultValue={tournament.status} onChange={(event) => { if (event.target.value !== tournament.status) void execute(() => setTournamentStatus({ tournamentId: tournament.id, status: event.target.value }), "Tournament status updated."); }} className="rounded-lg border border-white/10 bg-black px-2 py-2 text-xs text-white">{statuses.map((status) => <option key={status} value={status}>{status.replaceAll("_", " ")}</option>)}</select>{tournament.format === "SINGLE_ELIMINATION" && tournament.status === "REGISTRATION_CLOSED" && <Button onClick={() => execute(() => generateSingleEliminationBracket(tournament.id), "Bracket generated.")} disabled={pending} variant="outline" className="border-violet-400/30 text-violet-200 hover:bg-violet-500/10"><Swords className="mr-1 h-4 w-4" aria-hidden />Bracket</Button>}</div><Button onClick={() => execute(() => cancelTournamentAndRefund(tournament.id), "Tournament cancelled.")} disabled={pending || tournament.status === "CANCELLED"} variant="outline" className="mt-3 w-full border-red-500/30 text-red-200 hover:bg-red-500/10">Cancel tournament and refund eligible entries</Button></article>)}</div></section></main>;
+  return (
+    <main className="velox-page">
+      <header className="flex items-start gap-3">
+        <Link href="/admin" className="velox-muted-button flex h-10 w-10 shrink-0 p-0" aria-label="Back to Command Center"><ChevronLeft className="h-5 w-5" aria-hidden /></Link>
+        <div>
+          <p className="velox-eyebrow">Event operations</p>
+          <h1 className="mt-1 text-2xl font-black tracking-[-0.04em] text-white sm:text-3xl">Tournament control</h1>
+          <p className="mt-1 text-sm leading-relaxed text-[#8e998f]">Create events, manage the game roster, brackets, and safe lifecycle changes.</p>
+        </div>
+      </header>
+
+      <section className="mt-6 grid gap-3 sm:grid-cols-2">
+        <button type="button" onClick={() => setShowCreate((value) => !value)} className="velox-action min-h-12"><Plus className="mr-2 h-4 w-4" aria-hidden />{showCreate ? "Close tournament form" : "Create tournament"}</button>
+        <button type="button" onClick={() => setShowGame((value) => !value)} className="velox-muted-button min-h-12"><Gamepad2 className="mr-2 h-4 w-4 text-[#c5f94d]" aria-hidden />{showGame ? "Close game form" : "Add a game"}</button>
+      </section>
+
+      {error && <Notice tone="error" message={error} />}
+      {message && <Notice tone="success" message={message} />}
+
+      {showGame && (
+        <form onSubmit={handleGame} className="velox-card mt-4 p-5">
+          <p className="velox-eyebrow">Catalog</p>
+          <h2 className="mt-1 text-lg font-black text-white">Add a playable game</h2>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <Input name="name" label="Game name" placeholder="Rocket League" required />
+            <Input name="slug" label="URL slug" placeholder="rocket-league" required />
+          </div>
+          <button disabled={pending} type="submit" className="velox-action mt-4 w-full sm:w-auto">{pending ? "Saving…" : "Save game"}</button>
+        </form>
+      )}
+
+      {showCreate && (
+        <form onSubmit={handleTournament} className="velox-card mt-4 overflow-hidden">
+          <div className="border-b border-[#2a352b] bg-[radial-gradient(circle_at_90%_0%,rgba(197,249,77,0.13),transparent_35%)] px-5 py-5 sm:px-6">
+            <p className="velox-eyebrow">New event</p>
+            <h2 className="mt-1 text-xl font-black text-white">Tournament setup</h2>
+            <p className="mt-1 text-sm text-[#8e998f]">Set the competition details before opening it to players.</p>
+          </div>
+          <div className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
+            <Input name="title" label="Tournament title" placeholder="Nightfall Championship" className="sm:col-span-2" required />
+            <Select name="gameId" label="Game" required>{games.filter((game) => game.isActive).map((game) => <option key={game.id} value={game.id}>{game.name}</option>)}</Select>
+            <Select name="format" label="Format" defaultValue="SINGLE_ELIMINATION">{formats.map((format) => <option key={format} value={format}>{labelFor(format)}</option>)}</Select>
+            <Input name="prizePool" label="Prize pool (XTR)" type="number" defaultValue="0" min="0" required />
+            <Input name="entryFee" label="Entry fee (XTR)" type="number" defaultValue="0" min="0" required />
+            <label className="flex items-center gap-3 rounded-2xl border border-[#344335] bg-[#131b14] px-4 py-3 text-sm font-bold text-[#dce8d7] sm:col-span-2"><input name="isPaid" type="checkbox" className="h-4 w-4 accent-[#c5f94d]" />Paid tournament — collect the entry fee through Telegram Stars.</label>
+            <Input name="maxParticipants" label="Maximum players" type="number" defaultValue="16" min="2" required />
+            <Select name="status" label="Initial status" defaultValue="DRAFT">{statuses.map((status) => <option key={status} value={status}>{labelFor(status)}</option>)}</Select>
+            <DateTimeInput name="registrationDeadline" label="Registration closes" />
+            <DateTimeInput name="startDate" label="Tournament starts" />
+            <Input name="region" label="Region" placeholder="Global" />
+            <Input name="gameMode" label="Game mode" placeholder="1v1" />
+            <label className="grid gap-2 text-sm font-bold text-[#dce8d7] sm:col-span-2">Rules
+              <textarea name="rules" minLength={10} maxLength={10_000} rows={5} className={`${controlClass} resize-y`} placeholder="Tournament rules, check-in window, scoring and moderation requirements" />
+            </label>
+          </div>
+          <div className="flex flex-col gap-3 border-t border-[#2a352b] bg-[#0d130e] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <p className="text-xs leading-relaxed text-[#7e8c7d]">Registration must close before the tournament start date.</p>
+            <button disabled={pending || games.filter((game) => game.isActive).length === 0} type="submit" className="velox-action shrink-0">{pending ? "Creating…" : "Create tournament"}</button>
+          </div>
+        </form>
+      )}
+
+      <section className="mt-7">
+        <SectionHeading eyebrow="Catalog" title="Games" detail={`${games.length} configured`} />
+        <div className="velox-card mt-3 divide-y divide-[#29342a] overflow-hidden">
+          {games.length === 0 ? <Empty icon={<Gamepad2 className="h-8 w-8" aria-hidden />} title="No games configured" detail="Add the first game before creating a tournament." /> : games.map((game) => (
+            <div key={game.id} className="flex items-center justify-between gap-3 px-5 py-4">
+              <div className="min-w-0"><p className="truncate font-black text-white">{game.name}</p><p className="mt-0.5 text-xs text-[#718071]">/{game.slug}</p></div>
+              <div className="flex items-center gap-2"><span className={`hidden rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] sm:block ${game.isActive ? "bg-[#20331b] text-[#c5f94d]" : "bg-[#262d27] text-[#a4aea3]"}`}>{game.isActive ? "Active" : "Hidden"}</span><button type="button" onClick={() => void execute(() => setGameActive({ gameId: game.id, isActive: !game.isActive }), game.isActive ? "Game hidden from player discovery." : "Game restored to player discovery.")} disabled={pending} className="velox-muted-button px-3 py-2 text-xs">{game.isActive ? "Deactivate" : "Activate"}</button></div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-7">
+        <SectionHeading eyebrow="Operating queue" title="Tournaments" detail={`${tournaments.length} total`} />
+        <div className="mt-3 grid gap-3">
+          {tournaments.length === 0 ? <div className="velox-card"><Empty icon={<Trophy className="h-8 w-8" aria-hidden />} title="No tournaments yet" detail="Create your first event to populate the operating queue." /></div> : tournaments.map((tournament) => (
+            <article key={tournament.id} className="velox-card p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0"><p className="text-lg font-black text-white">{tournament.title}</p><p className="mt-1 text-xs font-bold uppercase tracking-[0.08em] text-[#8e998f]">{tournament.game.name} · {labelFor(tournament.format)}</p></div>
+                <StatusBadge value={tournament.status} />
+              </div>
+              <div className="mt-4 grid grid-cols-3 gap-2 border-y border-[#29342a] py-3 text-center">
+                <Stat label="Entries" value={tournament._count.registrations} icon={<Users className="h-3.5 w-3.5" aria-hidden />} />
+                <Stat label="Matches" value={tournament._count.matches} icon={<Swords className="h-3.5 w-3.5" aria-hidden />} />
+                <Stat label="Starts" value={formatDate(tournament.startDate)} icon={<CalendarDays className="h-3.5 w-3.5" aria-hidden />} />
+              </div>
+              <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+                <select aria-label={`Status for ${tournament.title}`} defaultValue={tournament.status} disabled={pending} onChange={(event) => { if (event.target.value !== tournament.status) void execute(() => setTournamentStatus({ tournamentId: tournament.id, status: event.target.value }), "Tournament status updated."); }} className={`${controlClass} py-2.5 text-xs font-bold`}>{statuses.map((status) => <option key={status} value={status}>{labelFor(status)}</option>)}</select>
+                {tournament.format === "SINGLE_ELIMINATION" && tournament.status === "REGISTRATION_CLOSED" && <button type="button" onClick={() => void execute(() => generateSingleEliminationBracket(tournament.id), "Single-elimination bracket generated.")} disabled={pending} className="velox-muted-button px-3 py-2.5 text-xs"><Swords className="mr-1.5 h-4 w-4 text-[#c5f94d]" aria-hidden />Generate bracket</button>}
+                <button type="button" onClick={() => void execute(() => cancelTournamentAndRefund(tournament.id), "Tournament cancelled.")} disabled={pending || tournament.status === "CANCELLED"} className="rounded-2xl border border-[#75453b] bg-[#2a1918] px-3 py-2.5 text-xs font-black text-[#ffad9a] transition hover:border-[#b9624f] hover:bg-[#3a211e] disabled:cursor-not-allowed disabled:opacity-50">Cancel & refund</button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </main>
+  );
 }
 
-function Input({ name, label, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { name: string; label: string }) { return <label className="grid gap-1 text-sm font-semibold text-slate-300">{label}<input name={name} {...props} className="rounded-xl border border-white/10 bg-black px-3 py-3 text-white outline-none focus:border-violet-400" /></label>; }
-function Notice({ tone, message }: { tone: "error" | "success"; message: string }) { return <p role="status" className={`mt-4 rounded-xl border p-3 text-sm ${tone === "error" ? "border-red-500/30 bg-red-500/10 text-red-100" : "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"}`}>{message}</p>; }
+function Input({ name, label, className = "", ...props }: InputHTMLAttributes<HTMLInputElement> & { name: string; label: string }) {
+  return <label className={`grid gap-2 text-sm font-bold text-[#dce8d7] ${className}`}>{label}<input name={name} {...props} className={controlClass} /></label>;
+}
+
+function Select({ name, label, children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { name: string; label: string; children: React.ReactNode }) {
+  return <label className="grid gap-2 text-sm font-bold text-[#dce8d7]">{label}<select name={name} {...props} className={controlClass}>{children}</select></label>;
+}
+
+function DateTimeInput({ name, label }: { name: string; label: string }) {
+  return <label className="grid gap-2 text-sm font-bold text-[#dce8d7]">{label}<span className="relative"><CalendarDays className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#c5f94d]" aria-hidden /><input name={name} type="datetime-local" required className={`${controlClass} [color-scheme:dark] pl-10`} /></span><span className="text-xs font-medium text-[#748173]">Choose a date and time with the calendar picker.</span></label>;
+}
+
+function Notice({ tone, message }: { tone: "error" | "success"; message: string }) {
+  return <p role="status" className={`mt-4 flex items-start gap-2 rounded-2xl border px-4 py-3 text-sm font-medium ${tone === "error" ? "border-[#87493d] bg-[#2b1d19] text-[#ffb1a0]" : "border-[#496b38] bg-[#182716] text-[#d8f5b3]"}`}><CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />{message}</p>;
+}
+
+function SectionHeading({ eyebrow, title, detail }: { eyebrow: string; title: string; detail: string }) {
+  return <div className="flex items-end justify-between gap-3"><div><p className="velox-eyebrow">{eyebrow}</p><h2 className="mt-1 text-xl font-black text-white">{title}</h2></div><p className="text-xs font-bold uppercase tracking-[0.08em] text-[#8e998f]">{detail}</p></div>;
+}
+
+function Empty({ icon, title, detail }: { icon: React.ReactNode; title: string; detail: string }) {
+  return <div className="px-5 py-10 text-center text-[#526052]"><span className="inline-flex">{icon}</span><p className="mt-3 font-black text-white">{title}</p><p className="mx-auto mt-1 max-w-sm text-sm leading-relaxed text-[#8e998f]">{detail}</p></div>;
+}
+
+function StatusBadge({ value }: { value: string }) {
+  const isLive = value === "LIVE";
+  const isReady = ["REGISTRATION_OPEN", "UPCOMING", "CHECK_IN"].includes(value);
+  return <span className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] ${isLive ? "bg-[#253a1d] text-[#c5f94d]" : isReady ? "bg-[#1b2b1a] text-[#bfeb74]" : "bg-[#242b25] text-[#a4aea3]"}`}>{labelFor(value)}</span>;
+}
+
+function Stat({ label, value, icon }: { label: string; value: string | number; icon: React.ReactNode }) {
+  return <div><span className="mx-auto flex w-fit items-center gap-1 text-[#8e998f]">{icon}<span className="text-[10px] font-black uppercase tracking-[0.08em]">{label}</span></span><p className="mt-1 truncate text-sm font-black text-white">{value}</p></div>;
+}
+
+function labelFor(value: string) {
+  return value.replaceAll("_", " ").toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function formatDate(value: Date) {
+  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(new Date(value));
+}
