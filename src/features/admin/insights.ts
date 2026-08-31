@@ -41,11 +41,69 @@ export type AdminInsight = {
   items: AdminInsightItem[];
 };
 
+export type AdminAnalytics = {
+  trend: Array<{ label: string; players: number; registrations: number; payments: number; refunds: number; rewards: number }>;
+  tournamentStatuses: Array<{ label: string; value: number }>;
+  playerStatuses: Array<{ label: string; value: number }>;
+};
+
 const playerAccountFilter = { NOT: { telegramId: { startsWith: "web-admin:" } } };
 const listLimit = 250;
 
 export function isAdminInsightMetric(value: string): value is AdminInsightMetric {
   return adminInsightMetrics.includes(value as AdminInsightMetric);
+}
+
+export async function getAdminAnalytics(): Promise<{ success: true; data: AdminAnalytics } | { success: false; error: string }> {
+  try {
+    await requireRole([...webAdminRoles]);
+    const start = new Date();
+    start.setUTCHours(0, 0, 0, 0);
+    start.setUTCDate(start.getUTCDate() - 13);
+
+    const [players, registrations, payments, refunds, rewards, tournamentStatuses, playerStatuses] = await Promise.all([
+      prisma.user.findMany({ where: { ...playerAccountFilter, createdAt: { gte: start } }, select: { createdAt: true } }),
+      prisma.tournamentRegistration.findMany({ where: { createdAt: { gte: start } }, select: { createdAt: true } }),
+      prisma.telegramPayment.findMany({ where: { status: "COMPLETED", completedAt: { gte: start } }, select: { amount: true, completedAt: true } }),
+      prisma.refund.findMany({ where: { status: "COMPLETED", completedAt: { gte: start } }, select: { amount: true, completedAt: true } }),
+      prisma.walletTransaction.findMany({ where: { type: "PRIZE_REWARD", status: "COMPLETED", completedAt: { gte: start } }, select: { amount: true, completedAt: true } }),
+      prisma.tournament.groupBy({ by: ["status"], _count: { _all: true } }),
+      prisma.user.groupBy({ by: ["status"], where: playerAccountFilter, _count: { _all: true } }),
+    ]);
+
+    const days = Array.from({ length: 14 }, (_, index) => {
+      const day = new Date(start);
+      day.setUTCDate(start.getUTCDate() + index);
+      return { key: dateKey(day), label: new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: "UTC" }).format(day) };
+    });
+    const playerCounts = countByDay(players, (item) => item.createdAt);
+    const registrationCounts = countByDay(registrations, (item) => item.createdAt);
+    const paymentTotals = sumByDay(payments, (item) => item.completedAt, (item) => item.amount);
+    const refundTotals = sumByDay(refunds, (item) => item.completedAt, (item) => item.amount);
+    const rewardTotals = sumByDay(rewards, (item) => item.completedAt, (item) => item.amount);
+
+    return {
+      success: true,
+      data: {
+        trend: days.map((day) => ({
+          label: day.label,
+          players: playerCounts.get(day.key) ?? 0,
+          registrations: registrationCounts.get(day.key) ?? 0,
+          payments: paymentTotals.get(day.key) ?? 0,
+          refunds: refundTotals.get(day.key) ?? 0,
+          rewards: rewardTotals.get(day.key) ?? 0,
+        })),
+        tournamentStatuses: tournamentStatuses.map((entry) => ({ label: entry.status, value: entry._count._all })),
+        playerStatuses: playerStatuses.map((entry) => ({ label: entry.status, value: entry._count._all })),
+      },
+    };
+  } catch (error) {
+    if (error instanceof Error && ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.message)) {
+      return { success: false, error: "You do not have permission to view platform analytics." };
+    }
+    console.error("Admin analytics fetch failed", error);
+    return { success: false, error: "Analytics are unavailable right now." };
+  }
 }
 
 export async function getAdminInsight(metric: AdminInsightMetric): Promise<{ success: true; data: AdminInsight } | { success: false; error: string }> {
@@ -392,6 +450,32 @@ function playerInsight({ total, players, activeOnly }: { total: number; players:
 
 function playerName(user: { username: string | null; firstName: string | null; profile: { veloxUsername: string | null } | null }) {
   return user.profile?.veloxUsername ?? user.username ?? user.firstName ?? "VELOX player";
+}
+
+function countByDay<T>(items: T[], dateFor: (item: T) => Date | null) {
+  const totals = new Map<string, number>();
+  for (const item of items) {
+    const date = dateFor(item);
+    if (!date) continue;
+    const key = dateKey(date);
+    totals.set(key, (totals.get(key) ?? 0) + 1);
+  }
+  return totals;
+}
+
+function sumByDay<T>(items: T[], dateFor: (item: T) => Date | null, amountFor: (item: T) => number) {
+  const totals = new Map<string, number>();
+  for (const item of items) {
+    const date = dateFor(item);
+    if (!date) continue;
+    const key = dateKey(date);
+    totals.set(key, (totals.get(key) ?? 0) + amountFor(item));
+  }
+  return totals;
+}
+
+function dateKey(date: Date) {
+  return date.toISOString().slice(0, 10);
 }
 
 function labelFor(value: string) {

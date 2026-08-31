@@ -1,9 +1,11 @@
 import { Activity, ArrowUpRight, Calendar, ChevronRight, CreditCard, Gamepad2, LogOut, ShieldAlert, Swords, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 import { getAdminStats } from "@/features/admin/actions";
+import { getAdminAnalytics } from "@/features/admin/insights";
+import { AdminAnalytics } from "./AdminAnalytics";
 
 export default async function AdminDashboard() {
-  const result = await getAdminStats();
+  const [result, analyticsResult] = await Promise.all([getAdminStats(), getAdminAnalytics()]);
 
   if (!result.success || !result.data) {
     return (
@@ -64,6 +66,8 @@ export default async function AdminDashboard() {
         <Kpi href="/admin/insights/refunded-stars" icon={<CreditCard className="h-5 w-5" aria-hidden />} label="Refunded Stars" value={stats.totalRefundStars} detail="Completed refund value" amount warning={stats.totalRefundStars > 0} />
         <Kpi href="/admin/insights/prize-rewards" icon={<Trophy className="h-5 w-5" aria-hidden />} label="Prize rewards" value={stats.tournamentRewardStars} detail="Completed player rewards" amount />
       </section>
+
+      {analyticsResult.success ? <AdminAnalytics data={analyticsResult.data} /> : <section className="velox-card mt-7 p-5"><p className="velox-eyebrow">Platform intelligence</p><p className="mt-2 font-black text-white">Analytics temporarily unavailable</p><p className="mt-1 text-sm text-[#8e998f]">{analyticsResult.error}</p></section>}
 
       <section className="mt-7 grid gap-5 lg:grid-cols-[1.28fr_0.72fr]">
         <div className="velox-card overflow-hidden">
