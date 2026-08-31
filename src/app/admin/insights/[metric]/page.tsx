@@ -26,7 +26,7 @@ export default async function AdminInsightPage({ params }: { params: Promise<{ m
 
       <section className="relative mt-6 overflow-hidden rounded-[28px] border border-[#405b31] bg-[#182714] p-5 sm:p-6">
         <div className="absolute -right-10 -top-14 h-40 w-40 rounded-full border-[28px] border-[#345123] opacity-70" aria-hidden />
-        <div className="relative flex items-center gap-4"><span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#263b1b] text-[#c5f94d]">{icon}</span><div><p className="text-2xl font-black text-white">{data.total.toLocaleString()}</p><p className="text-xs font-black uppercase tracking-[0.1em] text-[#c5f94d]">{data.itemLabel}{data.total === 1 ? "" : "s"} in this view</p></div></div>
+        <div className="relative flex items-center gap-4"><span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#263b1b] text-[#c5f94d]">{icon}</span><div><p className="text-2xl font-black text-white">{data.totalAmount === undefined ? data.total.toLocaleString() : `⭐ ${data.totalAmount.toLocaleString()}`}</p><p className="text-xs font-black uppercase tracking-[0.1em] text-[#c5f94d]">{data.totalAmount === undefined ? `${data.itemLabel}${data.total === 1 ? "" : "s"} in this view` : `${data.total} ${data.itemLabel}${data.total === 1 ? "" : "s"} recorded`}</p></div></div>
       </section>
 
       <section className="mt-7">

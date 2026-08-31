@@ -36,6 +36,7 @@ export type AdminInsight = {
   description: string;
   itemLabel: string;
   total: number;
+  totalAmount?: number;
   items: AdminInsightItem[];
 };
 
@@ -246,8 +247,9 @@ async function confirmedEntriesInsight(): Promise<AdminInsight> {
 async function paymentInsight(kind: "payments" | "refunds" | "rewards"): Promise<AdminInsight> {
   if (kind === "payments") {
     const where = { status: "COMPLETED" as const };
-    const [total, payments] = await Promise.all([
+    const [total, paymentTotal, payments] = await Promise.all([
       prisma.telegramPayment.count({ where }),
+      prisma.telegramPayment.aggregate({ _sum: { amount: true }, where }),
       prisma.telegramPayment.findMany({
         where,
         orderBy: { completedAt: "desc" },
@@ -268,6 +270,7 @@ async function paymentInsight(kind: "payments" | "refunds" | "rewards"): Promise
       description: "Completed Telegram Stars payments recorded by the verified payment flow.",
       itemLabel: "payment",
       total,
+      totalAmount: paymentTotal._sum.amount ?? 0,
       items: payments.map((payment) => ({
         id: payment.id,
         title: payment.tournament?.title ?? "VELOX transaction",
@@ -284,8 +287,9 @@ async function paymentInsight(kind: "payments" | "refunds" | "rewards"): Promise
 
   if (kind === "refunds") {
     const where = { status: "COMPLETED" as const };
-    const [total, refunds] = await Promise.all([
+    const [total, refundTotal, refunds] = await Promise.all([
       prisma.refund.count({ where }),
+      prisma.refund.aggregate({ _sum: { amount: true }, where }),
       prisma.refund.findMany({
         where,
         orderBy: { completedAt: "desc" },
@@ -310,6 +314,7 @@ async function paymentInsight(kind: "payments" | "refunds" | "rewards"): Promise
       description: "Telegram Stars refunds that have been completed for a player payment.",
       itemLabel: "refund",
       total,
+      totalAmount: refundTotal._sum.amount ?? 0,
       items: refunds.map((refund) => ({
         id: refund.id,
         title: refund.payment.tournament?.title ?? "VELOX refund",
@@ -325,8 +330,9 @@ async function paymentInsight(kind: "payments" | "refunds" | "rewards"): Promise
   }
 
   const where = { type: "PRIZE_REWARD" as const, status: "COMPLETED" as const };
-  const [total, rewards] = await Promise.all([
+  const [total, rewardTotal, rewards] = await Promise.all([
     prisma.walletTransaction.count({ where }),
+    prisma.walletTransaction.aggregate({ _sum: { amount: true }, where }),
     prisma.walletTransaction.findMany({
       where,
       orderBy: { completedAt: "desc" },
@@ -348,6 +354,7 @@ async function paymentInsight(kind: "payments" | "refunds" | "rewards"): Promise
     description: "Completed prize rewards credited to player wallets after tournament results.",
     itemLabel: "reward",
     total,
+    totalAmount: rewardTotal._sum.amount ?? 0,
     items: rewards.map((reward) => ({
       id: reward.id,
       title: reward.tournament?.title ?? reward.description ?? "VELOX prize reward",
