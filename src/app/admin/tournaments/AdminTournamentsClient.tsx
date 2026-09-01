@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, type FormEvent, type InputHTMLAttributes } from "react";
-import { CalendarDays, ChevronLeft, CircleAlert, Gamepad2, Plus, RefreshCw, Swords, Trophy, Users } from "lucide-react";
+import { CalendarDays, ChevronLeft, CircleAlert, Gamepad2, Pencil, Plus, RefreshCw, Swords, Trash2, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { cancelTournamentAndRefund, createGame, createTournament, openTournamentCheckIn, setGameActive, setTournamentStatus } from "@/features/admin/actions";
+import { cancelTournamentAndRefund, createGame, createTournament, deleteTournament, openTournamentCheckIn, setGameActive, setTournamentStatus } from "@/features/admin/actions";
 import { generateSingleEliminationBracket } from "@/features/matches/actions";
 import { getTournamentRulesTemplate } from "@/lib/tournaments/rule-templates";
+import { TournamentEditor } from "./TournamentEditor";
 
 type Game = { id: string; name: string; slug: string; isActive: boolean };
-type Tournament = { id: string; title: string; status: string; format: string; isPaid: boolean; entryFee: number; startDate: Date; game: { name: string }; registrations: { id: string }[]; _count: { registrations: number; matches: number } };
+type Tournament = { id: string; title: string; status: string; format: string; isPaid: boolean; entryFee: number; prizePool: number; maxParticipants: number; currentParticipants: number; registrationDeadline: Date; startDate: Date; region: string | null; gameMode: string | null; game: { id: string; name: string }; rules: { content: string; checkInPeriodMins: number } | null; registrations: { id: string }[]; _count: { registrations: number; matches: number } };
 
 const formats = ["SINGLE_ELIMINATION", "DOUBLE_ELIMINATION", "ROUND_ROBIN", "LEAGUE", "SWISS", "BATTLE_ROYALE", "CUSTOM"];
 const statuses = ["DRAFT", "REGISTRATION_OPEN", "REGISTRATION_CLOSED", "UPCOMING", "CHECK_IN", "LIVE", "COMPLETED"];
@@ -24,6 +25,7 @@ export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; 
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [editingTournament, setEditingTournament] = useState<Tournament | null>(null);
   const [selectedGameId, setSelectedGameId] = useState(() => activeGames[0]?.id ?? "");
   const [rules, setRules] = useState(() => activeGames[0] ? getTournamentRulesTemplate(activeGames[0]) : "");
   const selectedGame = activeGames.find((game) => game.id === selectedGameId);
@@ -160,6 +162,8 @@ export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; 
         </form>
       )}
 
+      {editingTournament && <TournamentEditor tournament={editingTournament} games={games} onClose={() => setEditingTournament(null)} />}
+
       <section className="mt-7">
         <SectionHeading eyebrow="Catalog" title="Games" detail={`${games.length} configured`} />
         <div className="velox-card mt-3 divide-y divide-[#29342a] overflow-hidden">
@@ -190,8 +194,10 @@ export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; 
               <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto_auto_auto]">
                 <select aria-label={`Status for ${tournament.title}`} defaultValue={tournament.status} disabled={pending || tournament.status === "CHECK_IN"} onChange={(event) => { if (event.target.value !== tournament.status) void execute(() => setTournamentStatus({ tournamentId: tournament.id, status: event.target.value }), "Tournament status updated."); }} className={`${controlClass} py-2.5 text-xs font-bold`}>{statuses.map((status) => <option key={status} value={status} disabled={status === "CHECK_IN" && tournament.status !== "CHECK_IN"}>{status === "CHECK_IN" ? "Check In (use control)" : labelFor(status)}</option>)}</select>
                 <Link href={`/admin/tournaments/${tournament.id}`} className="velox-muted-button px-3 py-2.5 text-xs"><Users className="mr-1.5 h-4 w-4 text-[#c5f94d]" aria-hidden />Players</Link>
+                <button type="button" onClick={() => { setEditingTournament(tournament); setShowCreate(false); }} disabled={pending || ["CANCELLED", "COMPLETED"].includes(tournament.status)} className="velox-muted-button px-3 py-2.5 text-xs"><Pencil className="mr-1.5 h-4 w-4 text-[#c5f94d]" aria-hidden />Edit</button>
                 {tournament.status === "REGISTRATION_CLOSED" && <button type="button" onClick={() => void execute(() => openTournamentCheckIn(tournament.id), "Check-in is open and confirmed players were notified.")} disabled={pending} className="velox-muted-button px-3 py-2.5 text-xs"><Trophy className="mr-1.5 h-4 w-4 text-[#c5f94d]" aria-hidden />Open check-in</button>}
                 {tournament.format === "SINGLE_ELIMINATION" && tournament.status === "UPCOMING" && <button type="button" onClick={() => void execute(() => generateSingleEliminationBracket(tournament.id), "Single-elimination bracket generated.")} disabled={pending} className="velox-muted-button px-3 py-2.5 text-xs"><Swords className="mr-1.5 h-4 w-4 text-[#c5f94d]" aria-hidden />Generate bracket</button>}
+                {tournament.status === "DRAFT" && <button type="button" onClick={() => { if (window.confirm(`Delete the empty draft “${tournament.title}”? This cannot be undone.`)) void execute(() => deleteTournament(tournament.id), "Draft tournament deleted."); }} disabled={pending} className="rounded-2xl border border-[#75453b] bg-[#2a1918] px-3 py-2.5 text-xs font-black text-[#ffad9a] transition hover:border-[#b9624f] hover:bg-[#3a211e] disabled:cursor-not-allowed disabled:opacity-50"><Trash2 className="mr-1.5 h-4 w-4" aria-hidden />Delete draft</button>}
                 <button type="button" onClick={() => { if (window.confirm("Cancel this tournament and refund eligible Telegram Stars payments? This cannot be undone.")) void execute(() => cancelTournamentAndRefund(tournament.id), "Tournament cancelled."); }} disabled={pending || tournament.status === "CANCELLED"} className="rounded-2xl border border-[#75453b] bg-[#2a1918] px-3 py-2.5 text-xs font-black text-[#ffad9a] transition hover:border-[#b9624f] hover:bg-[#3a211e] disabled:cursor-not-allowed disabled:opacity-50">Cancel & refund</button>
               </div>
             </article>

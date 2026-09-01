@@ -19,7 +19,7 @@ const gameSchema = z.object({
   slug: z.string().trim().toLowerCase().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(96),
 });
 const gameStatusSchema = z.object({ gameId: z.string().uuid(), isActive: z.boolean() });
-const tournamentSchema = z.object({
+const tournamentFieldsSchema = z.object({
   title: z.string().trim().min(3).max(140),
   gameId: z.string().uuid(),
   prizePool: z.coerce.number().int().min(0).max(10_000_000),
@@ -33,12 +33,19 @@ const tournamentSchema = z.object({
   gameMode: z.string().trim().max(100).optional(),
   rules: z.string().trim().min(10).max(10_000).optional(),
   checkInPeriodMins: z.coerce.number().int().min(5).max(1_440).default(60),
+});
+const tournamentSchema = tournamentFieldsSchema.extend({
   status: z.nativeEnum(TournamentStatus).default(TournamentStatus.DRAFT),
 }).superRefine((value, context) => {
   if (value.isPaid && value.entryFee < 1) context.addIssue({ code: "custom", path: ["entryFee"], message: "Paid tournaments must have an entry fee." });
   if (!value.isPaid && value.entryFee !== 0) context.addIssue({ code: "custom", path: ["entryFee"], message: "Free tournaments must have a zero entry fee." });
   if (value.registrationDeadline >= value.startDate) context.addIssue({ code: "custom", path: ["registrationDeadline"], message: "Registration must close before the tournament starts." });
   if (value.status === "CHECK_IN") context.addIssue({ code: "custom", path: ["status"], message: "Create the tournament first, then open its check-in window when it is ready." });
+});
+const tournamentUpdateSchema = tournamentFieldsSchema.extend({ tournamentId: z.string().uuid() }).superRefine((value, context) => {
+  if (value.isPaid && value.entryFee < 1) context.addIssue({ code: "custom", path: ["entryFee"], message: "Paid tournaments must have an entry fee." });
+  if (!value.isPaid && value.entryFee !== 0) context.addIssue({ code: "custom", path: ["entryFee"], message: "Free tournaments must have a zero entry fee." });
+  if (value.registrationDeadline >= value.startDate) context.addIssue({ code: "custom", path: ["registrationDeadline"], message: "Registration must close before the tournament starts." });
 });
 const statusSchema = z.object({ tournamentId: z.string().uuid(), status: z.nativeEnum(TournamentStatus) });
 const tournamentIdSchema = z.string().uuid();
@@ -304,8 +311,8 @@ export async function getAdminTournaments() {
     await requireRole([...tournamentManagerRoles]);
     const tournaments = await prisma.tournament.findMany({
       include: {
-        game: { select: { name: true } },
-        rules: { select: { checkInPeriodMins: true } },
+        game: { select: { id: true, name: true } },
+        rules: { select: { content: true, checkInPeriodMins: true } },
         registrations: { where: { status: "CONFIRMED", checkedIn: true }, select: { id: true } },
         _count: { select: { registrations: true, matches: true } },
       },
@@ -408,6 +415,161 @@ export async function createTournament(input: unknown) {
     if (error instanceof Error && ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.message)) return { success: false, error: "You do not have permission to create tournaments." };
     console.error("Tournament creation failed", error);
     return { success: false, error: "We couldn't create this tournament." };
+  }
+}
+
+export async function updateTournament(input: unknown) {
+  const parsed = tournamentUpdateSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Enter valid tournament details." };
+
+  try {
+    const admin = await requireRole([...tournamentManagerRoles]);
+    const updated = await prisma.$transaction(async (tx) => {
+      const current = await tx.tournament.findUnique({
+        where: { id: parsed.data.tournamentId },
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          status: true,
+          gameId: true,
+          format: true,
+          isPaid: true,
+          entryFee: true,
+          maxParticipants: true,
+          currentParticipants: true,
+          startDate: true,
+          registrationDeadline: true,
+          _count: { select: { registrations: true, matches: true, payments: true, walletTransactions: true } },
+        },
+      });
+      if (!current) throw new Error("TOURNAMENT_NOT_FOUND");
+      if (["CANCELLED", "COMPLETED"].includes(current.status)) throw new Error("TOURNAMENT_FINALIZED");
+      if (parsed.data.maxParticipants < current.currentParticipants) throw new Error("CAPACITY_TOO_LOW");
+      if (current.status === "REGISTRATION_OPEN" && parsed.data.registrationDeadline <= new Date()) throw new Error("REGISTRATION_DEADLINE_PASSED");
+
+      const structuralChange = current.gameId !== parsed.data.gameId
+        || current.format !== parsed.data.format
+        || current.isPaid !== parsed.data.isPaid
+        || current.entryFee !== parsed.data.entryFee;
+      if (current._count.registrations > 0 && structuralChange) throw new Error("REGISTRATIONS_EXIST");
+
+      const bracketChange = structuralChange
+        || current.startDate.getTime() !== parsed.data.startDate.getTime()
+        || current.registrationDeadline.getTime() !== parsed.data.registrationDeadline.getTime()
+        || current.maxParticipants !== parsed.data.maxParticipants;
+      if (current._count.matches > 0 && bracketChange) throw new Error("BRACKET_EXISTS");
+
+      if (current.gameId !== parsed.data.gameId) {
+        const game = await tx.game.findFirst({ where: { id: parsed.data.gameId, isActive: true }, select: { id: true } });
+        if (!game) throw new Error("GAME_NOT_ACTIVE");
+      }
+
+      const tournament = await tx.tournament.update({
+        where: { id: current.id },
+        data: {
+          title: parsed.data.title,
+          gameId: parsed.data.gameId,
+          prizePool: parsed.data.prizePool,
+          entryFee: parsed.data.entryFee,
+          isPaid: parsed.data.isPaid,
+          maxParticipants: parsed.data.maxParticipants,
+          registrationDeadline: parsed.data.registrationDeadline,
+          startDate: parsed.data.startDate,
+          format: parsed.data.format,
+          region: parsed.data.region || null,
+          gameMode: parsed.data.gameMode || null,
+          rules: {
+            upsert: {
+              create: { content: parsed.data.rules ?? "Standard VELOX competitive rules apply.", checkInPeriodMins: parsed.data.checkInPeriodMins },
+              update: { content: parsed.data.rules ?? "Standard VELOX competitive rules apply.", checkInPeriodMins: parsed.data.checkInPeriodMins },
+            },
+          },
+        },
+        select: { id: true, slug: true },
+      });
+      await tx.auditLog.create({
+        data: {
+          adminId: admin.id,
+          action: "TOURNAMENT_UPDATED",
+          entity: "Tournament",
+          entityId: current.id,
+          oldValue: toAuditJson({ title: current.title, gameId: current.gameId, format: current.format, isPaid: current.isPaid, entryFee: current.entryFee, maxParticipants: current.maxParticipants, registrationDeadline: current.registrationDeadline, startDate: current.startDate }),
+          newValue: toAuditJson(parsed.data),
+        },
+      });
+      return tournament;
+    }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 15_000 });
+
+    revalidateTournamentCheckIn(updated);
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    const known: Record<string, string> = {
+      TOURNAMENT_NOT_FOUND: "Tournament not found.",
+      TOURNAMENT_FINALIZED: "Completed and cancelled tournaments cannot be edited.",
+      CAPACITY_TOO_LOW: "Maximum participants cannot be lower than the existing participant count.",
+      REGISTRATION_DEADLINE_PASSED: "An open tournament needs a future registration deadline.",
+      REGISTRATIONS_EXIST: "Game, format, and payment settings lock once players have registered.",
+      BRACKET_EXISTS: "Schedule, capacity, game, and format lock once a bracket exists.",
+      GAME_NOT_ACTIVE: "Select an active game.",
+      UNAUTHENTICATED: "You must be signed in.",
+      FORBIDDEN: "You do not have permission to update tournaments.",
+    };
+    if (known[message]) return { success: false, error: known[message] };
+    console.error("Tournament update failed", error);
+    return { success: false, error: "We couldn't update this tournament." };
+  }
+}
+
+export async function deleteTournament(tournamentId: unknown) {
+  const parsed = tournamentIdSchema.safeParse(tournamentId);
+  if (!parsed.success) return { success: false, error: "Invalid tournament." };
+
+  try {
+    const admin = await requireRole([...administratorRoles]);
+    const deleted = await prisma.$transaction(async (tx) => {
+      const tournament = await tx.tournament.findUnique({
+        where: { id: parsed.data },
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          status: true,
+          _count: { select: { registrations: true, matches: true, payments: true, walletTransactions: true } },
+        },
+      });
+      if (!tournament) throw new Error("TOURNAMENT_NOT_FOUND");
+      if (tournament.status !== "DRAFT") throw new Error("TOURNAMENT_NOT_DRAFT");
+      if (Object.values(tournament._count).some((count) => count > 0)) throw new Error("TOURNAMENT_HAS_ACTIVITY");
+
+      await tx.auditLog.create({
+        data: {
+          adminId: admin.id,
+          action: "TOURNAMENT_DELETED",
+          entity: "Tournament",
+          entityId: tournament.id,
+          oldValue: toAuditJson({ title: tournament.title, status: tournament.status }),
+        },
+      });
+      await tx.tournament.delete({ where: { id: tournament.id } });
+      return tournament;
+    }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
+
+    revalidateTournamentCheckIn(deleted);
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    const known: Record<string, string> = {
+      TOURNAMENT_NOT_FOUND: "Tournament not found.",
+      TOURNAMENT_NOT_DRAFT: "Only empty draft tournaments can be deleted. Cancel live or registered events instead.",
+      TOURNAMENT_HAS_ACTIVITY: "This tournament has registrations, matches, or payment activity and cannot be deleted safely.",
+      UNAUTHENTICATED: "You must be signed in.",
+      FORBIDDEN: "Only platform administrators can delete tournaments.",
+    };
+    if (known[message]) return { success: false, error: known[message] };
+    console.error("Tournament deletion failed", error);
+    return { success: false, error: "We couldn't delete this tournament safely." };
   }
 }
 
