@@ -6,6 +6,7 @@ import { prisma } from "@/lib/database/prisma";
 import { requireRole } from "@/lib/auth/current-user";
 import { Prisma, TournamentFormat, TournamentStatus } from "@/lib/generated/prisma/client";
 import { getTournamentRulesTemplate } from "@/lib/tournaments/rule-templates";
+import { getCheckInWindow } from "@/lib/tournaments/check-in";
 import { refundStarsPayment } from "@/features/payments/actions";
 
 const administratorRoles = ["SUPER_ADMIN", "ADMIN"] as const;
@@ -31,11 +32,13 @@ const tournamentSchema = z.object({
   region: z.string().trim().max(80).optional(),
   gameMode: z.string().trim().max(100).optional(),
   rules: z.string().trim().min(10).max(10_000).optional(),
+  checkInPeriodMins: z.coerce.number().int().min(5).max(1_440).default(60),
   status: z.nativeEnum(TournamentStatus).default(TournamentStatus.DRAFT),
 }).superRefine((value, context) => {
   if (value.isPaid && value.entryFee < 1) context.addIssue({ code: "custom", path: ["entryFee"], message: "Paid tournaments must have an entry fee." });
   if (!value.isPaid && value.entryFee !== 0) context.addIssue({ code: "custom", path: ["entryFee"], message: "Free tournaments must have a zero entry fee." });
   if (value.registrationDeadline >= value.startDate) context.addIssue({ code: "custom", path: ["registrationDeadline"], message: "Registration must close before the tournament starts." });
+  if (value.status === "CHECK_IN") context.addIssue({ code: "custom", path: ["status"], message: "Create the tournament first, then open its check-in window when it is ready." });
 });
 const statusSchema = z.object({ tournamentId: z.string().uuid(), status: z.nativeEnum(TournamentStatus) });
 const tournamentIdSchema = z.string().uuid();
@@ -300,7 +303,12 @@ export async function getAdminTournaments() {
   try {
     await requireRole([...tournamentManagerRoles]);
     const tournaments = await prisma.tournament.findMany({
-      include: { game: { select: { name: true } }, _count: { select: { registrations: true, matches: true } } },
+      include: {
+        game: { select: { name: true } },
+        rules: { select: { checkInPeriodMins: true } },
+        registrations: { where: { status: "CONFIRMED", checkedIn: true }, select: { id: true } },
+        _count: { select: { registrations: true, matches: true } },
+      },
       orderBy: { createdAt: "desc" },
       take: 100,
     });
@@ -386,7 +394,7 @@ export async function createTournament(input: unknown) {
           gameMode: parsed.data.gameMode || null,
           status: parsed.data.status,
           organizerId: admin.id,
-          rules: { create: { content: rules } },
+          rules: { create: { content: rules, checkInPeriodMins: parsed.data.checkInPeriodMins } },
         },
       });
       await tx.auditLog.create({ data: { adminId: admin.id, action: "TOURNAMENT_CREATED", entity: "Tournament", entityId: created.id, newValue: toAuditJson({ ...parsed.data, rules, slug }) } });
@@ -407,10 +415,12 @@ export async function setTournamentStatus(input: unknown) {
   const parsed = statusSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: "Invalid tournament status update." };
   if (parsed.data.status === "CANCELLED") return { success: false, error: "Use the cancellation workflow to protect paid registrations." };
+  if (parsed.data.status === "CHECK_IN") return { success: false, error: "Use Open check-in to start a protected check-in window." };
   try {
     const admin = await requireRole([...tournamentManagerRoles]);
     const current = await prisma.tournament.findUnique({ where: { id: parsed.data.tournamentId }, select: { status: true } });
     if (!current) return { success: false, error: "Tournament not found." };
+    if (current.status === "CHECK_IN" && parsed.data.status === "LIVE") return { success: false, error: "Lock no-shows before starting the tournament." };
     await prisma.$transaction(async (tx) => {
       await tx.tournament.update({ where: { id: parsed.data.tournamentId }, data: { status: parsed.data.status } });
       await tx.auditLog.create({ data: { adminId: admin.id, action: "TOURNAMENT_STATUS_CHANGED", entity: "Tournament", entityId: parsed.data.tournamentId, oldValue: toAuditJson(current), newValue: toAuditJson({ status: parsed.data.status }) } });
@@ -424,6 +434,142 @@ export async function setTournamentStatus(input: unknown) {
     console.error("Tournament status update failed", error);
     return { success: false, error: "We couldn't update the tournament status." };
   }
+}
+
+export async function openTournamentCheckIn(tournamentId: unknown) {
+  const parsed = tournamentIdSchema.safeParse(tournamentId);
+  if (!parsed.success) return { success: false, error: "Invalid tournament." };
+
+  try {
+    const admin = await requireRole([...tournamentManagerRoles]);
+    const tournament = await prisma.$transaction(async (tx) => {
+      const current = await tx.tournament.findUnique({
+        where: { id: parsed.data },
+        select: { id: true, slug: true, title: true, status: true, startDate: true, rules: { select: { checkInPeriodMins: true } } },
+      });
+      if (!current) throw new Error("TOURNAMENT_NOT_FOUND");
+      if (current.status === "CHECK_IN") throw new Error("CHECK_IN_ALREADY_OPEN");
+      if (current.status !== "REGISTRATION_CLOSED") throw new Error("CHECK_IN_STATUS_INVALID");
+
+      const window = getCheckInWindow(current.startDate, current.rules?.checkInPeriodMins ?? 60);
+      if (window.phase === "NOT_STARTED") throw new Error("CHECK_IN_NOT_STARTED");
+      if (window.phase === "CLOSED") throw new Error("CHECK_IN_CLOSED");
+
+      await tx.tournament.update({ where: { id: current.id }, data: { status: "CHECK_IN" } });
+      const registrations = await tx.tournamentRegistration.findMany({ where: { tournamentId: current.id, status: "CONFIRMED" }, select: { userId: true } });
+      if (registrations.length) {
+        await tx.notification.createMany({
+          data: registrations.map((registration) => ({
+            userId: registration.userId,
+            type: "TOURNAMENT",
+            title: "Tournament check-in is open",
+            message: `Check in for ${current.title} before the tournament starts to keep your place.`,
+            metadata: { tournamentId: current.id },
+          })),
+        });
+      }
+      await tx.auditLog.create({
+        data: {
+          adminId: admin.id,
+          action: "TOURNAMENT_CHECK_IN_OPENED",
+          entity: "Tournament",
+          entityId: current.id,
+          oldValue: toAuditJson({ status: current.status }),
+          newValue: toAuditJson({ status: "CHECK_IN", opensAt: window.opensAt, closesAt: window.closesAt }),
+        },
+      });
+      return current;
+    }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
+
+    revalidateTournamentCheckIn(tournament);
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    const known: Record<string, string> = {
+      TOURNAMENT_NOT_FOUND: "Tournament not found.",
+      CHECK_IN_ALREADY_OPEN: "Check-in is already open for this tournament.",
+      CHECK_IN_STATUS_INVALID: "Close registration before opening check-in.",
+      CHECK_IN_NOT_STARTED: "The configured check-in window has not opened yet.",
+      CHECK_IN_CLOSED: "The configured check-in window has already closed.",
+      UNAUTHENTICATED: "You must be signed in.",
+      FORBIDDEN: "You do not have permission to open check-in.",
+    };
+    if (known[message]) return { success: false, error: known[message] };
+    console.error("Opening tournament check-in failed", error);
+    return { success: false, error: "We couldn't open the check-in window." };
+  }
+}
+
+export async function finalizeTournamentCheckIn(tournamentId: unknown) {
+  const parsed = tournamentIdSchema.safeParse(tournamentId);
+  if (!parsed.success) return { success: false, error: "Invalid tournament." };
+
+  try {
+    const admin = await requireRole([...tournamentManagerRoles]);
+    const outcome = await prisma.$transaction(async (tx) => {
+      const tournament = await tx.tournament.findUnique({
+        where: { id: parsed.data },
+        select: { id: true, slug: true, title: true, status: true, startDate: true, rules: { select: { checkInPeriodMins: true } } },
+      });
+      if (!tournament) throw new Error("TOURNAMENT_NOT_FOUND");
+      if (tournament.status !== "CHECK_IN") throw new Error("CHECK_IN_NOT_ACTIVE");
+      if (getCheckInWindow(tournament.startDate, tournament.rules?.checkInPeriodMins ?? 60).phase !== "CLOSED") throw new Error("CHECK_IN_STILL_OPEN");
+
+      const noShows = await tx.tournamentRegistration.findMany({
+        where: { tournamentId: tournament.id, status: "CONFIRMED", checkedIn: false },
+        select: { id: true, userId: true },
+      });
+      if (noShows.length) {
+        await tx.tournamentRegistration.updateMany({ where: { id: { in: noShows.map((registration) => registration.id) } }, data: { status: "CANCELLED" } });
+        await tx.notification.createMany({
+          data: noShows.map((registration) => ({
+            userId: registration.userId,
+            type: "TOURNAMENT",
+            title: "Tournament check-in missed",
+            message: `Your place in ${tournament.title} was released because check-in was not completed before the deadline.`,
+            metadata: { tournamentId: tournament.id },
+          })),
+        });
+      }
+
+      const checkedInCount = await tx.tournamentRegistration.count({ where: { tournamentId: tournament.id, status: "CONFIRMED", checkedIn: true } });
+      await tx.tournament.update({ where: { id: tournament.id }, data: { status: "UPCOMING", currentParticipants: checkedInCount } });
+      await tx.auditLog.create({
+        data: {
+          adminId: admin.id,
+          action: "TOURNAMENT_CHECK_IN_LOCKED",
+          entity: "Tournament",
+          entityId: tournament.id,
+          oldValue: toAuditJson({ status: tournament.status }),
+          newValue: toAuditJson({ status: "UPCOMING", checkedIn: checkedInCount, noShows: noShows.length }),
+        },
+      });
+      return { tournament, checkedInCount, noShowCount: noShows.length };
+    }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
+
+    revalidateTournamentCheckIn(outcome.tournament);
+    return { success: true, data: { checkedInCount: outcome.checkedInCount, noShowCount: outcome.noShowCount } };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    const known: Record<string, string> = {
+      TOURNAMENT_NOT_FOUND: "Tournament not found.",
+      CHECK_IN_NOT_ACTIVE: "This tournament is not currently in its check-in phase.",
+      CHECK_IN_STILL_OPEN: "The check-in window is still open. No-shows can be locked once it closes.",
+      UNAUTHENTICATED: "You must be signed in.",
+      FORBIDDEN: "You do not have permission to lock tournament no-shows.",
+    };
+    if (known[message]) return { success: false, error: known[message] };
+    console.error("Finalizing tournament check-in failed", error);
+    return { success: false, error: "We couldn't lock tournament no-shows safely." };
+  }
+}
+
+function revalidateTournamentCheckIn(tournament: { id: string; slug: string }) {
+  revalidatePath("/tournaments");
+  revalidatePath(`/tournaments/${tournament.slug}`);
+  revalidatePath("/admin");
+  revalidatePath("/admin/tournaments");
+  revalidatePath(`/admin/tournaments/${tournament.id}`);
 }
 
 export async function cancelTournamentAndRefund(tournamentId: unknown) {

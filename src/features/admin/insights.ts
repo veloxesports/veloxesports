@@ -175,6 +175,7 @@ export async function getAdminTournamentDetail(tournamentId: string) {
         currentParticipants: true,
         registrationDeadline: true,
         startDate: true,
+        rules: { select: { checkInPeriodMins: true } },
         game: { select: { name: true } },
         _count: { select: { matches: true, registrations: true } },
         registrations: {

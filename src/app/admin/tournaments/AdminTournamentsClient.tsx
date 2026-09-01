@@ -4,15 +4,16 @@ import { useState, type FormEvent, type InputHTMLAttributes } from "react";
 import { CalendarDays, ChevronLeft, CircleAlert, Gamepad2, Plus, RefreshCw, Swords, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { cancelTournamentAndRefund, createGame, createTournament, setGameActive, setTournamentStatus } from "@/features/admin/actions";
+import { cancelTournamentAndRefund, createGame, createTournament, openTournamentCheckIn, setGameActive, setTournamentStatus } from "@/features/admin/actions";
 import { generateSingleEliminationBracket } from "@/features/matches/actions";
 import { getTournamentRulesTemplate } from "@/lib/tournaments/rule-templates";
 
 type Game = { id: string; name: string; slug: string; isActive: boolean };
-type Tournament = { id: string; title: string; status: string; format: string; isPaid: boolean; entryFee: number; startDate: Date; game: { name: string }; _count: { registrations: number; matches: number } };
+type Tournament = { id: string; title: string; status: string; format: string; isPaid: boolean; entryFee: number; startDate: Date; game: { name: string }; registrations: { id: string }[]; _count: { registrations: number; matches: number } };
 
 const formats = ["SINGLE_ELIMINATION", "DOUBLE_ELIMINATION", "ROUND_ROBIN", "LEAGUE", "SWISS", "BATTLE_ROYALE", "CUSTOM"];
 const statuses = ["DRAFT", "REGISTRATION_OPEN", "REGISTRATION_CLOSED", "UPCOMING", "CHECK_IN", "LIVE", "COMPLETED"];
+const initialStatuses = statuses.filter((status) => status !== "CHECK_IN");
 const controlClass = "w-full rounded-2xl border border-[#344335] bg-[#080d09] px-3.5 py-3 text-sm text-white outline-none transition placeholder:text-[#6f796f] focus:border-[#c5f94d] focus:ring-2 focus:ring-[#c5f94d]/15 disabled:cursor-not-allowed disabled:opacity-60";
 
 export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; tournaments: Tournament[] }) {
@@ -83,6 +84,7 @@ export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; 
       region: form.get("region"),
       gameMode: form.get("gameMode"),
       rules,
+      checkInPeriodMins: form.get("checkInPeriodMins"),
       status: form.get("status"),
     }), "Tournament created and added to the operating queue.");
 
@@ -139,7 +141,8 @@ export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; 
             <Input name="entryFee" label="Entry fee (XTR)" type="number" defaultValue="0" min="0" required />
             <label className="flex items-center gap-3 rounded-2xl border border-[#344335] bg-[#131b14] px-4 py-3 text-sm font-bold text-[#dce8d7] sm:col-span-2"><input name="isPaid" type="checkbox" className="h-4 w-4 accent-[#c5f94d]" />Paid tournament — collect the entry fee through Telegram Stars.</label>
             <Input name="maxParticipants" label="Maximum players" type="number" defaultValue="16" min="2" required />
-            <Select name="status" label="Initial status" defaultValue="DRAFT">{statuses.map((status) => <option key={status} value={status}>{labelFor(status)}</option>)}</Select>
+            <Input name="checkInPeriodMins" label="Check-in window (minutes)" type="number" defaultValue="60" min="5" max="1440" required />
+            <Select name="status" label="Initial status" defaultValue="DRAFT">{initialStatuses.map((status) => <option key={status} value={status}>{labelFor(status)}</option>)}</Select>
             <DateTimeInput name="registrationDeadline" label="Registration closes" />
             <DateTimeInput name="startDate" label="Tournament starts" />
             <Input name="region" label="Region" placeholder="Global" />
@@ -178,15 +181,17 @@ export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; 
                 <div className="min-w-0"><Link href={`/admin/tournaments/${tournament.id}`} className="text-lg font-black text-white transition hover:text-[#c5f94d]">{tournament.title}</Link><p className="mt-1 text-xs font-bold uppercase tracking-[0.08em] text-[#8e998f]">{tournament.game.name} · {labelFor(tournament.format)}</p></div>
                 <StatusBadge value={tournament.status} />
               </div>
-              <div className="mt-4 grid grid-cols-3 gap-2 border-y border-[#29342a] py-3 text-center">
+              <div className="mt-4 grid grid-cols-2 gap-2 border-y border-[#29342a] py-3 text-center sm:grid-cols-4">
                 <Stat label="Entries" value={tournament._count.registrations} icon={<Users className="h-3.5 w-3.5" aria-hidden />} />
+                <Stat label="Checked in" value={tournament.registrations.length} icon={<Trophy className="h-3.5 w-3.5" aria-hidden />} />
                 <Stat label="Matches" value={tournament._count.matches} icon={<Swords className="h-3.5 w-3.5" aria-hidden />} />
                 <Stat label="Starts" value={formatDate(tournament.startDate)} icon={<CalendarDays className="h-3.5 w-3.5" aria-hidden />} />
               </div>
               <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto_auto_auto]">
-                <select aria-label={`Status for ${tournament.title}`} defaultValue={tournament.status} disabled={pending} onChange={(event) => { if (event.target.value !== tournament.status) void execute(() => setTournamentStatus({ tournamentId: tournament.id, status: event.target.value }), "Tournament status updated."); }} className={`${controlClass} py-2.5 text-xs font-bold`}>{statuses.map((status) => <option key={status} value={status}>{labelFor(status)}</option>)}</select>
+                <select aria-label={`Status for ${tournament.title}`} defaultValue={tournament.status} disabled={pending || tournament.status === "CHECK_IN"} onChange={(event) => { if (event.target.value !== tournament.status) void execute(() => setTournamentStatus({ tournamentId: tournament.id, status: event.target.value }), "Tournament status updated."); }} className={`${controlClass} py-2.5 text-xs font-bold`}>{statuses.map((status) => <option key={status} value={status} disabled={status === "CHECK_IN" && tournament.status !== "CHECK_IN"}>{status === "CHECK_IN" ? "Check In (use control)" : labelFor(status)}</option>)}</select>
                 <Link href={`/admin/tournaments/${tournament.id}`} className="velox-muted-button px-3 py-2.5 text-xs"><Users className="mr-1.5 h-4 w-4 text-[#c5f94d]" aria-hidden />Players</Link>
-                {tournament.format === "SINGLE_ELIMINATION" && tournament.status === "REGISTRATION_CLOSED" && <button type="button" onClick={() => void execute(() => generateSingleEliminationBracket(tournament.id), "Single-elimination bracket generated.")} disabled={pending} className="velox-muted-button px-3 py-2.5 text-xs"><Swords className="mr-1.5 h-4 w-4 text-[#c5f94d]" aria-hidden />Generate bracket</button>}
+                {tournament.status === "REGISTRATION_CLOSED" && <button type="button" onClick={() => void execute(() => openTournamentCheckIn(tournament.id), "Check-in is open and confirmed players were notified.")} disabled={pending} className="velox-muted-button px-3 py-2.5 text-xs"><Trophy className="mr-1.5 h-4 w-4 text-[#c5f94d]" aria-hidden />Open check-in</button>}
+                {tournament.format === "SINGLE_ELIMINATION" && tournament.status === "UPCOMING" && <button type="button" onClick={() => void execute(() => generateSingleEliminationBracket(tournament.id), "Single-elimination bracket generated.")} disabled={pending} className="velox-muted-button px-3 py-2.5 text-xs"><Swords className="mr-1.5 h-4 w-4 text-[#c5f94d]" aria-hidden />Generate bracket</button>}
                 <button type="button" onClick={() => { if (window.confirm("Cancel this tournament and refund eligible Telegram Stars payments? This cannot be undone.")) void execute(() => cancelTournamentAndRefund(tournament.id), "Tournament cancelled."); }} disabled={pending || tournament.status === "CANCELLED"} className="rounded-2xl border border-[#75453b] bg-[#2a1918] px-3 py-2.5 text-xs font-black text-[#ffad9a] transition hover:border-[#b9624f] hover:bg-[#3a211e] disabled:cursor-not-allowed disabled:opacity-50">Cancel & refund</button>
               </div>
             </article>

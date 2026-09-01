@@ -254,10 +254,11 @@ export async function generateSingleEliminationBracket(tournamentId: unknown) {
     await prisma.$transaction(async (tx) => {
       const tournament = await tx.tournament.findUnique({
         where: { id: parsedTournamentId.data },
-        include: { registrations: { where: { status: "CONFIRMED" }, orderBy: { createdAt: "asc" } } },
+        include: { registrations: { where: { status: "CONFIRMED", checkedIn: true }, orderBy: { createdAt: "asc" } } },
       });
       if (!tournament) throw new Error("TOURNAMENT_NOT_FOUND");
-      if (tournament.status !== "REGISTRATION_CLOSED") throw new Error("REGISTRATION_OPEN");
+      if (tournament.status === "CHECK_IN") throw new Error("CHECK_IN_NOT_LOCKED");
+      if (tournament.status !== "UPCOMING") throw new Error("CHECK_IN_REQUIRED");
       if (tournament.format !== "SINGLE_ELIMINATION") throw new Error("UNSUPPORTED_FORMAT");
 
       const existingMatches = await tx.match.count({ where: { tournamentId: tournament.id } });
@@ -299,10 +300,11 @@ export async function generateSingleEliminationBracket(tournamentId: unknown) {
       UNAUTHENTICATED: "You must be signed in.",
       FORBIDDEN: "You do not have permission to generate brackets.",
       TOURNAMENT_NOT_FOUND: "Tournament not found.",
-      REGISTRATION_OPEN: "Close registration before generating brackets.",
+      CHECK_IN_NOT_LOCKED: "Lock no-shows after check-in before generating a bracket.",
+      CHECK_IN_REQUIRED: "Complete tournament check-in before generating a bracket.",
       UNSUPPORTED_FORMAT: "This generator only supports single-elimination tournaments.",
       BRACKET_EXISTS: "A bracket has already been generated.",
-      NOT_ENOUGH_PARTICIPANTS: "At least two confirmed participants are required.",
+      NOT_ENOUGH_PARTICIPANTS: "At least two checked-in participants are required.",
     };
     if (known[message]) return { success: false, error: known[message] };
     console.error("Bracket generation failed", error);

@@ -2,6 +2,7 @@ import { CalendarDays, ChevronLeft, CircleDollarSign, Gamepad2, ShieldCheck, Use
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAdminTournamentDetail } from "@/features/admin/insights";
+import { AdminCheckInControls } from "./AdminCheckInControls";
 
 /* eslint-disable @next/next/no-img-element -- Admin avatars can originate from Telegram or Supabase. */
 
@@ -14,6 +15,8 @@ export default async function AdminTournamentDetailPage({ params }: { params: Pr
   }
 
   const { data: tournament } = result;
+  const confirmedCount = tournament.registrations.filter((registration) => registration.status === "CONFIRMED").length;
+  const checkedInCount = tournament.registrations.filter((registration) => registration.status === "CONFIRMED" && registration.checkedIn).length;
   return (
     <main className="velox-page">
       <header className="flex items-start gap-3">
@@ -25,12 +28,15 @@ export default async function AdminTournamentDetailPage({ params }: { params: Pr
         </div>
       </header>
 
-      <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <Stat icon={<Users className="h-5 w-5" aria-hidden />} label="Registrations" value={`${tournament._count.registrations}/${tournament.maxParticipants}`} />
-        <Stat icon={<ShieldCheck className="h-5 w-5" aria-hidden />} label="Confirmed" value={tournament.registrations.filter((registration) => registration.status === "CONFIRMED").length} />
+        <Stat icon={<ShieldCheck className="h-5 w-5" aria-hidden />} label="Confirmed" value={confirmedCount} />
+        <Stat icon={<ShieldCheck className="h-5 w-5" aria-hidden />} label="Checked in" value={checkedInCount} />
         <Stat icon={<CalendarDays className="h-5 w-5" aria-hidden />} label="Tournament starts" value={formatShortDate(tournament.startDate)} />
         <Stat icon={<CircleDollarSign className="h-5 w-5" aria-hidden />} label={tournament.isPaid ? "Entry fee" : "Prize pool"} value={`⭐ ${(tournament.isPaid ? tournament.entryFee : tournament.prizePool).toLocaleString()}`} />
       </section>
+
+      <AdminCheckInControls tournamentId={tournament.id} status={tournament.status} startDate={tournament.startDate} checkInPeriodMins={tournament.rules?.checkInPeriodMins ?? 60} checkedInCount={checkedInCount} confirmedCount={confirmedCount} />
 
       <section className="velox-card mt-6 overflow-hidden">
         <div className="border-b border-[#29342a] bg-[radial-gradient(circle_at_95%_0%,rgba(197,249,77,0.1),transparent_32%)] px-5 py-5"><div className="flex items-start justify-between gap-3"><div><p className="velox-eyebrow">Player roster</p><h2 className="mt-1 text-xl font-black text-white">Registered players</h2></div><StatusBadge value={tournament.status} /></div><p className="mt-2 text-sm text-[#8e998f]">Registrations are listed newest first. Confirmed players and check-ins are marked below.</p></div>

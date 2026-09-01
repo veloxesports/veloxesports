@@ -1,7 +1,8 @@
 import { CalendarDays, ChevronLeft, CircleDollarSign, Gamepad2, Info, ShieldCheck, Users } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getTournamentBySlug } from "@/features/tournaments/actions";
+import { getTournamentBySlug, getTournamentCheckInState } from "@/features/tournaments/actions";
+import { TournamentCheckInCard } from "./TournamentCheckInCard";
 
 export default async function TournamentDetailsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -9,6 +10,7 @@ export default async function TournamentDetailsPage({ params }: { params: Promis
   if (!result.success || !result.data) notFound();
 
   const tournament = result.data;
+  const checkInResult = tournament.status === "CHECK_IN" ? await getTournamentCheckInState(tournament.id) : null;
   const registrationOpen = tournament.status === "REGISTRATION_OPEN";
   const registrationLabel = registrationOpen
     ? tournament.isPaid ? `Join · ⭐ ${tournament.entryFee.toLocaleString()}` : "Join tournament"
@@ -48,6 +50,8 @@ export default async function TournamentDetailsPage({ params }: { params: Promis
         <Stat icon={<CalendarDays className="h-5 w-5" aria-hidden />} label="Closes" value={formatDate(tournament.registrationDeadline)} />
         <Stat icon={<CircleDollarSign className="h-5 w-5" aria-hidden />} label="Entry" value={tournament.isPaid ? `⭐ ${tournament.entryFee.toLocaleString()}` : "Free"} />
       </section>
+
+      {tournament.status === "CHECK_IN" && <TournamentCheckInCard tournamentId={tournament.id} state={checkInResult?.success ? checkInResult.data : null} />}
 
       {tournament.prizes.length > 0 && (
         <section className="velox-card mt-6 overflow-hidden">
