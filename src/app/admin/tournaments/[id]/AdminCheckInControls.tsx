@@ -46,7 +46,7 @@ export function AdminCheckInControls({
           setError(result.error ?? "Tournament check-in could not be updated.");
           return;
         }
-        setMessage(`${result.data.checkedInCount} checked in; ${result.data.noShowCount} no-shows locked.`);
+        setMessage(`${result.data.checkedInCount} checked in; ${result.data.noShowCount} no-shows locked.${result.data.bracketGenerated ? " Bracket generated." : ""}`);
       }
       router.refresh();
     });

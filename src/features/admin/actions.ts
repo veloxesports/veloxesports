@@ -7,6 +7,7 @@ import { requireRole } from "@/lib/auth/current-user";
 import { Prisma, TournamentFormat, TournamentParticipantType, TournamentStatus } from "@/lib/generated/prisma/client";
 import { getTournamentRulesTemplate } from "@/lib/tournaments/rule-templates";
 import { getCheckInWindow } from "@/lib/tournaments/check-in";
+import { generateSingleEliminationBracketInTransaction } from "@/lib/tournaments/bracket";
 import { refundStarsPayment } from "@/features/payments/actions";
 
 const administratorRoles = ["SUPER_ADMIN", "ADMIN"] as const;
@@ -685,7 +686,7 @@ export async function finalizeTournamentCheckIn(tournamentId: unknown) {
     const outcome = await prisma.$transaction(async (tx) => {
       const tournament = await tx.tournament.findUnique({
         where: { id: parsed.data },
-        select: { id: true, slug: true, title: true, status: true, startDate: true, rules: { select: { checkInPeriodMins: true } } },
+        select: { id: true, slug: true, title: true, status: true, format: true, startDate: true, rules: { select: { checkInPeriodMins: true } } },
       });
       if (!tournament) throw new Error("TOURNAMENT_NOT_FOUND");
       if (tournament.status !== "CHECK_IN") throw new Error("CHECK_IN_NOT_ACTIVE");
@@ -710,6 +711,8 @@ export async function finalizeTournamentCheckIn(tournamentId: unknown) {
 
       const checkedInCount = await tx.tournamentRegistration.count({ where: { tournamentId: tournament.id, status: "CONFIRMED", checkedIn: true } });
       await tx.tournament.update({ where: { id: tournament.id }, data: { status: "UPCOMING", currentParticipants: checkedInCount } });
+      const bracketGenerated = tournament.format === TournamentFormat.SINGLE_ELIMINATION && checkedInCount >= 2;
+      if (bracketGenerated) await generateSingleEliminationBracketInTransaction(tx, tournament.id);
       await tx.auditLog.create({
         data: {
           adminId: admin.id,
@@ -717,14 +720,14 @@ export async function finalizeTournamentCheckIn(tournamentId: unknown) {
           entity: "Tournament",
           entityId: tournament.id,
           oldValue: toAuditJson({ status: tournament.status }),
-          newValue: toAuditJson({ status: "UPCOMING", checkedIn: checkedInCount, noShows: noShows.length }),
+          newValue: toAuditJson({ status: "UPCOMING", checkedIn: checkedInCount, noShows: noShows.length, bracketGenerated }),
         },
       });
-      return { tournament, checkedInCount, noShowCount: noShows.length };
+      return { tournament, checkedInCount, noShowCount: noShows.length, bracketGenerated };
     }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
 
     revalidateTournamentCheckIn(outcome.tournament);
-    return { success: true, data: { checkedInCount: outcome.checkedInCount, noShowCount: outcome.noShowCount } };
+    return { success: true, data: { checkedInCount: outcome.checkedInCount, noShowCount: outcome.noShowCount, bracketGenerated: outcome.bracketGenerated } };
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
     const known: Record<string, string> = {
