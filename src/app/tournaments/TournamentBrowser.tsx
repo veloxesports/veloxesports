@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Calendar, ChevronRight, Gamepad2, Search, Trophy, Users } from "lucide-react";
+import { Calendar, ChevronDown, ChevronRight, Gamepad2, Search, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 
 type Game = { id: string; name: string };
@@ -82,7 +82,7 @@ export function TournamentBrowser({ tournaments, games }: { tournaments: Tournam
         {categories.map((item) => <button key={item.id} onClick={() => setCategory(item.id)} className={`h-12 shrink-0 rounded-xl px-5 text-sm font-black transition ${category === item.id ? "bg-[#c5f94d] text-[#090d09]" : "border border-[#2a352b] bg-[#111811] text-[#aeb8ad] hover:border-[#51644c] hover:text-white"}`}>{item.label}</button>)}
       </div>
 
-      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <div className="mt-2 grid grid-cols-3 gap-1.5 sm:gap-2">
         <FilterSelect ariaLabel="Game" value={gameId} onChange={setGameId} options={[{ value: "all", label: "All games" }, ...games.map((game) => ({ value: game.id, label: game.name }))]} />
         <FilterSelect ariaLabel="Format" value={format} onChange={setFormat} options={[{ value: "all", label: "All formats" }, ...formats.map((value) => ({ value, label: formatLabel(value) }))]} />
         <FilterSelect ariaLabel="Region" value={region} onChange={setRegion} options={[{ value: "all", label: "All regions" }, ...regions.map((value) => ({ value, label: value }))]} />
@@ -138,5 +138,12 @@ function EmptyState() {
 }
 
 function FilterSelect({ ariaLabel, value, onChange, options }: { ariaLabel: string; value: string; onChange: (value: string) => void; options: Array<{ value: string; label: string }> }) {
-  return <select aria-label={ariaLabel} value={value} onChange={(event) => onChange(event.target.value)} className="h-11 min-w-0 rounded-xl border border-[#2a352b] bg-[#111811] px-3 text-sm font-semibold text-[#c8d0c5] outline-none focus:border-[#c5f94d]">{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>;
+  return (
+    <div className="relative min-w-0">
+      <select aria-label={ariaLabel} value={value} onChange={(event) => onChange(event.target.value)} className="h-11 w-full min-w-0 appearance-none truncate rounded-xl border border-[#2a352b] bg-[#111811] px-2 pr-7 text-[10px] font-bold tracking-[-0.02em] text-[#c8d0c5] outline-none transition focus:border-[#c5f94d] focus:ring-2 focus:ring-[#c5f94d]/15 min-[360px]:px-2.5 min-[360px]:pr-8 min-[360px]:text-xs sm:px-3 sm:pr-9 sm:text-sm">
+        {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#aeb8ad] sm:right-3 sm:h-4 sm:w-4" aria-hidden />
+    </div>
+  );
 }
