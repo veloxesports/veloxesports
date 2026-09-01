@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, type FormEvent, type InputHTMLAttributes } from "react";
-import { CalendarDays, ChevronLeft, CircleAlert, Gamepad2, Plus, Swords, Trophy, Users } from "lucide-react";
+import { CalendarDays, ChevronLeft, CircleAlert, Gamepad2, Plus, RefreshCw, Swords, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cancelTournamentAndRefund, createGame, createTournament, setGameActive, setTournamentStatus } from "@/features/admin/actions";
 import { generateSingleEliminationBracket } from "@/features/matches/actions";
+import { getTournamentRulesTemplate } from "@/lib/tournaments/rule-templates";
 
 type Game = { id: string; name: string; slug: string; isActive: boolean };
 type Tournament = { id: string; title: string; status: string; format: string; isPaid: boolean; entryFee: number; startDate: Date; game: { name: string }; _count: { registrations: number; matches: number } };
@@ -16,11 +17,21 @@ const controlClass = "w-full rounded-2xl border border-[#344335] bg-[#080d09] px
 
 export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; tournaments: Tournament[] }) {
   const router = useRouter();
+  const activeGames = games.filter((game) => game.isActive);
   const [showCreate, setShowCreate] = useState(false);
   const [showGame, setShowGame] = useState(false);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedGameId, setSelectedGameId] = useState(() => activeGames[0]?.id ?? "");
+  const [rules, setRules] = useState(() => activeGames[0] ? getTournamentRulesTemplate(activeGames[0]) : "");
+  const selectedGame = activeGames.find((game) => game.id === selectedGameId);
+
+  function loadRulesForGame(gameId: string) {
+    const game = activeGames.find((candidate) => candidate.id === gameId);
+    setSelectedGameId(gameId);
+    setRules(game ? getTournamentRulesTemplate(game) : "");
+  }
 
   async function execute(action: () => Promise<{ success: boolean; error?: string; warning?: string }>, successMessage: string) {
     setPending(true);
@@ -71,12 +82,13 @@ export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; 
       format: form.get("format"),
       region: form.get("region"),
       gameMode: form.get("gameMode"),
-      rules: form.get("rules"),
+      rules,
       status: form.get("status"),
     }), "Tournament created and added to the operating queue.");
 
     if (success) {
       event.currentTarget.reset();
+      loadRulesForGame(activeGames[0]?.id ?? "");
       setShowCreate(false);
     }
   }
@@ -121,7 +133,7 @@ export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; 
           </div>
           <div className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
             <Input name="title" label="Tournament title" placeholder="Nightfall Championship" className="sm:col-span-2" required />
-            <Select name="gameId" label="Game" required>{games.filter((game) => game.isActive).map((game) => <option key={game.id} value={game.id}>{game.name}</option>)}</Select>
+            <Select name="gameId" label="Game" value={selectedGameId} onChange={(event) => loadRulesForGame(event.target.value)} required>{activeGames.length === 0 && <option value="">No active games</option>}{activeGames.map((game) => <option key={game.id} value={game.id}>{game.name}</option>)}</Select>
             <Select name="format" label="Format" defaultValue="SINGLE_ELIMINATION">{formats.map((format) => <option key={format} value={format}>{labelFor(format)}</option>)}</Select>
             <Input name="prizePool" label="Prize pool (XTR)" type="number" defaultValue="0" min="0" required />
             <Input name="entryFee" label="Entry fee (XTR)" type="number" defaultValue="0" min="0" required />
@@ -132,13 +144,15 @@ export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; 
             <DateTimeInput name="startDate" label="Tournament starts" />
             <Input name="region" label="Region" placeholder="Global" />
             <Input name="gameMode" label="Game mode" placeholder="1v1" />
-            <label className="grid gap-2 text-sm font-bold text-[#dce8d7] sm:col-span-2">Rules
-              <textarea name="rules" minLength={10} maxLength={10_000} rows={5} className={`${controlClass} resize-y`} placeholder="Tournament rules, check-in window, scoring and moderation requirements" />
+            <label className="grid gap-2 text-sm font-bold text-[#dce8d7] sm:col-span-2">
+              <span className="flex flex-wrap items-center justify-between gap-2">Tournament rules <button type="button" onClick={() => loadRulesForGame(selectedGameId)} disabled={!selectedGame} className="inline-flex items-center gap-1 rounded-lg border border-[#40503f] bg-[#142014] px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-[#c5f94d] transition hover:border-[#c5f94d] disabled:cursor-not-allowed disabled:opacity-50"><RefreshCw className="h-3.5 w-3.5" aria-hidden />Restore template</button></span>
+              <textarea name="rules" value={rules} onChange={(event) => setRules(event.target.value)} minLength={10} maxLength={10_000} rows={18} required className={`${controlClass} resize-y font-mono text-xs leading-relaxed`} placeholder="Choose a game to load its tournament rules." aria-describedby="rules-help" />
+              <span id="rules-help" className="text-xs font-medium leading-relaxed text-[#748173]">{selectedGame ? `${selectedGame.name} rules are loaded automatically. Review and edit this template before publishing; restoring it discards your current changes.` : "Select an active game to load its editable rules template."}</span>
             </label>
           </div>
           <div className="flex flex-col gap-3 border-t border-[#2a352b] bg-[#0d130e] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <p className="text-xs leading-relaxed text-[#7e8c7d]">Registration must close before the tournament start date.</p>
-            <button disabled={pending || games.filter((game) => game.isActive).length === 0} type="submit" className="velox-action shrink-0">{pending ? "Creating…" : "Create tournament"}</button>
+            <button disabled={pending || activeGames.length === 0} type="submit" className="velox-action shrink-0">{pending ? "Creating…" : "Create tournament"}</button>
           </div>
         </form>
       )}

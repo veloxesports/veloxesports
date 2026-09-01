@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/database/prisma";
 import { requireRole } from "@/lib/auth/current-user";
 import { Prisma, TournamentFormat, TournamentStatus } from "@/lib/generated/prisma/client";
+import { getTournamentRulesTemplate } from "@/lib/tournaments/rule-templates";
 import { refundStarsPayment } from "@/features/payments/actions";
 
 const administratorRoles = ["SUPER_ADMIN", "ADMIN"] as const;
@@ -364,8 +365,9 @@ export async function createTournament(input: unknown) {
   if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Enter valid tournament details." };
   try {
     const admin = await requireRole([...tournamentManagerRoles]);
-    const game = await prisma.game.findFirst({ where: { id: parsed.data.gameId, isActive: true }, select: { id: true } });
+    const game = await prisma.game.findFirst({ where: { id: parsed.data.gameId, isActive: true }, select: { id: true, name: true, slug: true } });
     if (!game) return { success: false, error: "Select an active game." };
+    const rules = parsed.data.rules ?? getTournamentRulesTemplate(game);
     const slug = await uniqueTournamentSlug(parsed.data.title);
     const tournament = await prisma.$transaction(async (tx) => {
       const created = await tx.tournament.create({
@@ -384,10 +386,10 @@ export async function createTournament(input: unknown) {
           gameMode: parsed.data.gameMode || null,
           status: parsed.data.status,
           organizerId: admin.id,
-          rules: parsed.data.rules ? { create: { content: parsed.data.rules } } : undefined,
+          rules: { create: { content: rules } },
         },
       });
-      await tx.auditLog.create({ data: { adminId: admin.id, action: "TOURNAMENT_CREATED", entity: "Tournament", entityId: created.id, newValue: toAuditJson({ ...parsed.data, slug }) } });
+      await tx.auditLog.create({ data: { adminId: admin.id, action: "TOURNAMENT_CREATED", entity: "Tournament", entityId: created.id, newValue: toAuditJson({ ...parsed.data, rules, slug }) } });
       return created;
     });
     revalidatePath("/tournaments");
