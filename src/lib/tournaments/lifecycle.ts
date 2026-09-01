@@ -87,7 +87,7 @@ async function lockNoShowsAndGenerateBracket(tournamentId: string, now: Date) {
         rules: { select: { checkInPeriodMins: true } },
       },
     });
-    if (!tournament || tournament.status !== "CHECK_IN") return { locked: 0, bracket: 0 };
+    if (!tournament || !["REGISTRATION_CLOSED", "CHECK_IN"].includes(tournament.status)) return { locked: 0, bracket: 0 };
     if (getCheckInWindow(tournament.startDate, tournament.rules?.checkInPeriodMins ?? 60, now).phase !== "CLOSED") {
       return { locked: 0, bracket: 0 };
     }
@@ -269,6 +269,20 @@ export async function runTournamentLifecycle(now = new Date()): Promise<Lifecycl
       summary.bracketsGenerated += outcome.bracket;
     } catch (error) {
       summary.warnings.push(`Could not generate a bracket for ${candidate.id}: ${error instanceof Error ? error.message : "unknown error"}`);
+    }
+  }
+
+  // Recover safely if a scheduler run was delayed past the whole check-in
+  // window: lock no-shows and build the bracket instead of leaving the event
+  // stranded in registration-closed state.
+  const missedCheckInCandidates = await prisma.tournament.findMany({ where: { status: "REGISTRATION_CLOSED", startDate: { lte: now } }, select: { id: true }, take: 100 });
+  for (const candidate of missedCheckInCandidates) {
+    try {
+      const outcome = await lockNoShowsAndGenerateBracket(candidate.id, now);
+      summary.noShowsLocked += outcome.locked;
+      summary.bracketsGenerated += outcome.bracket;
+    } catch (error) {
+      summary.warnings.push(`Could not recover check-in for ${candidate.id}: ${error instanceof Error ? error.message : "unknown error"}`);
     }
   }
 
