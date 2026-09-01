@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 const tournamentIdSchema = z.string().uuid();
+const publicTournamentStatuses: TournamentStatus[] = ["REGISTRATION_OPEN", "REGISTRATION_CLOSED", "UPCOMING", "CHECK_IN", "LIVE"];
 
 class TournamentRegistrationError extends Error {
   constructor(public code: "ALREADY_REGISTERED" | "FULL" | "REGISTRATION_CLOSED" | "PAID_TOURNAMENT") {
@@ -20,14 +21,12 @@ export async function getTournaments(options?: {
   isPaid?: boolean;
 }) {
   try {
-    const where: { gameId?: string; status?: TournamentStatus; isPaid?: boolean } = {};
-    
-    if (options?.gameId) where.gameId = options.gameId;
-    if (options?.status) where.status = options.status;
-    if (options?.isPaid !== undefined) where.isPaid = options.isPaid;
-
     const tournaments = await prisma.tournament.findMany({
-      where,
+      where: {
+        ...(options?.gameId ? { gameId: options.gameId } : {}),
+        status: options?.status ?? { in: publicTournamentStatuses },
+        ...(options?.isPaid !== undefined ? { isPaid: options.isPaid } : {}),
+      },
       include: {
         game: true,
       },

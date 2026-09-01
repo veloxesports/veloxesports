@@ -21,8 +21,8 @@ export function TelegramInit() {
       // These APIs are not available in older Telegram clients. The application
       // still renders correctly there, without triggering client-side warnings.
       if (webApp.isVersionAtLeast?.("6.1")) {
-        webApp.setHeaderColor("#000000");
-        webApp.setBackgroundColor("#000000");
+        webApp.setHeaderColor("#080d09");
+        webApp.setBackgroundColor("#080d09");
       }
 
       // initData is the only Telegram-provided client value sent to the server.

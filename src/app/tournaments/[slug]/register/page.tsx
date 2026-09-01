@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { use, useEffect, useState } from "react";
+import { CheckCircle2, ChevronLeft, CircleAlert, ShieldCheck, Users } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getTournamentBySlug, registerForFreeTournament } from "@/features/tournaments/actions";
 import { initiateTournamentPayment } from "@/features/payments/actions";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, CheckCircle2 } from "lucide-react";
-import Link from "next/link";
 
 type RegistrationTournament = {
   id: string;
@@ -15,12 +14,12 @@ type RegistrationTournament = {
   entryFee: number;
   maxParticipants: number;
   currentParticipants: number;
+  status: string;
 };
 
 export default function RegisterPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const router = useRouter();
-  
   const [tournament, setTournament] = useState<RegistrationTournament | null>(null);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
@@ -30,20 +29,25 @@ export default function RegisterPage({ params }: { params: Promise<{ slug: strin
   const [acceptedRules, setAcceptedRules] = useState(false);
 
   useEffect(() => {
-    async function load() {
-      const res = await getTournamentBySlug(slug);
-      if (res.success && res.data) {
-        setTournament(res.data);
+    let mounted = true;
+
+    void getTournamentBySlug(slug).then((result) => {
+      if (!mounted) return;
+      if (result.success && result.data) {
+        setTournament(result.data);
       } else {
         setError("Tournament not found.");
       }
       setLoading(false);
-    }
-    load();
+    });
+
+    return () => {
+      mounted = false;
+    };
   }, [slug]);
 
   const handleRegister = async () => {
-    if (!tournament) return;
+    if (!tournament || tournament.status !== "REGISTRATION_OPEN") return;
 
     if (!acceptedRules) {
       setError("Please accept the tournament rules before continuing.");
@@ -53,106 +57,107 @@ export default function RegisterPage({ params }: { params: Promise<{ slug: strin
     setRegistering(true);
     setError(null);
 
-    if (tournament.isPaid) {
-      const res = await initiateTournamentPayment(tournament.id);
-      if (res.success && res.data) {
-        if (window.Telegram?.WebApp) {
-          window.Telegram.WebApp.openInvoice(res.data.invoiceUrl, (status) => {
-            if (status === "paid") {
-              setPaymentSubmitted(true);
-              router.refresh();
-            } else if (status === "failed") {
-              setError("Telegram couldn't complete the payment. No registration was created.");
-            }
-          });
-        } else {
-          setError("Telegram Stars payments must be completed inside the Telegram app.");
+    try {
+      if (tournament.isPaid) {
+        const result = await initiateTournamentPayment(tournament.id);
+        if (!result.success || !result.data) {
+          setError(result.error || "We couldn't prepare this payment. Please try again.");
+          return;
         }
+
+        if (!window.Telegram?.WebApp) {
+          setError("Telegram Stars payments must be completed inside the Telegram app.");
+          return;
+        }
+
+        window.Telegram.WebApp.openInvoice(result.data.invoiceUrl, (status) => {
+          if (status === "paid") {
+            setPaymentSubmitted(true);
+            router.refresh();
+          } else if (status === "failed") {
+            setError("Telegram couldn't complete the payment. No registration was created.");
+          } else if (status === "cancelled") {
+            setError("Payment was cancelled. You have not been registered.");
+          }
+        });
       } else {
-        setError(res.error || "An error occurred");
+        const result = await registerForFreeTournament(tournament.id);
+        if (result.success) {
+          setSuccess(true);
+        } else {
+          setError(result.error || "We couldn't complete your registration. Please try again.");
+        }
       }
-    } else {
-      const res = await registerForFreeTournament(tournament.id);
-      if (res.success) {
-        setSuccess(true);
-      } else {
-        setError(res.error || "An error occurred");
-      }
+    } finally {
+      setRegistering(false);
     }
-    setRegistering(false);
   };
 
-  if (loading) return <div className="p-8 text-center text-gray-400">Loading...</div>;
-  if (error && !tournament) return <div className="p-8 text-center text-red-400">{error}</div>;
-  if (!tournament) return <div className="p-8 text-center text-gray-400">Tournament unavailable.</div>;
+  if (loading) {
+    return <main className="velox-page flex min-h-[60vh] items-center justify-center"><p className="text-sm font-bold text-[#9ca89a]">Loading tournament…</p></main>;
+  }
+
+  if (!tournament) {
+    return <Unavailable slug={slug} message={error || "Tournament unavailable."} />;
+  }
+
+  if (tournament.status !== "REGISTRATION_OPEN") {
+    return <Unavailable slug={slug} message="Registration is not open for this tournament." />;
+  }
 
   if (success || paymentSubmitted) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-black p-6">
-        <CheckCircle2 className="w-20 h-20 text-green-500 mb-6" />
-        <h1 className="text-2xl font-bold text-white text-center mb-2">
-          {success ? "Registration Confirmed!" : "Payment received"}
-        </h1>
-        <p className="text-gray-400 text-center mb-8">
-          {success
-            ? `You are officially registered for ${tournament.title}.`
-            : "Your registration will be confirmed after VELOX verifies Telegram's payment event."}
-        </p>
-        <Link href={`/tournaments/${slug}`} className="w-full">
-          <Button className="w-full bg-gray-800 text-white hover:bg-gray-700 font-bold py-6">
-            Back to Tournament
-          </Button>
-        </Link>
-      </div>
+      <main className="velox-page flex min-h-[72vh] items-center justify-center">
+        <section className="velox-card w-full max-w-md p-7 text-center">
+          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1f3119] text-[#c5f94d]"><CheckCircle2 className="h-9 w-9" aria-hidden /></span>
+          <p className="velox-eyebrow mt-6">You&apos;re in</p>
+          <h1 className="mt-2 text-3xl font-black tracking-[-0.05em] text-white">{success ? "Registration confirmed" : "Payment received"}</h1>
+          <p className="mt-3 text-sm leading-relaxed text-[#aeb8ad]">{success ? `You are registered for ${tournament.title}.` : "VELOX is verifying Telegram's payment event and will confirm your entry shortly."}</p>
+          <Link href={`/tournaments/${slug}`} className="velox-action mt-7 w-full">Back to tournament</Link>
+        </section>
+      </main>
     );
   }
 
+  const availableSlots = Math.max(0, tournament.maxParticipants - tournament.currentParticipants);
+  const hasSlots = availableSlots > 0;
+
   return (
-    <div className="flex flex-col min-h-screen bg-black p-4">
-      <header className="flex items-center gap-4 mb-8">
-        <button onClick={() => router.back()} className="w-10 h-10 rounded-full bg-gray-900 border border-white/10 flex items-center justify-center text-white">
-          <ChevronLeft className="w-6 h-6" />
-        </button>
-        <h1 className="text-xl font-bold text-white">Register</h1>
+    <main className="velox-page pb-36">
+      <header className="flex items-center gap-3">
+        <button type="button" onClick={() => router.back()} className="velox-muted-button flex h-10 w-10 shrink-0 p-0" aria-label="Back to tournament"><ChevronLeft className="h-5 w-5" aria-hidden /></button>
+        <div><p className="velox-eyebrow">Secure entry</p><h1 className="mt-1 text-2xl font-black tracking-[-0.04em] text-white">Register</h1></div>
       </header>
 
-      <div className="bg-gray-900 border border-white/10 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
-        <div>
-          <span className="text-[#c5f94d] font-bold text-xs uppercase mb-1 block">Selected Tournament</span>
-          <h2 className="text-2xl font-black text-white">{tournament.title}</h2>
+      <section className="velox-card mt-6 overflow-hidden">
+        <div className="border-b border-[#29342a] bg-[#142010] px-5 py-5">
+          <p className="velox-eyebrow">Selected tournament</p>
+          <h2 className="mt-2 text-2xl font-black tracking-[-0.04em] text-white">{tournament.title}</h2>
         </div>
-
-        <div className="bg-black/50 rounded-xl p-4 flex flex-col gap-3">
-          <div className="flex justify-between">
-            <span className="text-gray-400">Entry Fee</span>
-            <span className="font-bold text-white">{tournament.isPaid ? `⭐ ${tournament.entryFee}` : 'Free'}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">Available Slots</span>
-            <span className="font-bold text-white">{tournament.maxParticipants - tournament.currentParticipants}</span>
-          </div>
+        <div className="divide-y divide-[#29342a] px-5">
+          <Summary label="Entry" value={tournament.isPaid ? `⭐ ${tournament.entryFee.toLocaleString()} Telegram Stars` : "Free"} />
+          <Summary label="Available slots" value={`${availableSlots} of ${tournament.maxParticipants}`} />
         </div>
-        
-        {error && <div className="bg-red-500/10 text-red-500 p-3 rounded-xl text-sm border border-red-500/20">{error}</div>}
+      </section>
 
-        <label className="flex items-start gap-3 rounded-xl bg-black/30 p-3 text-sm text-gray-300 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={acceptedRules}
-            onChange={(event) => setAcceptedRules(event.target.checked)}
-            className="mt-0.5 h-4 w-4 accent-[#c5f94d]"
-          />
-          <span>I have read and accept the VELOX tournament rules and terms of service.</span>
-        </label>
+      {error && <div role="alert" className="mt-5 flex items-start gap-3 rounded-2xl border border-[#6e342d] bg-[#331d1a] p-4 text-sm leading-relaxed text-[#ffd1c7]"><CircleAlert className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />{error}</div>}
 
-        <Button 
-          onClick={handleRegister} 
-          disabled={registering || !acceptedRules}
-          className="w-full bg-[#c5f94d] hover:bg-[#d5ff70] text-[#090d09] font-bold py-6 text-lg shadow-[0_0_20px_rgba(197,249,77,0.22)] mt-2"
-        >
-          {registering ? "Preparing..." : tournament.isPaid ? `Pay ⭐ ${tournament.entryFee} with Telegram Stars` : "Confirm Free Registration"}
-        </Button>
-      </div>
-    </div>
+      <label className="velox-card mt-5 flex cursor-pointer items-start gap-3 p-4 text-sm leading-relaxed text-[#c9d3c4]">
+        <input type="checkbox" checked={acceptedRules} onChange={(event) => setAcceptedRules(event.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[#c5f94d]" />
+        <span>I have read and accept the VELOX tournament rules and terms of service.</span>
+      </label>
+
+      <section className="mt-5 flex items-start gap-3 rounded-2xl border border-[#2e4722] bg-[#12200e] p-4"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#203318] text-[#c5f94d]"><ShieldCheck className="h-5 w-5" aria-hidden /></span><p className="text-sm leading-relaxed text-[#aeb8ad]">Payments are completed securely through Telegram. VELOX never asks for payment details in chat.</p></section>
+
+      <div className="fixed inset-x-0 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-40 px-5 sm:px-8"><div className="mx-auto w-full max-w-3xl rounded-2xl bg-[#080d09]/90 p-1.5 backdrop-blur"><button type="button" onClick={handleRegister} disabled={registering || !acceptedRules || !hasSlots} className="velox-action w-full disabled:cursor-not-allowed disabled:opacity-45">{registering ? "Preparing…" : !hasSlots ? "Tournament is full" : tournament.isPaid ? `Pay ⭐ ${tournament.entryFee.toLocaleString()} with Telegram Stars` : "Confirm free registration"}</button></div></div>
+    </main>
   );
+}
+
+function Summary({ label, value }: { label: string; value: string }) {
+  return <div className="flex items-center justify-between gap-4 py-4"><span className="text-sm text-[#9ca89a]">{label}</span><span className="text-right text-sm font-black text-white">{value}</span></div>;
+}
+
+function Unavailable({ slug, message }: { slug: string; message: string }) {
+  return <main className="velox-page flex min-h-[68vh] items-center justify-center"><section className="velox-card w-full max-w-md p-7 text-center"><span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1d2c1a] text-[#c5f94d]"><Users className="h-7 w-7" aria-hidden /></span><p className="velox-eyebrow mt-5">Entry unavailable</p><h1 className="mt-2 text-2xl font-black text-white">Registration is closed</h1><p className="mt-3 text-sm leading-relaxed text-[#aeb8ad]">{message}</p><Link href={`/tournaments/${slug}`} className="velox-action mt-6 w-full">Back to tournament</Link></section></main>;
 }

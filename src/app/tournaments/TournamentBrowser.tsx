@@ -42,6 +42,7 @@ export function TournamentBrowser({ tournaments, games }: { tournaments: Tournam
   const [gameId, setGameId] = useState<string>("all");
   const [format, setFormat] = useState("all");
   const [region, setRegion] = useState("all");
+  const sectionTitle = category === "all" ? "Available tournaments" : category === "live" ? "Live now" : category === "upcoming" ? "Upcoming tournaments" : "Tournaments";
 
   const formats = useMemo(() => [...new Set(tournaments.map((tournament) => tournament.format))], [tournaments]);
   const regions = useMemo(() => [...new Set(tournaments.map((tournament) => tournament.region).filter((value): value is string => Boolean(value)))], [tournaments]);
@@ -88,7 +89,7 @@ export function TournamentBrowser({ tournaments, games }: { tournaments: Tournam
       </div>
 
       <div className="mt-8 flex items-baseline justify-between gap-3">
-        <h2 className="text-lg font-black uppercase tracking-[0.07em] text-white">Open for registration</h2>
+        <h2 className="text-lg font-black uppercase tracking-[0.07em] text-white">{sectionTitle}</h2>
         <p className="text-xs font-black uppercase tracking-[0.1em] text-[#8e998f]">{filtered.length} {filtered.length === 1 ? "event" : "events"}</p>
       </div>
       <section className="mt-4 grid gap-4 sm:grid-cols-2">
