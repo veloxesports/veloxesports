@@ -63,10 +63,8 @@ export default async function TournamentDetailsPage({ params }: { params: Promis
 
       <section className="velox-card mt-6 flex items-start gap-3 p-5"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1f3119] text-[#c5f94d]"><ShieldCheck className="h-5 w-5" aria-hidden /></span><p className="text-sm leading-relaxed text-[#aeb8ad]">Registration is confirmed only after VELOX verifies your entry. Telegram Stars payments are never collected outside Telegram.</p></section>
 
-      <div className="fixed inset-x-0 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-40 px-5 sm:px-8">
-        <div className="mx-auto w-full max-w-3xl rounded-2xl bg-[#080d09]/90 p-1.5 backdrop-blur">
-          {registrationOpen ? <Link href={`/tournaments/${tournament.slug}/register`} className="velox-action w-full text-base">{registrationLabel}</Link> : <span className="flex w-full items-center justify-center rounded-2xl border border-[#2f3930] bg-[#151c15] px-4 py-3 text-sm font-black text-[#788477]">{registrationLabel}</span>}
-        </div>
+      <div className="mt-6">
+        {registrationOpen ? <Link href={`/tournaments/${tournament.slug}/register`} className="velox-action w-full text-base">{registrationLabel}</Link> : <span className="flex w-full items-center justify-center rounded-2xl border border-[#2f3930] bg-[#151c15] px-4 py-3 text-sm font-black text-[#788477]">{registrationLabel}</span>}
       </div>
     </main>
   );
