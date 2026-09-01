@@ -1,19 +1,14 @@
 import { getPlayerProfile } from "@/features/profile/actions";
-import { User, Trophy, Gamepad2, Swords, Medal, Gift } from "lucide-react";
+import { Trophy, Gamepad2, Swords, Medal, Gift } from "lucide-react";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
+import { TelegramAccessRequired } from "@/components/auth/TelegramAccessRequired";
 import Link from "next/link";
 
 export default async function ProfilePage() {
   const res = await getPlayerProfile();
   
   if (!res.success || !res.data) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-black p-4 text-center">
-        <User className="w-16 h-16 text-gray-700 mb-4" />
-        <h1 className="text-xl font-bold text-white mb-2">Profile Unavailable</h1>
-        <p className="text-gray-500">We couldn&apos;t load your profile data.</p>
-      </div>
-    );
+    return <TelegramAccessRequired title="Profile needs Telegram" message={res.error ?? "Open VELOX in Telegram to view your player profile."} />;
   }
 
   const { profile, achievements } = res.data;

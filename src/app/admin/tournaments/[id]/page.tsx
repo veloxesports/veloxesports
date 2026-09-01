@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAdminTournamentDetail } from "@/features/admin/insights";
 
+/* eslint-disable @next/next/no-img-element -- Admin avatars can originate from Telegram or Supabase. */
+
 export default async function AdminTournamentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const result = await getAdminTournamentDetail(id);

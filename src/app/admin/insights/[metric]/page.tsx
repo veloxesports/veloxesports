@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { getAdminInsight, isAdminInsightMetric, type AdminInsightItem } from "@/features/admin/insights";
 import { PlayerModerationControls } from "./PlayerModerationControls";
 
+/* eslint-disable @next/next/no-img-element -- Admin avatars can originate from Telegram or Supabase. */
+
 export default async function AdminInsightPage({ params }: { params: Promise<{ metric: string }> }) {
   const { metric } = await params;
   if (!isAdminInsightMetric(metric)) notFound();

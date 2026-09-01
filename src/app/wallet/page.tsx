@@ -1,18 +1,12 @@
 import { getWalletSummary } from "@/features/wallet/services";
-import { Wallet as WalletIcon } from "lucide-react";
 import { WalletHistory } from "@/features/wallet/WalletHistory";
+import { TelegramAccessRequired } from "@/components/auth/TelegramAccessRequired";
 
 export default async function WalletPage() {
   const res = await getWalletSummary();
 
   if (!res.success || !res.data) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-black p-4 text-center">
-        <WalletIcon className="w-16 h-16 text-gray-700 mb-4" />
-        <h1 className="text-xl font-bold text-white mb-2">Wallet Unavailable</h1>
-        <p className="text-gray-500">We couldn&apos;t load your wallet data. Please try again later.</p>
-      </div>
-    );
+    return <TelegramAccessRequired title="Wallet needs Telegram" message={res.error ?? "Open VELOX in Telegram to view your Stars activity."} />;
   }
 
   const { wallet, transactions } = res.data;

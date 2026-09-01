@@ -13,6 +13,7 @@ export default function SettingsPage() {
   const [country, setCountry] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [signedIn, setSignedIn] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [discordUsername, setDiscordUsername] = useState<string | null>(null);
   const [disconnectingDiscord, setDisconnectingDiscord] = useState(false);
@@ -20,10 +21,12 @@ export default function SettingsPage() {
   useEffect(() => {
     void getPlayerProfile().then((result) => {
       if (result.success && result.data) {
+        setSignedIn(true);
         setUsername(result.data.profile.veloxUsername || "");
         setCountry(result.data.profile.country || "");
         setDiscordUsername(result.data.profile.discordUsername || null);
       } else {
+        setSignedIn(false);
         setMessage(result.error || "We couldn't load your profile.");
       }
       const discordStatus = new URLSearchParams(window.location.search).get("discord");
@@ -94,7 +97,7 @@ export default function SettingsPage() {
                 type="text" 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                disabled={loading}
+                disabled={loading || !signedIn}
                 placeholder="Your VELOX username"
                 className="bg-[#090d09] border border-[#2a352b] rounded-xl px-4 py-3 text-white text-sm font-medium focus:outline-none focus:border-[#c5f94d] transition-colors"
               />
@@ -106,13 +109,13 @@ export default function SettingsPage() {
                 type="text" 
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
-                disabled={loading}
+                disabled={loading || !signedIn}
                 placeholder="Country or region"
                 className="bg-[#090d09] border border-[#2a352b] rounded-xl px-4 py-3 text-white text-sm font-medium focus:outline-none focus:border-[#c5f94d] transition-colors"
               />
             </div>
 
-            <Button type="submit" disabled={saving || loading} className="bg-[#c5f94d] hover:bg-[#d5ff70] text-[#090d09] font-bold w-full mt-2">
+            <Button type="submit" disabled={saving || loading || !signedIn} className="bg-[#c5f94d] hover:bg-[#d5ff70] text-[#090d09] font-bold w-full mt-2">
               {saving ? "Saving..." : loading ? "Loading..." : "Save Changes"}
             </Button>
             {message && <p className="text-sm text-gray-400 text-center" role="status">{message}</p>}
@@ -136,7 +139,7 @@ export default function SettingsPage() {
                   <span className="text-xs text-gray-400">{discordUsername ? `Connected as ${discordUsername}` : "Not connected"}</span>
                 </div>
               </div>
-              <Button onClick={handleDiscord} disabled={loading || disconnectingDiscord} size="sm" variant="outline" className="border-[#5865F2] text-[#5865F2] hover:bg-[#5865F2] hover:text-white">
+              <Button onClick={handleDiscord} disabled={loading || !signedIn || disconnectingDiscord} size="sm" variant="outline" className="border-[#5865F2] text-[#5865F2] hover:bg-[#5865F2] hover:text-white">
                 {disconnectingDiscord ? "Disconnecting..." : discordUsername ? "Disconnect" : "Connect"}
               </Button>
             </div>

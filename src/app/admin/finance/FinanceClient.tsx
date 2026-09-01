@@ -34,6 +34,7 @@ export function FinanceClient({ initialData }: { initialData: FinanceData }) {
   }), [initialData.payments, query, status]);
 
   async function refund(paymentId: string) {
+    if (!window.confirm("Refund this Telegram Stars payment? This sends the refund through Telegram and updates the permanent ledger.")) return;
     setPendingId(paymentId);
     const result = await refundStarsPayment(paymentId);
     setPendingId(null);

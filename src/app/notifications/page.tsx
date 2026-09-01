@@ -18,7 +18,7 @@ export default async function NotificationsPage() {
       {result.success && result.data ? (
         <NotificationsList initialNotifications={result.data} />
       ) : (
-        <div className="rounded-2xl border border-white/5 bg-gray-900 p-8 text-center text-sm text-gray-400">
+        <div className="velox-card p-8 text-center text-sm text-[#8e998f]">
           {result.error || "We couldn't load your alerts."}
         </div>
       )}
