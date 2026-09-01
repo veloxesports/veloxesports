@@ -7,6 +7,7 @@ import { Prisma, Role } from "@/lib/generated/prisma/client";
 import { requireCurrentUser, requireRole } from "@/lib/auth/current-user";
 import { createEvidenceSignedUrl, uploadMatchEvidence, validateEvidenceFile } from "@/lib/database/supabase";
 import { addXpToUser, checkAndAwardAchievements } from "@/features/profile/xp";
+import { canConfirmPendingMatchResult, canSubmitMatchResult, isAwaitingOpponentConfirmation, nextBracketSlotForWinner } from "@/lib/matches/flow";
 
 const idSchema = z.string().uuid();
 const resultSchema = z.object({
@@ -73,7 +74,11 @@ async function advanceSingleEliminationWinner(
   match: MatchForAdvancement,
   winnerId: string,
 ) {
-  if (match.bracketPosition === null) return;
+  const bracketPosition = match.bracketPosition;
+  if (bracketPosition === null) return;
+
+  const slot = nextBracketSlotForWinner(match, winnerId);
+  if (!slot) return;
 
   const tournament = await tx.tournament.findUnique({
     where: { id: match.tournamentId },
@@ -85,13 +90,11 @@ async function advanceSingleEliminationWinner(
     where: {
       tournamentId: match.tournamentId,
       round: match.round + 1,
-      bracketPosition: Math.floor(match.bracketPosition / 2),
+      bracketPosition: Math.floor(bracketPosition / 2),
     },
   });
   if (!nextMatch) return;
 
-  const advancesIntoFirstSlot = match.bracketPosition % 2 === 0;
-  const slot = advancesIntoFirstSlot ? "player1Id" : "player2Id";
   const existingParticipant = nextMatch[slot];
   if (existingParticipant && existingParticipant !== winnerId) {
     throw new Error("BRACKET_CONFLICT");
@@ -163,7 +166,7 @@ async function createPendingResult(
     const match = await tx.match.findUnique({ where: { id: input.matchId } });
     if (!match) throw new Error("MATCH_NOT_FOUND");
     if (!await userCanActInMatch(tx, userId, match)) throw new Error("NOT_PARTICIPANT");
-    if (!['SCHEDULED', 'READY', 'LIVE'].includes(match.status)) throw new Error("MATCH_NOT_ACTIVE");
+    if (!canSubmitMatchResult(match.status)) throw new Error("MATCH_NOT_ACTIVE");
 
     const participants = [match.player1Id, match.player2Id, match.team1Id, match.team2Id];
     if (!participants.includes(input.winnerId)) throw new Error("INVALID_WINNER");
@@ -365,7 +368,7 @@ export async function confirmMatchResult(matchId: unknown) {
       const match = await tx.match.findUnique({ where: { id: parsedMatchId.data } });
       if (!match) throw new Error("MATCH_NOT_FOUND");
       if (!await userCanActInMatch(tx, user.id, match)) throw new Error("NOT_PARTICIPANT");
-      if (match.status !== "AWAITING_RESULT") throw new Error("MATCH_NOT_ACTIVE");
+      if (!isAwaitingOpponentConfirmation(match.status)) throw new Error("MATCH_NOT_ACTIVE");
 
       const result = await tx.matchResult.findFirst({
         where: { matchId: match.id, status: "PENDING_CONFIRMATION" },
@@ -410,6 +413,8 @@ export async function confirmMatchResult(matchId: unknown) {
     await Promise.all([...outcome.winnerIds, ...outcome.loserIds].map((userId) => checkAndAwardAchievements(userId)));
     revalidatePath(`/matches/${parsedMatchId.data}`);
     revalidatePath("/matches");
+    revalidatePath("/leaderboard");
+    revalidatePath("/profile");
     return { success: true };
   } catch (error) {
     const knownError = knownMatchError(error);
@@ -429,6 +434,7 @@ export async function rejectMatchResult(matchId: unknown) {
       const match = await tx.match.findUnique({ where: { id: parsedMatchId.data } });
       if (!match) throw new Error("MATCH_NOT_FOUND");
       if (!await userCanActInMatch(tx, user.id, match)) throw new Error("NOT_PARTICIPANT");
+      if (!isAwaitingOpponentConfirmation(match.status)) throw new Error("MATCH_NOT_ACTIVE");
       const result = await tx.matchResult.findFirst({ where: { matchId: match.id, status: "PENDING_CONFIRMATION" } });
       if (!result) throw new Error("RESULT_NOT_FOUND");
       if (result.submitterId === user.id) throw new Error("RESULT_SUBMITTER");
@@ -549,13 +555,13 @@ export async function resolveDispute(input: unknown) {
             newValue: { winnerId: parsed.data.winnerId, score1: parsed.data.score1!, score2: parsed.data.score2!, resolutionNotes: parsed.data.resolutionNotes },
           },
         });
-        return { winnerIds, loserIds };
+        return { winnerIds, loserIds, matchId: match.id };
       } else {
         await tx.match.update({ where: { id: match.id }, data: { status: "UNDER_REVIEW" } });
         await tx.auditLog.create({
           data: { adminId: moderator.id, action: "DISPUTE_CLOSED", entity: "Dispute", entityId: dispute.id, newValue: { resolutionNotes: parsed.data.resolutionNotes } },
         });
-        return { winnerIds: [], loserIds: [] };
+        return { winnerIds: [], loserIds: [], matchId: match.id };
       }
     }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
     await Promise.all([
@@ -563,6 +569,10 @@ export async function resolveDispute(input: unknown) {
       ...outcome.loserIds.map((userId) => addXpToUser(userId, 10)),
     ]);
     await Promise.all([...outcome.winnerIds, ...outcome.loserIds].map((userId) => checkAndAwardAchievements(userId)));
+    revalidatePath(`/matches/${outcome.matchId}`);
+    revalidatePath("/matches");
+    revalidatePath("/leaderboard");
+    revalidatePath("/profile");
     return { success: true };
   } catch (error) {
     const knownError = knownMatchError(error);
@@ -633,8 +643,8 @@ export async function getMatchDetails(matchId: unknown) {
           winnerId: pendingResult.winnerId,
           comment: pendingResult.comment,
         },
-        canSubmit: canAct && ["SCHEDULED", "READY", "LIVE"].includes(match.status),
-        canConfirm: canAct && pendingResult?.submitterId !== user.id,
+        canSubmit: canAct && canSubmitMatchResult(match.status),
+        canConfirm: canAct && canConfirmPendingMatchResult(match.status, pendingResult?.submitterId, user.id),
         canDispute: canAct && ["AWAITING_RESULT", "UNDER_REVIEW", "DISPUTED"].includes(match.status),
         hasOpenDispute: match.disputes.length > 0,
         evidence,

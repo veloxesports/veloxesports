@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { ChevronRight, MapPin, Swords } from "lucide-react";
 import Link from "next/link";
+import { matchCenterScoreLabel } from "@/lib/matches/flow";
 
 type Match = {
   id: string;
@@ -54,7 +55,7 @@ function MatchCard({ match }: { match: Match }) {
           <span className="text-[10px] font-black uppercase tracking-[0.09em] text-[#899489]">{date}</span>
         </div>
         <p className="mt-5 text-[11px] font-black uppercase tracking-[0.12em] text-[#aeb8ad]">{match.gameName} · Round {match.round} · {match.tournamentTitle}</p>
-        <div className="mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-3"><Participant participant={match.player1} score={match.score1} align="left" /><div className="text-center"><span className="text-lg font-black text-[#8e998f]">{isCompleted || isLive ? `${match.score1 ?? 0} – ${match.score2 ?? 0}` : "VS"}</span></div><Participant participant={match.player2} score={match.score2} align="right" /></div>
+        <div className="mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-3"><Participant participant={match.player1} score={match.score1} align="left" /><div className="text-center"><span className="text-lg font-black text-[#8e998f]">{matchCenterScoreLabel(match.status, match.score1, match.score2)}</span></div><Participant participant={match.player2} score={match.score2} align="right" /></div>
         <div className="mt-6 flex items-center justify-between border-t border-[#29342a] pt-4"><span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#8e998f]"><MapPin className="h-4 w-4" aria-hidden /> Online arena</span><ChevronRight className="h-5 w-5 text-[#c5f94d] transition group-hover:translate-x-0.5" aria-hidden /></div>
       </article>
     </Link>
