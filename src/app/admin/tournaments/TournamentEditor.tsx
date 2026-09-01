@@ -11,6 +11,8 @@ type Tournament = {
   title: string;
   status: string;
   format: string;
+  participantType: "INDIVIDUAL" | "TEAM";
+  teamSize: number;
   isPaid: boolean;
   entryFee: number;
   prizePool: number;
@@ -24,6 +26,7 @@ type Tournament = {
 };
 
 const formats = ["SINGLE_ELIMINATION", "DOUBLE_ELIMINATION", "ROUND_ROBIN", "LEAGUE", "SWISS", "BATTLE_ROYALE", "CUSTOM"];
+const participantTypes = ["INDIVIDUAL", "TEAM"];
 const controlClass = "w-full rounded-2xl border border-[#344335] bg-[#080d09] px-3.5 py-3 text-sm text-white outline-none transition placeholder:text-[#6f796f] focus:border-[#c5f94d] focus:ring-2 focus:ring-[#c5f94d]/15 disabled:cursor-not-allowed disabled:opacity-60";
 
 export function TournamentEditor({ tournament, games, onClose }: { tournament: Tournament; games: Game[]; onClose: () => void }) {
@@ -55,6 +58,8 @@ export function TournamentEditor({ tournament, games, onClose }: { tournament: T
       registrationDeadline,
       startDate,
       format: form.get("format"),
+      participantType: form.get("participantType"),
+      teamSize: form.get("teamSize"),
       region: form.get("region"),
       gameMode: form.get("gameMode"),
       rules,
@@ -81,10 +86,12 @@ export function TournamentEditor({ tournament, games, onClose }: { tournament: T
         <Input name="title" label="Tournament title" defaultValue={tournament.title} className="sm:col-span-2" required />
         <Select name="gameId" label="Game" defaultValue={tournament.game.id} required>{games.map((game) => <option key={game.id} value={game.id} disabled={!game.isActive && game.id !== tournament.game.id}>{game.name}{!game.isActive ? " (inactive)" : ""}</option>)}</Select>
         <Select name="format" label="Format" defaultValue={tournament.format}>{formats.map((format) => <option key={format} value={format}>{labelFor(format)}</option>)}</Select>
+        <Select name="participantType" label="Entry type" defaultValue={tournament.participantType}>{participantTypes.map((type) => <option key={type} value={type}>{type === "TEAM" ? "Team roster" : "Individual players"}</option>)}</Select>
         <Input name="prizePool" label="Prize pool (XTR)" type="number" defaultValue={tournament.prizePool} min="0" required />
         <Input name="entryFee" label="Entry fee (XTR)" type="number" defaultValue={tournament.entryFee} min="0" required />
         <label className="flex items-center gap-3 rounded-2xl border border-[#344335] bg-[#131b14] px-4 py-3 text-sm font-bold text-[#dce8d7] sm:col-span-2"><input name="isPaid" type="checkbox" defaultChecked={tournament.isPaid} className="h-4 w-4 accent-[#c5f94d]" />Paid tournament — collect the entry fee through Telegram Stars.</label>
-        <Input name="maxParticipants" label="Maximum players" type="number" defaultValue={tournament.maxParticipants} min="2" required />
+        <Input name="maxParticipants" label="Maximum entries" type="number" defaultValue={tournament.maxParticipants} min="2" required />
+        <Input name="teamSize" label="Required roster size" type="number" defaultValue={tournament.teamSize} min="1" max="20" required />
         <Input name="checkInPeriodMins" label="Check-in window (minutes)" type="number" defaultValue={tournament.rules?.checkInPeriodMins ?? 60} min="5" max="1440" required />
         <DateTimeInput name="registrationDeadline" label="Registration closes" defaultValue={tournament.registrationDeadline} />
         <DateTimeInput name="startDate" label="Tournament starts" defaultValue={tournament.startDate} />

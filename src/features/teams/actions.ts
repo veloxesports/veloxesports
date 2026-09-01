@@ -4,6 +4,7 @@ import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/database/prisma";
+import type { Prisma } from "@/lib/generated/prisma/client";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 
 const teamIdSchema = z.string().uuid();
@@ -19,6 +20,18 @@ function newInviteCode() {
 
 function revalidateTeams() {
   revalidatePath("/teams");
+}
+
+async function teamRosterIsLocked(tx: Prisma.TransactionClient, teamId: string) {
+  const registration = await tx.tournamentRegistration.findFirst({
+    where: {
+      teamId,
+      status: "CONFIRMED",
+      tournament: { status: { notIn: ["COMPLETED", "CANCELLED"] } },
+    },
+    select: { id: true },
+  });
+  return Boolean(registration);
 }
 
 export async function getMyTeams() {
@@ -160,6 +173,7 @@ export async function redeemTeamInvite(code: unknown) {
 
       const existing = await tx.teamMember.findUnique({ where: { teamId_userId: { teamId: invite.teamId, userId: user.id } } });
       if (existing) throw new Error("ALREADY_MEMBER");
+      if (await teamRosterIsLocked(tx, invite.teamId)) throw new Error("ROSTER_LOCKED");
 
       const updatedInvite = await tx.teamInvite.updateMany({
         where: { id: invite.id, uses: { lt: invite.maxUses }, expiresAt: { gt: new Date() } },
@@ -177,6 +191,7 @@ export async function redeemTeamInvite(code: unknown) {
     if (message === "UNAUTHENTICATED") return { success: false, error: "Open VELOX in Telegram to join a team." };
     if (message === "INVITE_INVALID") return { success: false, error: "That invite is expired, used, or invalid." };
     if (message === "ALREADY_MEMBER") return { success: false, error: "You are already a member of this team." };
+    if (message === "ROSTER_LOCKED") return { success: false, error: "This roster is locked while it has an active tournament entry." };
     console.error("Team invite redemption failed", error);
     return { success: false, error: "We couldn't join the team. Please try again." };
   }
@@ -192,6 +207,7 @@ export async function leaveTeam(teamId: unknown) {
       const membership = await tx.teamMember.findUnique({ where: { teamId_userId: { teamId: parsed.data, userId: user.id } } });
       if (!membership) throw new Error("NOT_MEMBER");
       if (membership.role === "CAPTAIN") throw new Error("CAPTAIN_MUST_TRANSFER");
+      if (await teamRosterIsLocked(tx, parsed.data)) throw new Error("ROSTER_LOCKED");
       await tx.teamMember.delete({ where: { id: membership.id } });
     });
     revalidateTeams();
@@ -200,6 +216,7 @@ export async function leaveTeam(teamId: unknown) {
     const message = error instanceof Error ? error.message : "";
     if (message === "NOT_MEMBER") return { success: false, error: "You are not a member of this team." };
     if (message === "CAPTAIN_MUST_TRANSFER") return { success: false, error: "Transfer captaincy before leaving this team." };
+    if (message === "ROSTER_LOCKED") return { success: false, error: "This roster is locked while it has an active tournament entry." };
     if (message === "UNAUTHENTICATED") return { success: false, error: "Open VELOX in Telegram to manage your teams." };
     console.error("Leave team failed", error);
     return { success: false, error: "We couldn't leave the team. Please try again." };

@@ -6,6 +6,8 @@ import { Prisma } from "@/lib/generated/prisma/client";
 import { answerPreCheckoutQuery, refundTelegramStarsPayment } from "@/lib/telegram/bot";
 import { createLedgerTransactionInTransaction } from "@/features/wallet/services";
 import { canAcceptTournamentRegistration, invoicePayloadSchema, isVerifiedStarsPaymentEvent, paymentIdFromInvoicePayload } from "@/lib/payments/validation";
+import { TournamentParticipantType } from "@/lib/generated/prisma/client";
+import { validateTeamEntry } from "@/lib/tournaments/team-registration";
 
 export const runtime = "nodejs";
 
@@ -172,10 +174,49 @@ async function processSuccessfulPayment(
       throw new Error("PAYMENT_WITHOUT_TOURNAMENT");
     }
 
+    let teamId: string | null = null;
+    if (payment.tournament.participantType === TournamentParticipantType.TEAM) {
+      try {
+        if (!payment.teamId) throw new Error("TEAM_NOT_FOUND");
+        teamId = (await validateTeamEntry(tx, payment.tournament, payment.userId, payment.teamId)).teamId;
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : "TEAM_ROSTER_INVALID";
+        await tx.refund.create({
+          data: {
+            paymentId: payment.id,
+            amount: payment.amount,
+            status: "PENDING",
+            reason: `Team registration could not be validated: ${reason}.`,
+          },
+        });
+        await tx.notification.create({
+          data: {
+            userId: payment.userId,
+            type: "PAYMENT",
+            title: "Team entry requires a refund",
+            message: "Your selected team roster changed before payment verification. VELOX is returning the entry fee.",
+            metadata: { tournamentId: payment.tournamentId, paymentId: payment.id },
+          },
+        });
+        return {
+          kind: "REFUND_REQUIRED" as const,
+          payment: {
+            id: payment.id,
+            userId: payment.userId,
+            telegramId: payment.user.telegramId,
+            tournamentId: payment.tournamentId,
+            amount: payment.amount,
+            telegramPaymentRef: successfulPayment.telegram_payment_charge_id,
+          },
+        };
+      }
+    }
+
     const registration = await tx.tournamentRegistration.create({
       data: {
         tournamentId: payment.tournamentId,
         userId: payment.userId,
+        teamId,
         paymentId: payment.id,
         status: "CONFIRMED",
       },

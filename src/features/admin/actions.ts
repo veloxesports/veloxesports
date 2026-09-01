@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/database/prisma";
 import { requireRole } from "@/lib/auth/current-user";
-import { Prisma, TournamentFormat, TournamentStatus } from "@/lib/generated/prisma/client";
+import { Prisma, TournamentFormat, TournamentParticipantType, TournamentStatus } from "@/lib/generated/prisma/client";
 import { getTournamentRulesTemplate } from "@/lib/tournaments/rule-templates";
 import { getCheckInWindow } from "@/lib/tournaments/check-in";
 import { refundStarsPayment } from "@/features/payments/actions";
@@ -29,6 +29,8 @@ const tournamentFieldsSchema = z.object({
   registrationDeadline: z.coerce.date(),
   startDate: z.coerce.date(),
   format: z.nativeEnum(TournamentFormat),
+  participantType: z.nativeEnum(TournamentParticipantType).default(TournamentParticipantType.INDIVIDUAL),
+  teamSize: z.coerce.number().int().min(1).max(20).default(1),
   region: z.string().trim().max(80).optional(),
   gameMode: z.string().trim().max(100).optional(),
   rules: z.string().trim().min(10).max(10_000).optional(),
@@ -40,12 +42,16 @@ const tournamentSchema = tournamentFieldsSchema.extend({
   if (value.isPaid && value.entryFee < 1) context.addIssue({ code: "custom", path: ["entryFee"], message: "Paid tournaments must have an entry fee." });
   if (!value.isPaid && value.entryFee !== 0) context.addIssue({ code: "custom", path: ["entryFee"], message: "Free tournaments must have a zero entry fee." });
   if (value.registrationDeadline >= value.startDate) context.addIssue({ code: "custom", path: ["registrationDeadline"], message: "Registration must close before the tournament starts." });
+  if (value.participantType === TournamentParticipantType.INDIVIDUAL && value.teamSize !== 1) context.addIssue({ code: "custom", path: ["teamSize"], message: "Individual tournaments must use a roster size of 1." });
+  if (value.participantType === TournamentParticipantType.TEAM && value.teamSize < 2) context.addIssue({ code: "custom", path: ["teamSize"], message: "Team tournaments need at least two roster members." });
   if (value.status === "CHECK_IN") context.addIssue({ code: "custom", path: ["status"], message: "Create the tournament first, then open its check-in window when it is ready." });
 });
 const tournamentUpdateSchema = tournamentFieldsSchema.extend({ tournamentId: z.string().uuid() }).superRefine((value, context) => {
   if (value.isPaid && value.entryFee < 1) context.addIssue({ code: "custom", path: ["entryFee"], message: "Paid tournaments must have an entry fee." });
   if (!value.isPaid && value.entryFee !== 0) context.addIssue({ code: "custom", path: ["entryFee"], message: "Free tournaments must have a zero entry fee." });
   if (value.registrationDeadline >= value.startDate) context.addIssue({ code: "custom", path: ["registrationDeadline"], message: "Registration must close before the tournament starts." });
+  if (value.participantType === TournamentParticipantType.INDIVIDUAL && value.teamSize !== 1) context.addIssue({ code: "custom", path: ["teamSize"], message: "Individual tournaments must use a roster size of 1." });
+  if (value.participantType === TournamentParticipantType.TEAM && value.teamSize < 2) context.addIssue({ code: "custom", path: ["teamSize"], message: "Team tournaments need at least two roster members." });
 });
 const statusSchema = z.object({ tournamentId: z.string().uuid(), status: z.nativeEnum(TournamentStatus) });
 const tournamentIdSchema = z.string().uuid();
@@ -397,6 +403,8 @@ export async function createTournament(input: unknown) {
           registrationDeadline: parsed.data.registrationDeadline,
           startDate: parsed.data.startDate,
           format: parsed.data.format,
+          participantType: parsed.data.participantType,
+          teamSize: parsed.data.teamSize,
           region: parsed.data.region || null,
           gameMode: parsed.data.gameMode || null,
           status: parsed.data.status,
@@ -434,6 +442,8 @@ export async function updateTournament(input: unknown) {
           status: true,
           gameId: true,
           format: true,
+          participantType: true,
+          teamSize: true,
           isPaid: true,
           entryFee: true,
           maxParticipants: true,
@@ -450,6 +460,8 @@ export async function updateTournament(input: unknown) {
 
       const structuralChange = current.gameId !== parsed.data.gameId
         || current.format !== parsed.data.format
+        || current.participantType !== parsed.data.participantType
+        || current.teamSize !== parsed.data.teamSize
         || current.isPaid !== parsed.data.isPaid
         || current.entryFee !== parsed.data.entryFee;
       if (current._count.registrations > 0 && structuralChange) throw new Error("REGISTRATIONS_EXIST");
@@ -477,6 +489,8 @@ export async function updateTournament(input: unknown) {
           registrationDeadline: parsed.data.registrationDeadline,
           startDate: parsed.data.startDate,
           format: parsed.data.format,
+          participantType: parsed.data.participantType,
+          teamSize: parsed.data.teamSize,
           region: parsed.data.region || null,
           gameMode: parsed.data.gameMode || null,
           rules: {
@@ -494,7 +508,7 @@ export async function updateTournament(input: unknown) {
           action: "TOURNAMENT_UPDATED",
           entity: "Tournament",
           entityId: current.id,
-          oldValue: toAuditJson({ title: current.title, gameId: current.gameId, format: current.format, isPaid: current.isPaid, entryFee: current.entryFee, maxParticipants: current.maxParticipants, registrationDeadline: current.registrationDeadline, startDate: current.startDate }),
+          oldValue: toAuditJson({ title: current.title, gameId: current.gameId, format: current.format, participantType: current.participantType, teamSize: current.teamSize, isPaid: current.isPaid, entryFee: current.entryFee, maxParticipants: current.maxParticipants, registrationDeadline: current.registrationDeadline, startDate: current.startDate }),
           newValue: toAuditJson(parsed.data),
         },
       });

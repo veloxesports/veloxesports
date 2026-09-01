@@ -104,6 +104,8 @@ model TelegramPayment {
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   tournamentId      String?
   tournament        Tournament? @relation(fields: [tournamentId], references: [id], onDelete: SetNull)
+  teamId            String?
+  team              Team?     @relation(fields: [teamId], references: [id], onDelete: SetNull)
   amount            Int
   currency          String    @default("XTR")
   invoicePayload    String?   @unique
@@ -118,6 +120,7 @@ model TelegramPayment {
   paymentEvents     PaymentEvent[]
 
   @@index([userId, tournamentId, status])
+  @@index([teamId])
 }
 
 model PaymentEvent {
@@ -158,6 +161,8 @@ model Tournament {
   registrationDeadline DateTime
   startDate         DateTime
   format            TournamentFormat
+  participantType   TournamentParticipantType @default(INDIVIDUAL)
+  teamSize          Int       @default(1)
   region            String?
   status            TournamentStatus @default(DRAFT)
   gameMode          String?
@@ -235,6 +240,7 @@ model Team {
   members           TeamMember[]
   invites           TeamInvite[]
   registrations     TournamentRegistration[]
+  payments          TelegramPayment[]
 }
 
 model TeamMember {
@@ -494,6 +500,11 @@ enum TournamentFormat {
   SWISS
   BATTLE_ROYALE
   CUSTOM
+}
+
+enum TournamentParticipantType {
+  INDIVIDUAL
+  TEAM
 }
 
 enum TournamentStatus {

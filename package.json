@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "test:automation": "set \"NODE_PATH=%CD%\\node_modules\\next\\dist\\compiled\"&& set \"NODE_OPTIONS=--conditions=react-server\"&& tsx --env-file=.env.local scripts/verify-tournament-automation.ts",
     "db:seed": "prisma db seed",
     "admin:bootstrap": "tsx scripts/bootstrap-web-super-admin.ts",
     "telegram:configure": "tsx --env-file=.env.local scripts/configure-telegram.ts"

@@ -10,9 +10,10 @@ import { getTournamentRulesTemplate } from "@/lib/tournaments/rule-templates";
 import { TournamentEditor } from "./TournamentEditor";
 
 type Game = { id: string; name: string; slug: string; isActive: boolean };
-type Tournament = { id: string; title: string; status: string; format: string; isPaid: boolean; entryFee: number; prizePool: number; maxParticipants: number; currentParticipants: number; registrationDeadline: Date; startDate: Date; region: string | null; gameMode: string | null; game: { id: string; name: string }; rules: { content: string; checkInPeriodMins: number } | null; registrations: { id: string }[]; _count: { registrations: number; matches: number } };
+type Tournament = { id: string; title: string; status: string; format: string; participantType: "INDIVIDUAL" | "TEAM"; teamSize: number; isPaid: boolean; entryFee: number; prizePool: number; maxParticipants: number; currentParticipants: number; registrationDeadline: Date; startDate: Date; region: string | null; gameMode: string | null; game: { id: string; name: string }; rules: { content: string; checkInPeriodMins: number } | null; registrations: { id: string }[]; _count: { registrations: number; matches: number } };
 
 const formats = ["SINGLE_ELIMINATION", "DOUBLE_ELIMINATION", "ROUND_ROBIN", "LEAGUE", "SWISS", "BATTLE_ROYALE", "CUSTOM"];
+const participantTypes = ["INDIVIDUAL", "TEAM"];
 const statuses = ["DRAFT", "REGISTRATION_OPEN", "REGISTRATION_CLOSED", "UPCOMING", "CHECK_IN", "LIVE", "COMPLETED"];
 const initialStatuses = statuses.filter((status) => status !== "CHECK_IN");
 const controlClass = "w-full rounded-2xl border border-[#344335] bg-[#080d09] px-3.5 py-3 text-sm text-white outline-none transition placeholder:text-[#6f796f] focus:border-[#c5f94d] focus:ring-2 focus:ring-[#c5f94d]/15 disabled:cursor-not-allowed disabled:opacity-60";
@@ -83,6 +84,8 @@ export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; 
       registrationDeadline,
       startDate,
       format: form.get("format"),
+      participantType: form.get("participantType"),
+      teamSize: form.get("teamSize"),
       region: form.get("region"),
       gameMode: form.get("gameMode"),
       rules,
@@ -139,10 +142,12 @@ export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; 
             <Input name="title" label="Tournament title" placeholder="Nightfall Championship" className="sm:col-span-2" required />
             <Select name="gameId" label="Game" value={selectedGameId} onChange={(event) => loadRulesForGame(event.target.value)} required>{activeGames.length === 0 && <option value="">No active games</option>}{activeGames.map((game) => <option key={game.id} value={game.id}>{game.name}</option>)}</Select>
             <Select name="format" label="Format" defaultValue="SINGLE_ELIMINATION">{formats.map((format) => <option key={format} value={format}>{labelFor(format)}</option>)}</Select>
+            <Select name="participantType" label="Entry type" defaultValue="INDIVIDUAL">{participantTypes.map((type) => <option key={type} value={type}>{type === "TEAM" ? "Team roster" : "Individual players"}</option>)}</Select>
             <Input name="prizePool" label="Prize pool (XTR)" type="number" defaultValue="0" min="0" required />
             <Input name="entryFee" label="Entry fee (XTR)" type="number" defaultValue="0" min="0" required />
             <label className="flex items-center gap-3 rounded-2xl border border-[#344335] bg-[#131b14] px-4 py-3 text-sm font-bold text-[#dce8d7] sm:col-span-2"><input name="isPaid" type="checkbox" className="h-4 w-4 accent-[#c5f94d]" />Paid tournament — collect the entry fee through Telegram Stars.</label>
-            <Input name="maxParticipants" label="Maximum players" type="number" defaultValue="16" min="2" required />
+            <Input name="maxParticipants" label="Maximum entries" type="number" defaultValue="16" min="2" required />
+            <Input name="teamSize" label="Required roster size" type="number" defaultValue="1" min="1" max="20" required />
             <Input name="checkInPeriodMins" label="Check-in window (minutes)" type="number" defaultValue="60" min="5" max="1440" required />
             <Select name="status" label="Initial status" defaultValue="DRAFT">{initialStatuses.map((status) => <option key={status} value={status}>{labelFor(status)}</option>)}</Select>
             <DateTimeInput name="registrationDeadline" label="Registration closes" />
@@ -156,7 +161,7 @@ export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; 
             </label>
           </div>
           <div className="flex flex-col gap-3 border-t border-[#2a352b] bg-[#0d130e] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <p className="text-xs leading-relaxed text-[#7e8c7d]">Registration must close before the tournament start date.</p>
+            <p className="text-xs leading-relaxed text-[#7e8c7d]">Registration must close before the tournament start date. Individual events use roster size 1; team events require an exact active roster of 2–20 players.</p>
             <button disabled={pending || activeGames.length === 0} type="submit" className="velox-action shrink-0">{pending ? "Creating…" : "Create tournament"}</button>
           </div>
         </form>

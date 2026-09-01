@@ -193,6 +193,7 @@ export type TeamWhereInput = {
   members?: Prisma.TeamMemberListRelationFilter
   invites?: Prisma.TeamInviteListRelationFilter
   registrations?: Prisma.TournamentRegistrationListRelationFilter
+  payments?: Prisma.TelegramPaymentListRelationFilter
 }
 
 export type TeamOrderByWithRelationInput = {
@@ -205,6 +206,7 @@ export type TeamOrderByWithRelationInput = {
   members?: Prisma.TeamMemberOrderByRelationAggregateInput
   invites?: Prisma.TeamInviteOrderByRelationAggregateInput
   registrations?: Prisma.TournamentRegistrationOrderByRelationAggregateInput
+  payments?: Prisma.TelegramPaymentOrderByRelationAggregateInput
 }
 
 export type TeamWhereUniqueInput = Prisma.AtLeast<{
@@ -220,6 +222,7 @@ export type TeamWhereUniqueInput = Prisma.AtLeast<{
   members?: Prisma.TeamMemberListRelationFilter
   invites?: Prisma.TeamInviteListRelationFilter
   registrations?: Prisma.TournamentRegistrationListRelationFilter
+  payments?: Prisma.TelegramPaymentListRelationFilter
 }, "id" | "name">
 
 export type TeamOrderByWithAggregationInput = {
@@ -256,6 +259,7 @@ export type TeamCreateInput = {
   members?: Prisma.TeamMemberCreateNestedManyWithoutTeamInput
   invites?: Prisma.TeamInviteCreateNestedManyWithoutTeamInput
   registrations?: Prisma.TournamentRegistrationCreateNestedManyWithoutTeamInput
+  payments?: Prisma.TelegramPaymentCreateNestedManyWithoutTeamInput
 }
 
 export type TeamUncheckedCreateInput = {
@@ -268,6 +272,7 @@ export type TeamUncheckedCreateInput = {
   members?: Prisma.TeamMemberUncheckedCreateNestedManyWithoutTeamInput
   invites?: Prisma.TeamInviteUncheckedCreateNestedManyWithoutTeamInput
   registrations?: Prisma.TournamentRegistrationUncheckedCreateNestedManyWithoutTeamInput
+  payments?: Prisma.TelegramPaymentUncheckedCreateNestedManyWithoutTeamInput
 }
 
 export type TeamUpdateInput = {
@@ -280,6 +285,7 @@ export type TeamUpdateInput = {
   members?: Prisma.TeamMemberUpdateManyWithoutTeamNestedInput
   invites?: Prisma.TeamInviteUpdateManyWithoutTeamNestedInput
   registrations?: Prisma.TournamentRegistrationUpdateManyWithoutTeamNestedInput
+  payments?: Prisma.TelegramPaymentUpdateManyWithoutTeamNestedInput
 }
 
 export type TeamUncheckedUpdateInput = {
@@ -292,6 +298,7 @@ export type TeamUncheckedUpdateInput = {
   members?: Prisma.TeamMemberUncheckedUpdateManyWithoutTeamNestedInput
   invites?: Prisma.TeamInviteUncheckedUpdateManyWithoutTeamNestedInput
   registrations?: Prisma.TournamentRegistrationUncheckedUpdateManyWithoutTeamNestedInput
+  payments?: Prisma.TelegramPaymentUncheckedUpdateManyWithoutTeamNestedInput
 }
 
 export type TeamCreateManyInput = {
@@ -358,6 +365,22 @@ export type TeamScalarRelationFilter = {
   isNot?: Prisma.TeamWhereInput
 }
 
+export type TeamCreateNestedOneWithoutPaymentsInput = {
+  create?: Prisma.XOR<Prisma.TeamCreateWithoutPaymentsInput, Prisma.TeamUncheckedCreateWithoutPaymentsInput>
+  connectOrCreate?: Prisma.TeamCreateOrConnectWithoutPaymentsInput
+  connect?: Prisma.TeamWhereUniqueInput
+}
+
+export type TeamUpdateOneWithoutPaymentsNestedInput = {
+  create?: Prisma.XOR<Prisma.TeamCreateWithoutPaymentsInput, Prisma.TeamUncheckedCreateWithoutPaymentsInput>
+  connectOrCreate?: Prisma.TeamCreateOrConnectWithoutPaymentsInput
+  upsert?: Prisma.TeamUpsertWithoutPaymentsInput
+  disconnect?: Prisma.TeamWhereInput | boolean
+  delete?: Prisma.TeamWhereInput | boolean
+  connect?: Prisma.TeamWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TeamUpdateToOneWithWhereWithoutPaymentsInput, Prisma.TeamUpdateWithoutPaymentsInput>, Prisma.TeamUncheckedUpdateWithoutPaymentsInput>
+}
+
 export type TeamCreateNestedOneWithoutRegistrationsInput = {
   create?: Prisma.XOR<Prisma.TeamCreateWithoutRegistrationsInput, Prisma.TeamUncheckedCreateWithoutRegistrationsInput>
   connectOrCreate?: Prisma.TeamCreateOrConnectWithoutRegistrationsInput
@@ -402,6 +425,70 @@ export type TeamUpdateOneRequiredWithoutInvitesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.TeamUpdateToOneWithWhereWithoutInvitesInput, Prisma.TeamUpdateWithoutInvitesInput>, Prisma.TeamUncheckedUpdateWithoutInvitesInput>
 }
 
+export type TeamCreateWithoutPaymentsInput = {
+  id?: string
+  name: string
+  logoUrl?: string | null
+  captainId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  members?: Prisma.TeamMemberCreateNestedManyWithoutTeamInput
+  invites?: Prisma.TeamInviteCreateNestedManyWithoutTeamInput
+  registrations?: Prisma.TournamentRegistrationCreateNestedManyWithoutTeamInput
+}
+
+export type TeamUncheckedCreateWithoutPaymentsInput = {
+  id?: string
+  name: string
+  logoUrl?: string | null
+  captainId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  members?: Prisma.TeamMemberUncheckedCreateNestedManyWithoutTeamInput
+  invites?: Prisma.TeamInviteUncheckedCreateNestedManyWithoutTeamInput
+  registrations?: Prisma.TournamentRegistrationUncheckedCreateNestedManyWithoutTeamInput
+}
+
+export type TeamCreateOrConnectWithoutPaymentsInput = {
+  where: Prisma.TeamWhereUniqueInput
+  create: Prisma.XOR<Prisma.TeamCreateWithoutPaymentsInput, Prisma.TeamUncheckedCreateWithoutPaymentsInput>
+}
+
+export type TeamUpsertWithoutPaymentsInput = {
+  update: Prisma.XOR<Prisma.TeamUpdateWithoutPaymentsInput, Prisma.TeamUncheckedUpdateWithoutPaymentsInput>
+  create: Prisma.XOR<Prisma.TeamCreateWithoutPaymentsInput, Prisma.TeamUncheckedCreateWithoutPaymentsInput>
+  where?: Prisma.TeamWhereInput
+}
+
+export type TeamUpdateToOneWithWhereWithoutPaymentsInput = {
+  where?: Prisma.TeamWhereInput
+  data: Prisma.XOR<Prisma.TeamUpdateWithoutPaymentsInput, Prisma.TeamUncheckedUpdateWithoutPaymentsInput>
+}
+
+export type TeamUpdateWithoutPaymentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  captainId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  members?: Prisma.TeamMemberUpdateManyWithoutTeamNestedInput
+  invites?: Prisma.TeamInviteUpdateManyWithoutTeamNestedInput
+  registrations?: Prisma.TournamentRegistrationUpdateManyWithoutTeamNestedInput
+}
+
+export type TeamUncheckedUpdateWithoutPaymentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  captainId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  members?: Prisma.TeamMemberUncheckedUpdateManyWithoutTeamNestedInput
+  invites?: Prisma.TeamInviteUncheckedUpdateManyWithoutTeamNestedInput
+  registrations?: Prisma.TournamentRegistrationUncheckedUpdateManyWithoutTeamNestedInput
+}
+
 export type TeamCreateWithoutRegistrationsInput = {
   id?: string
   name: string
@@ -411,6 +498,7 @@ export type TeamCreateWithoutRegistrationsInput = {
   updatedAt?: Date | string
   members?: Prisma.TeamMemberCreateNestedManyWithoutTeamInput
   invites?: Prisma.TeamInviteCreateNestedManyWithoutTeamInput
+  payments?: Prisma.TelegramPaymentCreateNestedManyWithoutTeamInput
 }
 
 export type TeamUncheckedCreateWithoutRegistrationsInput = {
@@ -422,6 +510,7 @@ export type TeamUncheckedCreateWithoutRegistrationsInput = {
   updatedAt?: Date | string
   members?: Prisma.TeamMemberUncheckedCreateNestedManyWithoutTeamInput
   invites?: Prisma.TeamInviteUncheckedCreateNestedManyWithoutTeamInput
+  payments?: Prisma.TelegramPaymentUncheckedCreateNestedManyWithoutTeamInput
 }
 
 export type TeamCreateOrConnectWithoutRegistrationsInput = {
@@ -449,6 +538,7 @@ export type TeamUpdateWithoutRegistrationsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.TeamMemberUpdateManyWithoutTeamNestedInput
   invites?: Prisma.TeamInviteUpdateManyWithoutTeamNestedInput
+  payments?: Prisma.TelegramPaymentUpdateManyWithoutTeamNestedInput
 }
 
 export type TeamUncheckedUpdateWithoutRegistrationsInput = {
@@ -460,6 +550,7 @@ export type TeamUncheckedUpdateWithoutRegistrationsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.TeamMemberUncheckedUpdateManyWithoutTeamNestedInput
   invites?: Prisma.TeamInviteUncheckedUpdateManyWithoutTeamNestedInput
+  payments?: Prisma.TelegramPaymentUncheckedUpdateManyWithoutTeamNestedInput
 }
 
 export type TeamCreateWithoutMembersInput = {
@@ -471,6 +562,7 @@ export type TeamCreateWithoutMembersInput = {
   updatedAt?: Date | string
   invites?: Prisma.TeamInviteCreateNestedManyWithoutTeamInput
   registrations?: Prisma.TournamentRegistrationCreateNestedManyWithoutTeamInput
+  payments?: Prisma.TelegramPaymentCreateNestedManyWithoutTeamInput
 }
 
 export type TeamUncheckedCreateWithoutMembersInput = {
@@ -482,6 +574,7 @@ export type TeamUncheckedCreateWithoutMembersInput = {
   updatedAt?: Date | string
   invites?: Prisma.TeamInviteUncheckedCreateNestedManyWithoutTeamInput
   registrations?: Prisma.TournamentRegistrationUncheckedCreateNestedManyWithoutTeamInput
+  payments?: Prisma.TelegramPaymentUncheckedCreateNestedManyWithoutTeamInput
 }
 
 export type TeamCreateOrConnectWithoutMembersInput = {
@@ -509,6 +602,7 @@ export type TeamUpdateWithoutMembersInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   invites?: Prisma.TeamInviteUpdateManyWithoutTeamNestedInput
   registrations?: Prisma.TournamentRegistrationUpdateManyWithoutTeamNestedInput
+  payments?: Prisma.TelegramPaymentUpdateManyWithoutTeamNestedInput
 }
 
 export type TeamUncheckedUpdateWithoutMembersInput = {
@@ -520,6 +614,7 @@ export type TeamUncheckedUpdateWithoutMembersInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   invites?: Prisma.TeamInviteUncheckedUpdateManyWithoutTeamNestedInput
   registrations?: Prisma.TournamentRegistrationUncheckedUpdateManyWithoutTeamNestedInput
+  payments?: Prisma.TelegramPaymentUncheckedUpdateManyWithoutTeamNestedInput
 }
 
 export type TeamCreateWithoutInvitesInput = {
@@ -531,6 +626,7 @@ export type TeamCreateWithoutInvitesInput = {
   updatedAt?: Date | string
   members?: Prisma.TeamMemberCreateNestedManyWithoutTeamInput
   registrations?: Prisma.TournamentRegistrationCreateNestedManyWithoutTeamInput
+  payments?: Prisma.TelegramPaymentCreateNestedManyWithoutTeamInput
 }
 
 export type TeamUncheckedCreateWithoutInvitesInput = {
@@ -542,6 +638,7 @@ export type TeamUncheckedCreateWithoutInvitesInput = {
   updatedAt?: Date | string
   members?: Prisma.TeamMemberUncheckedCreateNestedManyWithoutTeamInput
   registrations?: Prisma.TournamentRegistrationUncheckedCreateNestedManyWithoutTeamInput
+  payments?: Prisma.TelegramPaymentUncheckedCreateNestedManyWithoutTeamInput
 }
 
 export type TeamCreateOrConnectWithoutInvitesInput = {
@@ -569,6 +666,7 @@ export type TeamUpdateWithoutInvitesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.TeamMemberUpdateManyWithoutTeamNestedInput
   registrations?: Prisma.TournamentRegistrationUpdateManyWithoutTeamNestedInput
+  payments?: Prisma.TelegramPaymentUpdateManyWithoutTeamNestedInput
 }
 
 export type TeamUncheckedUpdateWithoutInvitesInput = {
@@ -580,6 +678,7 @@ export type TeamUncheckedUpdateWithoutInvitesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.TeamMemberUncheckedUpdateManyWithoutTeamNestedInput
   registrations?: Prisma.TournamentRegistrationUncheckedUpdateManyWithoutTeamNestedInput
+  payments?: Prisma.TelegramPaymentUncheckedUpdateManyWithoutTeamNestedInput
 }
 
 
@@ -591,12 +690,14 @@ export type TeamCountOutputType = {
   members: number
   invites: number
   registrations: number
+  payments: number
 }
 
 export type TeamCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   members?: boolean | TeamCountOutputTypeCountMembersArgs
   invites?: boolean | TeamCountOutputTypeCountInvitesArgs
   registrations?: boolean | TeamCountOutputTypeCountRegistrationsArgs
+  payments?: boolean | TeamCountOutputTypeCountPaymentsArgs
 }
 
 /**
@@ -630,6 +731,13 @@ export type TeamCountOutputTypeCountRegistrationsArgs<ExtArgs extends runtime.Ty
   where?: Prisma.TournamentRegistrationWhereInput
 }
 
+/**
+ * TeamCountOutputType without action
+ */
+export type TeamCountOutputTypeCountPaymentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TelegramPaymentWhereInput
+}
+
 
 export type TeamSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -641,6 +749,7 @@ export type TeamSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   members?: boolean | Prisma.Team$membersArgs<ExtArgs>
   invites?: boolean | Prisma.Team$invitesArgs<ExtArgs>
   registrations?: boolean | Prisma.Team$registrationsArgs<ExtArgs>
+  payments?: boolean | Prisma.Team$paymentsArgs<ExtArgs>
   _count?: boolean | Prisma.TeamCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["team"]>
 
@@ -676,6 +785,7 @@ export type TeamInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   members?: boolean | Prisma.Team$membersArgs<ExtArgs>
   invites?: boolean | Prisma.Team$invitesArgs<ExtArgs>
   registrations?: boolean | Prisma.Team$registrationsArgs<ExtArgs>
+  payments?: boolean | Prisma.Team$paymentsArgs<ExtArgs>
   _count?: boolean | Prisma.TeamCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type TeamIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -687,6 +797,7 @@ export type $TeamPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     members: Prisma.$TeamMemberPayload<ExtArgs>[]
     invites: Prisma.$TeamInvitePayload<ExtArgs>[]
     registrations: Prisma.$TournamentRegistrationPayload<ExtArgs>[]
+    payments: Prisma.$TelegramPaymentPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1092,6 +1203,7 @@ export interface Prisma__TeamClient<T, Null = never, ExtArgs extends runtime.Typ
   members<T extends Prisma.Team$membersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Team$membersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TeamMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   invites<T extends Prisma.Team$invitesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Team$invitesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TeamInvitePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   registrations<T extends Prisma.Team$registrationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Team$registrationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TournamentRegistrationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  payments<T extends Prisma.Team$paymentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Team$paymentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TelegramPaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1589,6 +1701,30 @@ export type Team$registrationsArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.TournamentRegistrationScalarFieldEnum | Prisma.TournamentRegistrationScalarFieldEnum[]
+}
+
+/**
+ * Team.payments
+ */
+export type Team$paymentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TelegramPayment
+   */
+  select?: Prisma.TelegramPaymentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TelegramPayment
+   */
+  omit?: Prisma.TelegramPaymentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TelegramPaymentInclude<ExtArgs> | null
+  where?: Prisma.TelegramPaymentWhereInput
+  orderBy?: Prisma.TelegramPaymentOrderByWithRelationInput | Prisma.TelegramPaymentOrderByWithRelationInput[]
+  cursor?: Prisma.TelegramPaymentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TelegramPaymentScalarFieldEnum | Prisma.TelegramPaymentScalarFieldEnum[]
 }
 
 /**

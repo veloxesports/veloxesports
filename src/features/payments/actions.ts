@@ -5,10 +5,15 @@ import { prisma } from "@/lib/database/prisma";
 import { requireCurrentUser, requireRole } from "@/lib/auth/current-user";
 import { createTournamentInvoice, refundTelegramStarsPayment } from "@/lib/telegram/bot";
 import { createLedgerTransactionInTransaction } from "@/features/wallet/services";
+import { TournamentParticipantType } from "@/lib/generated/prisma/client";
+import { teamEntryErrorMessage, validateTeamEntry } from "@/lib/tournaments/team-registration";
 import { revalidatePath } from "next/cache";
 
 const paymentIdSchema = z.string().uuid();
-const tournamentIdSchema = z.string().uuid();
+const tournamentPaymentSchema = z.union([
+  z.string().uuid().transform((tournamentId) => ({ tournamentId })),
+  z.object({ tournamentId: z.string().uuid(), teamId: z.string().uuid().optional() }),
+]);
 
 class PaymentActionError extends Error {
   constructor(
@@ -39,16 +44,17 @@ function paymentErrorMessage(code: PaymentActionError["code"]) {
   return messages[code];
 }
 
-export async function initiateTournamentPayment(tournamentId: unknown) {
-  const parsedTournamentId = tournamentIdSchema.safeParse(tournamentId);
-  if (!parsedTournamentId.success) return { success: false, error: "Invalid tournament." };
+export async function initiateTournamentPayment(input: unknown) {
+  const parsedPayment = tournamentPaymentSchema.safeParse(input);
+  if (!parsedPayment.success) return { success: false, error: "Invalid tournament." };
+  const requestedTeamId = "teamId" in parsedPayment.data ? parsedPayment.data.teamId : undefined;
 
   try {
     const user = await requireCurrentUser();
     const now = new Date();
     const { payment, title } = await prisma.$transaction(async (tx) => {
       const tournament = await tx.tournament.findUnique({
-        where: { id: parsedTournamentId.data },
+        where: { id: parsedPayment.data.tournamentId },
         select: {
           id: true,
           title: true,
@@ -58,6 +64,8 @@ export async function initiateTournamentPayment(tournamentId: unknown) {
           registrationDeadline: true,
           maxParticipants: true,
           currentParticipants: true,
+          participantType: true,
+          teamSize: true,
         },
       });
 
@@ -68,6 +76,15 @@ export async function initiateTournamentPayment(tournamentId: unknown) {
       }
       if (tournament.currentParticipants >= tournament.maxParticipants) throw new PaymentActionError("FULL");
 
+      let selectedTeamId: string | null = null;
+      if (tournament.participantType === TournamentParticipantType.TEAM) {
+        if (!requestedTeamId) throw new Error("TEAM_REQUIRED");
+        const team = await validateTeamEntry(tx, tournament, user.id, requestedTeamId);
+        selectedTeamId = team.teamId;
+      } else if (requestedTeamId) {
+        throw new Error("TEAM_NOT_ALLOWED");
+      }
+
       const registration = await tx.tournamentRegistration.findUnique({
         where: { tournamentId_userId: { tournamentId: tournament.id, userId: user.id } },
         select: { id: true },
@@ -75,7 +92,7 @@ export async function initiateTournamentPayment(tournamentId: unknown) {
       if (registration) throw new PaymentActionError("ALREADY_REGISTERED");
 
       const pendingPayment = await tx.telegramPayment.findFirst({
-        where: { userId: user.id, tournamentId: tournament.id, status: "PENDING" },
+        where: { userId: user.id, tournamentId: tournament.id, teamId: selectedTeamId, status: "PENDING" },
         orderBy: { createdAt: "desc" },
       });
 
@@ -85,6 +102,7 @@ export async function initiateTournamentPayment(tournamentId: unknown) {
         data: {
           userId: user.id,
           tournamentId: tournament.id,
+          teamId: selectedTeamId,
           amount: tournament.entryFee,
           currency: "XTR",
           status: "PENDING",
@@ -108,6 +126,14 @@ export async function initiateTournamentPayment(tournamentId: unknown) {
   } catch (error) {
     if (error instanceof PaymentActionError) {
       return { success: false, error: paymentErrorMessage(error.code) };
+    }
+    if (error instanceof Error && ["TEAM_REQUIRED", "TEAM_NOT_ALLOWED", "TEAM_EVENT_REQUIRED", "TEAM_NOT_FOUND", "NOT_TEAM_CAPTAIN", "TEAM_ROSTER_SIZE_INVALID", "TEAM_MEMBER_UNAVAILABLE", "TEAM_MEMBER_ALREADY_REGISTERED"].includes(error.message)) {
+      const message = error.message === "TEAM_REQUIRED"
+        ? "Choose the team roster that your captain will enter."
+        : error.message === "TEAM_NOT_ALLOWED"
+          ? "This is an individual tournament."
+          : teamEntryErrorMessage(error.message);
+      return { success: false, error: message };
     }
     if (error instanceof Error && error.message === "UNAUTHENTICATED") {
       return { success: false, error: "Open VELOX in Telegram to make a payment." };

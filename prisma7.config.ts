@@ -10,6 +10,8 @@ export default defineConfig({
     seed: "npx --no-install tsx prisma/seed.ts",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // Serverless requests use DATABASE_URL, while migrations should prefer the
+    // direct Supabase connection when it is configured.
+    url: process.env["DIRECT_URL"] || process.env["DATABASE_URL"],
   },
 });

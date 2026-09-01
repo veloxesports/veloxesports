@@ -8,6 +8,8 @@ import { requireCurrentUser, requireRole } from "@/lib/auth/current-user";
 import { createEvidenceSignedUrl, uploadMatchEvidence, validateEvidenceFile } from "@/lib/database/supabase";
 import { addXpToUser, checkAndAwardAchievements } from "@/features/profile/xp";
 import { canConfirmPendingMatchResult, canSubmitMatchResult, isAwaitingOpponentConfirmation, nextBracketSlotForWinner } from "@/lib/matches/flow";
+import { generateSingleEliminationBracketInTransaction } from "@/lib/tournaments/bracket";
+import { completeTournamentIfReady } from "@/lib/tournaments/lifecycle";
 
 const idSchema = z.string().uuid();
 const resultSchema = z.object({
@@ -108,47 +110,6 @@ async function advanceSingleEliminationWinner(
       status: nextMatch.status === "CANCELLED" ? "CANCELLED" : "SCHEDULED",
     },
   });
-}
-
-async function settleAutomaticByes(tx: Prisma.TransactionClient, tournamentId: string) {
-  const matches = await tx.match.findMany({
-    where: { tournamentId, status: "COMPLETED", winnerId: { not: null }, bracketPosition: { not: null } },
-    orderBy: [{ round: "asc" }, { bracketPosition: "asc" }],
-  });
-
-  for (const match of matches) {
-    await advanceSingleEliminationWinner(tx, match, match.winnerId!);
-  }
-
-  // Only automatically complete a next-round match when the opposing source
-  // match was itself an empty bye. A future, unresolved match never forfeits.
-  for (let round = 2; round <= 16; round += 1) {
-    const candidates = await tx.match.findMany({
-      where: { tournamentId, round, status: "SCHEDULED", bracketPosition: { not: null } },
-    });
-    let advanced = false;
-
-    for (const candidate of candidates) {
-      const hasFirst = Boolean(candidate.player1Id || candidate.team1Id);
-      const hasSecond = Boolean(candidate.player2Id || candidate.team2Id);
-      if (hasFirst === hasSecond || candidate.bracketPosition === null) continue;
-
-      const missingSourcePosition = candidate.bracketPosition * 2 + (hasFirst ? 1 : 0);
-      const missingSource = await tx.match.findFirst({
-        where: { tournamentId, round: round - 1, bracketPosition: missingSourcePosition },
-        select: { status: true, winnerId: true },
-      });
-      if (!missingSource || missingSource.status !== "COMPLETED" || missingSource.winnerId) continue;
-
-      const winnerId = hasFirst ? candidate.player1Id ?? candidate.team1Id : candidate.player2Id ?? candidate.team2Id;
-      if (!winnerId) continue;
-      await tx.match.update({ where: { id: candidate.id }, data: { status: "COMPLETED", winnerId } });
-      await advanceSingleEliminationWinner(tx, candidate, winnerId);
-      advanced = true;
-    }
-
-    if (!advanced) continue;
-  }
 }
 
 async function getOpponentUserIds(tx: Prisma.TransactionClient, match: MatchParticipants, submitterId: string) {
@@ -252,45 +213,7 @@ export async function generateSingleEliminationBracket(tournamentId: unknown) {
   try {
     await requireRole(["SUPER_ADMIN", "ADMIN", "TOURNAMENT_MANAGER"]);
     await prisma.$transaction(async (tx) => {
-      const tournament = await tx.tournament.findUnique({
-        where: { id: parsedTournamentId.data },
-        include: { registrations: { where: { status: "CONFIRMED", checkedIn: true }, orderBy: { createdAt: "asc" } } },
-      });
-      if (!tournament) throw new Error("TOURNAMENT_NOT_FOUND");
-      if (tournament.status === "CHECK_IN") throw new Error("CHECK_IN_NOT_LOCKED");
-      if (tournament.status !== "UPCOMING") throw new Error("CHECK_IN_REQUIRED");
-      if (tournament.format !== "SINGLE_ELIMINATION") throw new Error("UNSUPPORTED_FORMAT");
-
-      const existingMatches = await tx.match.count({ where: { tournamentId: tournament.id } });
-      if (existingMatches > 0) throw new Error("BRACKET_EXISTS");
-      if (tournament.registrations.length < 2) throw new Error("NOT_ENOUGH_PARTICIPANTS");
-
-      const participants = tournament.registrations.map((registration) => registration.userId);
-      const bracketSize = 2 ** Math.ceil(Math.log2(participants.length));
-      const totalRounds = Math.log2(bracketSize);
-
-      for (let round = 1; round <= totalRounds; round += 1) {
-        const matchesInRound = bracketSize / 2 ** round;
-        for (let bracketPosition = 0; bracketPosition < matchesInRound; bracketPosition += 1) {
-          const player1Id = round === 1 ? participants[bracketPosition * 2] ?? null : null;
-          const player2Id = round === 1 ? participants[bracketPosition * 2 + 1] ?? null : null;
-          const winnerId = player1Id && !player2Id ? player1Id : player2Id && !player1Id ? player2Id : null;
-          await tx.match.create({
-            data: {
-              tournamentId: tournament.id,
-              round,
-              bracketPosition,
-              player1Id,
-              player2Id,
-              status: winnerId || (!player1Id && !player2Id) ? "COMPLETED" : "SCHEDULED",
-              winnerId,
-            },
-          });
-        }
-      }
-
-      await settleAutomaticByes(tx, tournament.id);
-      await tx.tournament.update({ where: { id: tournament.id }, data: { status: "UPCOMING" } });
+      await generateSingleEliminationBracketInTransaction(tx, parsedTournamentId.data);
     }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 20_000 });
 
     return { success: true };
@@ -305,6 +228,7 @@ export async function generateSingleEliminationBracket(tournamentId: unknown) {
       UNSUPPORTED_FORMAT: "This generator only supports single-elimination tournaments.",
       BRACKET_EXISTS: "A bracket has already been generated.",
       NOT_ENOUGH_PARTICIPANTS: "At least two checked-in participants are required.",
+      TEAM_REGISTRATION_INVALID: "A checked-in team entry is missing its roster. Review registrations before generating the bracket.",
     };
     if (known[message]) return { success: false, error: known[message] };
     console.error("Bracket generation failed", error);
@@ -405,7 +329,7 @@ export async function confirmMatchResult(matchId: unknown) {
         })),
       });
 
-      return { winnerIds, loserIds };
+      return { winnerIds, loserIds, tournamentId: match.tournamentId };
     }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
 
     await Promise.all([
@@ -413,6 +337,7 @@ export async function confirmMatchResult(matchId: unknown) {
       ...outcome.loserIds.map((userId) => addXpToUser(userId, 10)),
     ]);
     await Promise.all([...outcome.winnerIds, ...outcome.loserIds].map((userId) => checkAndAwardAchievements(userId)));
+    await completeTournamentIfReady(outcome.tournamentId);
     revalidatePath(`/matches/${parsedMatchId.data}`);
     revalidatePath("/matches");
     revalidatePath("/leaderboard");
@@ -557,13 +482,13 @@ export async function resolveDispute(input: unknown) {
             newValue: { winnerId: parsed.data.winnerId, score1: parsed.data.score1!, score2: parsed.data.score2!, resolutionNotes: parsed.data.resolutionNotes },
           },
         });
-        return { winnerIds, loserIds, matchId: match.id };
+        return { winnerIds, loserIds, matchId: match.id, tournamentId: match.tournamentId };
       } else {
         await tx.match.update({ where: { id: match.id }, data: { status: "UNDER_REVIEW" } });
         await tx.auditLog.create({
           data: { adminId: moderator.id, action: "DISPUTE_CLOSED", entity: "Dispute", entityId: dispute.id, newValue: { resolutionNotes: parsed.data.resolutionNotes } },
         });
-        return { winnerIds: [], loserIds: [], matchId: match.id };
+        return { winnerIds: [], loserIds: [], matchId: match.id, tournamentId: match.tournamentId };
       }
     }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
     await Promise.all([
@@ -571,6 +496,7 @@ export async function resolveDispute(input: unknown) {
       ...outcome.loserIds.map((userId) => addXpToUser(userId, 10)),
     ]);
     await Promise.all([...outcome.winnerIds, ...outcome.loserIds].map((userId) => checkAndAwardAchievements(userId)));
+    await completeTournamentIfReady(outcome.tournamentId);
     revalidatePath(`/matches/${outcome.matchId}`);
     revalidatePath("/matches");
     revalidatePath("/leaderboard");

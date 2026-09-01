@@ -1,17 +1,19 @@
 "use server";
 
 import { prisma } from "@/lib/database/prisma";
-import { TournamentStatus } from "@/lib/generated/prisma/client";
+import { TournamentParticipantType, TournamentStatus } from "@/lib/generated/prisma/client";
 import { getCurrentUser, requireCurrentUser } from "@/lib/auth/current-user";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { canCheckIn, getCheckInWindow } from "@/lib/tournaments/check-in";
+import { teamEntryErrorMessage, validateTeamEntry } from "@/lib/tournaments/team-registration";
 
 const tournamentIdSchema = z.string().uuid();
+const teamRegistrationSchema = z.object({ tournamentId: z.string().uuid(), teamId: z.string().uuid() });
 const publicTournamentStatuses: TournamentStatus[] = ["REGISTRATION_OPEN", "REGISTRATION_CLOSED", "UPCOMING", "CHECK_IN", "LIVE"];
 
 class TournamentRegistrationError extends Error {
-  constructor(public code: "ALREADY_REGISTERED" | "FULL" | "REGISTRATION_CLOSED" | "PAID_TOURNAMENT") {
+  constructor(public code: "ALREADY_REGISTERED" | "FULL" | "REGISTRATION_CLOSED" | "PAID_TOURNAMENT" | "TEAM_TOURNAMENT") {
     super(code);
   }
 }
@@ -225,6 +227,61 @@ export async function getGames() {
   }
 }
 
+export async function getEligibleTeamsForTournament(tournamentId: unknown) {
+  const parsedTournamentId = tournamentIdSchema.safeParse(tournamentId);
+  if (!parsedTournamentId.success) return { success: false as const, error: "Invalid tournament." };
+
+  try {
+    const user = await requireCurrentUser();
+    const [tournament, teams] = await Promise.all([
+      prisma.tournament.findUnique({
+        where: { id: parsedTournamentId.data },
+        select: { id: true, participantType: true, teamSize: true },
+      }),
+      prisma.team.findMany({
+        where: { captainId: user.id },
+        orderBy: { name: "asc" },
+        include: { members: { include: { user: { select: { status: true } } } } },
+      }),
+    ]);
+    if (!tournament) return { success: false as const, error: "Tournament not found." };
+    if (tournament.participantType !== TournamentParticipantType.TEAM) {
+      return { success: true as const, data: [] };
+    }
+
+    const entries = await Promise.all(teams.map(async (team) => {
+      const memberIds = team.members.map((member) => member.userId);
+      const conflict = memberIds.length ? await prisma.tournamentRegistration.findFirst({
+        where: {
+          tournamentId: tournament.id,
+          status: { in: ["PENDING", "CONFIRMED"] },
+          OR: [
+            { userId: { in: memberIds } },
+            { team: { is: { members: { some: { userId: { in: memberIds } } } } } },
+          ],
+        },
+        select: { id: true },
+      }) : null;
+      const hasUnavailableMember = team.members.some((member) => member.user.status !== "ACTIVE");
+      const ready = team.members.length === tournament.teamSize && !hasUnavailableMember && !conflict;
+      const issue = team.members.length !== tournament.teamSize
+        ? `Needs exactly ${tournament.teamSize} members`
+        : hasUnavailableMember
+          ? "A roster member is unavailable"
+          : conflict
+            ? "A roster member is already entered"
+            : null;
+      return { id: team.id, name: team.name, logoUrl: team.logoUrl, memberCount: team.members.length, ready, issue };
+    }));
+
+    return { success: true as const, data: entries };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHENTICATED") return { success: false as const, error: "Open VELOX in Telegram to register a team." };
+    console.error("Eligible team lookup failed", error);
+    return { success: false as const, error: "We couldn't load your teams." };
+  }
+}
+
 export async function registerForFreeTournament(tournamentId: unknown) {
   const validatedTournamentId = tournamentIdSchema.safeParse(tournamentId);
   if (!validatedTournamentId.success) return { success: false, error: "Invalid tournament." };
@@ -238,6 +295,7 @@ export async function registerForFreeTournament(tournamentId: unknown) {
         select: {
           id: true,
           isPaid: true,
+          participantType: true,
           status: true,
           maxParticipants: true,
           registrationDeadline: true,
@@ -246,6 +304,7 @@ export async function registerForFreeTournament(tournamentId: unknown) {
 
       if (!tournament) throw new Error("TOURNAMENT_NOT_FOUND");
       if (tournament.isPaid) throw new TournamentRegistrationError("PAID_TOURNAMENT");
+      if (tournament.participantType === TournamentParticipantType.TEAM) throw new TournamentRegistrationError("TEAM_TOURNAMENT");
       if (tournament.status !== "REGISTRATION_OPEN" || tournament.registrationDeadline <= now) {
         throw new TournamentRegistrationError("REGISTRATION_CLOSED");
       }
@@ -290,6 +349,7 @@ export async function registerForFreeTournament(tournamentId: unknown) {
         FULL: "Tournament is full.",
         REGISTRATION_CLOSED: "Registration is closed.",
         PAID_TOURNAMENT: "This tournament requires a Telegram Stars payment.",
+        TEAM_TOURNAMENT: "This is a team event. Choose your captain roster before registering.",
       };
       return { success: false, error: messages[error.code] };
     }
@@ -298,5 +358,67 @@ export async function registerForFreeTournament(tournamentId: unknown) {
     }
     console.error("Free tournament registration failed", error);
     return { success: false, error: "We couldn't complete your registration. Please try again." };
+  }
+}
+
+export async function registerTeamForFreeTournament(input: unknown) {
+  const parsed = teamRegistrationSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: "Choose a valid team." };
+
+  try {
+    const user = await requireCurrentUser();
+    const now = new Date();
+    const registration = await prisma.$transaction(async (tx) => {
+      const tournament = await tx.tournament.findUnique({
+        where: { id: parsed.data.tournamentId },
+        select: { id: true, isPaid: true, participantType: true, teamSize: true, status: true, maxParticipants: true, registrationDeadline: true },
+      });
+      if (!tournament) throw new Error("TOURNAMENT_NOT_FOUND");
+      if (tournament.isPaid) throw new TournamentRegistrationError("PAID_TOURNAMENT");
+      if (tournament.status !== "REGISTRATION_OPEN" || tournament.registrationDeadline <= now) throw new TournamentRegistrationError("REGISTRATION_CLOSED");
+
+      const team = await validateTeamEntry(tx, tournament, user.id, parsed.data.teamId);
+      const created = await tx.tournamentRegistration.create({
+        data: { tournamentId: tournament.id, userId: user.id, teamId: team.teamId, status: "CONFIRMED" },
+      });
+      const capacityUpdate = await tx.tournament.updateMany({
+        where: { id: tournament.id, status: "REGISTRATION_OPEN", registrationDeadline: { gt: now }, currentParticipants: { lt: tournament.maxParticipants } },
+        data: { currentParticipants: { increment: 1 } },
+      });
+      if (capacityUpdate.count !== 1) throw new TournamentRegistrationError("FULL");
+      await tx.notification.createMany({
+        data: team.memberIds.map((userId) => ({
+          userId,
+          type: "TEAM",
+          title: "Team tournament entry confirmed",
+          message: `${team.teamName} is registered for this tournament. Your captain will check in for the roster.`,
+          metadata: { tournamentId: tournament.id, teamId: team.teamId },
+        })),
+      });
+      return created;
+    }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
+
+    revalidatePath("/tournaments");
+    revalidatePath(`/tournaments/${registration.tournamentId}`);
+    revalidatePath("/teams");
+    return { success: true, data: registration };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (["TEAM_EVENT_REQUIRED", "TEAM_NOT_FOUND", "NOT_TEAM_CAPTAIN", "TEAM_ROSTER_SIZE_INVALID", "TEAM_MEMBER_UNAVAILABLE", "TEAM_MEMBER_ALREADY_REGISTERED"].includes(message)) {
+      return { success: false, error: teamEntryErrorMessage(message) };
+    }
+    if (error instanceof TournamentRegistrationError) {
+      const messages = {
+        ALREADY_REGISTERED: "You are already registered.",
+        FULL: "Tournament is full.",
+        REGISTRATION_CLOSED: "Registration is closed.",
+        PAID_TOURNAMENT: "This tournament requires a Telegram Stars payment.",
+        TEAM_TOURNAMENT: "Choose a captain roster for this team event.",
+      };
+      return { success: false, error: messages[error.code] };
+    }
+    if (message === "UNAUTHENTICATED") return { success: false, error: "Open VELOX in Telegram to register a team." };
+    console.error("Team tournament registration failed", error);
+    return { success: false, error: "We couldn't complete the team registration. Please try again." };
   }
 }

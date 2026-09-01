@@ -38,6 +38,7 @@ export type TelegramPaymentMinAggregateOutputType = {
   id: string | null
   userId: string | null
   tournamentId: string | null
+  teamId: string | null
   amount: number | null
   currency: string | null
   invoicePayload: string | null
@@ -51,6 +52,7 @@ export type TelegramPaymentMaxAggregateOutputType = {
   id: string | null
   userId: string | null
   tournamentId: string | null
+  teamId: string | null
   amount: number | null
   currency: string | null
   invoicePayload: string | null
@@ -64,6 +66,7 @@ export type TelegramPaymentCountAggregateOutputType = {
   id: number
   userId: number
   tournamentId: number
+  teamId: number
   amount: number
   currency: number
   invoicePayload: number
@@ -88,6 +91,7 @@ export type TelegramPaymentMinAggregateInputType = {
   id?: true
   userId?: true
   tournamentId?: true
+  teamId?: true
   amount?: true
   currency?: true
   invoicePayload?: true
@@ -101,6 +105,7 @@ export type TelegramPaymentMaxAggregateInputType = {
   id?: true
   userId?: true
   tournamentId?: true
+  teamId?: true
   amount?: true
   currency?: true
   invoicePayload?: true
@@ -114,6 +119,7 @@ export type TelegramPaymentCountAggregateInputType = {
   id?: true
   userId?: true
   tournamentId?: true
+  teamId?: true
   amount?: true
   currency?: true
   invoicePayload?: true
@@ -215,6 +221,7 @@ export type TelegramPaymentGroupByOutputType = {
   id: string
   userId: string
   tournamentId: string | null
+  teamId: string | null
   amount: number
   currency: string
   invoicePayload: string | null
@@ -252,6 +259,7 @@ export type TelegramPaymentWhereInput = {
   id?: Prisma.StringFilter<"TelegramPayment"> | string
   userId?: Prisma.StringFilter<"TelegramPayment"> | string
   tournamentId?: Prisma.StringNullableFilter<"TelegramPayment"> | string | null
+  teamId?: Prisma.StringNullableFilter<"TelegramPayment"> | string | null
   amount?: Prisma.IntFilter<"TelegramPayment"> | number
   currency?: Prisma.StringFilter<"TelegramPayment"> | string
   invoicePayload?: Prisma.StringNullableFilter<"TelegramPayment"> | string | null
@@ -262,6 +270,7 @@ export type TelegramPaymentWhereInput = {
   metadata?: Prisma.JsonNullableFilter<"TelegramPayment">
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   tournament?: Prisma.XOR<Prisma.TournamentNullableScalarRelationFilter, Prisma.TournamentWhereInput> | null
+  team?: Prisma.XOR<Prisma.TeamNullableScalarRelationFilter, Prisma.TeamWhereInput> | null
   refund?: Prisma.XOR<Prisma.RefundNullableScalarRelationFilter, Prisma.RefundWhereInput> | null
   registration?: Prisma.XOR<Prisma.TournamentRegistrationNullableScalarRelationFilter, Prisma.TournamentRegistrationWhereInput> | null
   paymentEvents?: Prisma.PaymentEventListRelationFilter
@@ -271,6 +280,7 @@ export type TelegramPaymentOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   tournamentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  teamId?: Prisma.SortOrderInput | Prisma.SortOrder
   amount?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   invoicePayload?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -281,6 +291,7 @@ export type TelegramPaymentOrderByWithRelationInput = {
   metadata?: Prisma.SortOrderInput | Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   tournament?: Prisma.TournamentOrderByWithRelationInput
+  team?: Prisma.TeamOrderByWithRelationInput
   refund?: Prisma.RefundOrderByWithRelationInput
   registration?: Prisma.TournamentRegistrationOrderByWithRelationInput
   paymentEvents?: Prisma.PaymentEventOrderByRelationAggregateInput
@@ -295,6 +306,7 @@ export type TelegramPaymentWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.TelegramPaymentWhereInput | Prisma.TelegramPaymentWhereInput[]
   userId?: Prisma.StringFilter<"TelegramPayment"> | string
   tournamentId?: Prisma.StringNullableFilter<"TelegramPayment"> | string | null
+  teamId?: Prisma.StringNullableFilter<"TelegramPayment"> | string | null
   amount?: Prisma.IntFilter<"TelegramPayment"> | number
   currency?: Prisma.StringFilter<"TelegramPayment"> | string
   status?: Prisma.EnumPaymentStatusFilter<"TelegramPayment"> | $Enums.PaymentStatus
@@ -303,6 +315,7 @@ export type TelegramPaymentWhereUniqueInput = Prisma.AtLeast<{
   metadata?: Prisma.JsonNullableFilter<"TelegramPayment">
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   tournament?: Prisma.XOR<Prisma.TournamentNullableScalarRelationFilter, Prisma.TournamentWhereInput> | null
+  team?: Prisma.XOR<Prisma.TeamNullableScalarRelationFilter, Prisma.TeamWhereInput> | null
   refund?: Prisma.XOR<Prisma.RefundNullableScalarRelationFilter, Prisma.RefundWhereInput> | null
   registration?: Prisma.XOR<Prisma.TournamentRegistrationNullableScalarRelationFilter, Prisma.TournamentRegistrationWhereInput> | null
   paymentEvents?: Prisma.PaymentEventListRelationFilter
@@ -312,6 +325,7 @@ export type TelegramPaymentOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   tournamentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  teamId?: Prisma.SortOrderInput | Prisma.SortOrder
   amount?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   invoicePayload?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -334,6 +348,7 @@ export type TelegramPaymentScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"TelegramPayment"> | string
   userId?: Prisma.StringWithAggregatesFilter<"TelegramPayment"> | string
   tournamentId?: Prisma.StringNullableWithAggregatesFilter<"TelegramPayment"> | string | null
+  teamId?: Prisma.StringNullableWithAggregatesFilter<"TelegramPayment"> | string | null
   amount?: Prisma.IntWithAggregatesFilter<"TelegramPayment"> | number
   currency?: Prisma.StringWithAggregatesFilter<"TelegramPayment"> | string
   invoicePayload?: Prisma.StringNullableWithAggregatesFilter<"TelegramPayment"> | string | null
@@ -356,6 +371,7 @@ export type TelegramPaymentCreateInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   user: Prisma.UserCreateNestedOneWithoutPaymentsInput
   tournament?: Prisma.TournamentCreateNestedOneWithoutPaymentsInput
+  team?: Prisma.TeamCreateNestedOneWithoutPaymentsInput
   refund?: Prisma.RefundCreateNestedOneWithoutPaymentInput
   registration?: Prisma.TournamentRegistrationCreateNestedOneWithoutPaymentInput
   paymentEvents?: Prisma.PaymentEventCreateNestedManyWithoutPaymentInput
@@ -365,6 +381,7 @@ export type TelegramPaymentUncheckedCreateInput = {
   id?: string
   userId: string
   tournamentId?: string | null
+  teamId?: string | null
   amount: number
   currency?: string
   invoicePayload?: string | null
@@ -390,6 +407,7 @@ export type TelegramPaymentUpdateInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   user?: Prisma.UserUpdateOneRequiredWithoutPaymentsNestedInput
   tournament?: Prisma.TournamentUpdateOneWithoutPaymentsNestedInput
+  team?: Prisma.TeamUpdateOneWithoutPaymentsNestedInput
   refund?: Prisma.RefundUpdateOneWithoutPaymentNestedInput
   registration?: Prisma.TournamentRegistrationUpdateOneWithoutPaymentNestedInput
   paymentEvents?: Prisma.PaymentEventUpdateManyWithoutPaymentNestedInput
@@ -399,6 +417,7 @@ export type TelegramPaymentUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   tournamentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   invoicePayload?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -416,6 +435,7 @@ export type TelegramPaymentCreateManyInput = {
   id?: string
   userId: string
   tournamentId?: string | null
+  teamId?: string | null
   amount: number
   currency?: string
   invoicePayload?: string | null
@@ -442,6 +462,7 @@ export type TelegramPaymentUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   tournamentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   invoicePayload?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -466,6 +487,7 @@ export type TelegramPaymentCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   tournamentId?: Prisma.SortOrder
+  teamId?: Prisma.SortOrder
   amount?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   invoicePayload?: Prisma.SortOrder
@@ -484,6 +506,7 @@ export type TelegramPaymentMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   tournamentId?: Prisma.SortOrder
+  teamId?: Prisma.SortOrder
   amount?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   invoicePayload?: Prisma.SortOrder
@@ -497,6 +520,7 @@ export type TelegramPaymentMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   tournamentId?: Prisma.SortOrder
+  teamId?: Prisma.SortOrder
   amount?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   invoicePayload?: Prisma.SortOrder
@@ -652,6 +676,48 @@ export type TelegramPaymentUpdateOneWithoutRegistrationNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.TelegramPaymentUpdateToOneWithWhereWithoutRegistrationInput, Prisma.TelegramPaymentUpdateWithoutRegistrationInput>, Prisma.TelegramPaymentUncheckedUpdateWithoutRegistrationInput>
 }
 
+export type TelegramPaymentCreateNestedManyWithoutTeamInput = {
+  create?: Prisma.XOR<Prisma.TelegramPaymentCreateWithoutTeamInput, Prisma.TelegramPaymentUncheckedCreateWithoutTeamInput> | Prisma.TelegramPaymentCreateWithoutTeamInput[] | Prisma.TelegramPaymentUncheckedCreateWithoutTeamInput[]
+  connectOrCreate?: Prisma.TelegramPaymentCreateOrConnectWithoutTeamInput | Prisma.TelegramPaymentCreateOrConnectWithoutTeamInput[]
+  createMany?: Prisma.TelegramPaymentCreateManyTeamInputEnvelope
+  connect?: Prisma.TelegramPaymentWhereUniqueInput | Prisma.TelegramPaymentWhereUniqueInput[]
+}
+
+export type TelegramPaymentUncheckedCreateNestedManyWithoutTeamInput = {
+  create?: Prisma.XOR<Prisma.TelegramPaymentCreateWithoutTeamInput, Prisma.TelegramPaymentUncheckedCreateWithoutTeamInput> | Prisma.TelegramPaymentCreateWithoutTeamInput[] | Prisma.TelegramPaymentUncheckedCreateWithoutTeamInput[]
+  connectOrCreate?: Prisma.TelegramPaymentCreateOrConnectWithoutTeamInput | Prisma.TelegramPaymentCreateOrConnectWithoutTeamInput[]
+  createMany?: Prisma.TelegramPaymentCreateManyTeamInputEnvelope
+  connect?: Prisma.TelegramPaymentWhereUniqueInput | Prisma.TelegramPaymentWhereUniqueInput[]
+}
+
+export type TelegramPaymentUpdateManyWithoutTeamNestedInput = {
+  create?: Prisma.XOR<Prisma.TelegramPaymentCreateWithoutTeamInput, Prisma.TelegramPaymentUncheckedCreateWithoutTeamInput> | Prisma.TelegramPaymentCreateWithoutTeamInput[] | Prisma.TelegramPaymentUncheckedCreateWithoutTeamInput[]
+  connectOrCreate?: Prisma.TelegramPaymentCreateOrConnectWithoutTeamInput | Prisma.TelegramPaymentCreateOrConnectWithoutTeamInput[]
+  upsert?: Prisma.TelegramPaymentUpsertWithWhereUniqueWithoutTeamInput | Prisma.TelegramPaymentUpsertWithWhereUniqueWithoutTeamInput[]
+  createMany?: Prisma.TelegramPaymentCreateManyTeamInputEnvelope
+  set?: Prisma.TelegramPaymentWhereUniqueInput | Prisma.TelegramPaymentWhereUniqueInput[]
+  disconnect?: Prisma.TelegramPaymentWhereUniqueInput | Prisma.TelegramPaymentWhereUniqueInput[]
+  delete?: Prisma.TelegramPaymentWhereUniqueInput | Prisma.TelegramPaymentWhereUniqueInput[]
+  connect?: Prisma.TelegramPaymentWhereUniqueInput | Prisma.TelegramPaymentWhereUniqueInput[]
+  update?: Prisma.TelegramPaymentUpdateWithWhereUniqueWithoutTeamInput | Prisma.TelegramPaymentUpdateWithWhereUniqueWithoutTeamInput[]
+  updateMany?: Prisma.TelegramPaymentUpdateManyWithWhereWithoutTeamInput | Prisma.TelegramPaymentUpdateManyWithWhereWithoutTeamInput[]
+  deleteMany?: Prisma.TelegramPaymentScalarWhereInput | Prisma.TelegramPaymentScalarWhereInput[]
+}
+
+export type TelegramPaymentUncheckedUpdateManyWithoutTeamNestedInput = {
+  create?: Prisma.XOR<Prisma.TelegramPaymentCreateWithoutTeamInput, Prisma.TelegramPaymentUncheckedCreateWithoutTeamInput> | Prisma.TelegramPaymentCreateWithoutTeamInput[] | Prisma.TelegramPaymentUncheckedCreateWithoutTeamInput[]
+  connectOrCreate?: Prisma.TelegramPaymentCreateOrConnectWithoutTeamInput | Prisma.TelegramPaymentCreateOrConnectWithoutTeamInput[]
+  upsert?: Prisma.TelegramPaymentUpsertWithWhereUniqueWithoutTeamInput | Prisma.TelegramPaymentUpsertWithWhereUniqueWithoutTeamInput[]
+  createMany?: Prisma.TelegramPaymentCreateManyTeamInputEnvelope
+  set?: Prisma.TelegramPaymentWhereUniqueInput | Prisma.TelegramPaymentWhereUniqueInput[]
+  disconnect?: Prisma.TelegramPaymentWhereUniqueInput | Prisma.TelegramPaymentWhereUniqueInput[]
+  delete?: Prisma.TelegramPaymentWhereUniqueInput | Prisma.TelegramPaymentWhereUniqueInput[]
+  connect?: Prisma.TelegramPaymentWhereUniqueInput | Prisma.TelegramPaymentWhereUniqueInput[]
+  update?: Prisma.TelegramPaymentUpdateWithWhereUniqueWithoutTeamInput | Prisma.TelegramPaymentUpdateWithWhereUniqueWithoutTeamInput[]
+  updateMany?: Prisma.TelegramPaymentUpdateManyWithWhereWithoutTeamInput | Prisma.TelegramPaymentUpdateManyWithWhereWithoutTeamInput[]
+  deleteMany?: Prisma.TelegramPaymentScalarWhereInput | Prisma.TelegramPaymentScalarWhereInput[]
+}
+
 export type TelegramPaymentCreateWithoutUserInput = {
   id?: string
   amount: number
@@ -663,6 +729,7 @@ export type TelegramPaymentCreateWithoutUserInput = {
   completedAt?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tournament?: Prisma.TournamentCreateNestedOneWithoutPaymentsInput
+  team?: Prisma.TeamCreateNestedOneWithoutPaymentsInput
   refund?: Prisma.RefundCreateNestedOneWithoutPaymentInput
   registration?: Prisma.TournamentRegistrationCreateNestedOneWithoutPaymentInput
   paymentEvents?: Prisma.PaymentEventCreateNestedManyWithoutPaymentInput
@@ -671,6 +738,7 @@ export type TelegramPaymentCreateWithoutUserInput = {
 export type TelegramPaymentUncheckedCreateWithoutUserInput = {
   id?: string
   tournamentId?: string | null
+  teamId?: string | null
   amount: number
   currency?: string
   invoicePayload?: string | null
@@ -717,6 +785,7 @@ export type TelegramPaymentScalarWhereInput = {
   id?: Prisma.StringFilter<"TelegramPayment"> | string
   userId?: Prisma.StringFilter<"TelegramPayment"> | string
   tournamentId?: Prisma.StringNullableFilter<"TelegramPayment"> | string | null
+  teamId?: Prisma.StringNullableFilter<"TelegramPayment"> | string | null
   amount?: Prisma.IntFilter<"TelegramPayment"> | number
   currency?: Prisma.StringFilter<"TelegramPayment"> | string
   invoicePayload?: Prisma.StringNullableFilter<"TelegramPayment"> | string | null
@@ -739,6 +808,7 @@ export type TelegramPaymentCreateWithoutPaymentEventsInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   user: Prisma.UserCreateNestedOneWithoutPaymentsInput
   tournament?: Prisma.TournamentCreateNestedOneWithoutPaymentsInput
+  team?: Prisma.TeamCreateNestedOneWithoutPaymentsInput
   refund?: Prisma.RefundCreateNestedOneWithoutPaymentInput
   registration?: Prisma.TournamentRegistrationCreateNestedOneWithoutPaymentInput
 }
@@ -747,6 +817,7 @@ export type TelegramPaymentUncheckedCreateWithoutPaymentEventsInput = {
   id?: string
   userId: string
   tournamentId?: string | null
+  teamId?: string | null
   amount: number
   currency?: string
   invoicePayload?: string | null
@@ -787,6 +858,7 @@ export type TelegramPaymentUpdateWithoutPaymentEventsInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   user?: Prisma.UserUpdateOneRequiredWithoutPaymentsNestedInput
   tournament?: Prisma.TournamentUpdateOneWithoutPaymentsNestedInput
+  team?: Prisma.TeamUpdateOneWithoutPaymentsNestedInput
   refund?: Prisma.RefundUpdateOneWithoutPaymentNestedInput
   registration?: Prisma.TournamentRegistrationUpdateOneWithoutPaymentNestedInput
 }
@@ -795,6 +867,7 @@ export type TelegramPaymentUncheckedUpdateWithoutPaymentEventsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   tournamentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   invoicePayload?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -819,6 +892,7 @@ export type TelegramPaymentCreateWithoutRefundInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   user: Prisma.UserCreateNestedOneWithoutPaymentsInput
   tournament?: Prisma.TournamentCreateNestedOneWithoutPaymentsInput
+  team?: Prisma.TeamCreateNestedOneWithoutPaymentsInput
   registration?: Prisma.TournamentRegistrationCreateNestedOneWithoutPaymentInput
   paymentEvents?: Prisma.PaymentEventCreateNestedManyWithoutPaymentInput
 }
@@ -827,6 +901,7 @@ export type TelegramPaymentUncheckedCreateWithoutRefundInput = {
   id?: string
   userId: string
   tournamentId?: string | null
+  teamId?: string | null
   amount: number
   currency?: string
   invoicePayload?: string | null
@@ -867,6 +942,7 @@ export type TelegramPaymentUpdateWithoutRefundInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   user?: Prisma.UserUpdateOneRequiredWithoutPaymentsNestedInput
   tournament?: Prisma.TournamentUpdateOneWithoutPaymentsNestedInput
+  team?: Prisma.TeamUpdateOneWithoutPaymentsNestedInput
   registration?: Prisma.TournamentRegistrationUpdateOneWithoutPaymentNestedInput
   paymentEvents?: Prisma.PaymentEventUpdateManyWithoutPaymentNestedInput
 }
@@ -875,6 +951,7 @@ export type TelegramPaymentUncheckedUpdateWithoutRefundInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   tournamentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   invoicePayload?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -898,6 +975,7 @@ export type TelegramPaymentCreateWithoutTournamentInput = {
   completedAt?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   user: Prisma.UserCreateNestedOneWithoutPaymentsInput
+  team?: Prisma.TeamCreateNestedOneWithoutPaymentsInput
   refund?: Prisma.RefundCreateNestedOneWithoutPaymentInput
   registration?: Prisma.TournamentRegistrationCreateNestedOneWithoutPaymentInput
   paymentEvents?: Prisma.PaymentEventCreateNestedManyWithoutPaymentInput
@@ -906,6 +984,7 @@ export type TelegramPaymentCreateWithoutTournamentInput = {
 export type TelegramPaymentUncheckedCreateWithoutTournamentInput = {
   id?: string
   userId: string
+  teamId?: string | null
   amount: number
   currency?: string
   invoicePayload?: string | null
@@ -957,6 +1036,7 @@ export type TelegramPaymentCreateWithoutRegistrationInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   user: Prisma.UserCreateNestedOneWithoutPaymentsInput
   tournament?: Prisma.TournamentCreateNestedOneWithoutPaymentsInput
+  team?: Prisma.TeamCreateNestedOneWithoutPaymentsInput
   refund?: Prisma.RefundCreateNestedOneWithoutPaymentInput
   paymentEvents?: Prisma.PaymentEventCreateNestedManyWithoutPaymentInput
 }
@@ -965,6 +1045,7 @@ export type TelegramPaymentUncheckedCreateWithoutRegistrationInput = {
   id?: string
   userId: string
   tournamentId?: string | null
+  teamId?: string | null
   amount: number
   currency?: string
   invoicePayload?: string | null
@@ -1005,6 +1086,7 @@ export type TelegramPaymentUpdateWithoutRegistrationInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   user?: Prisma.UserUpdateOneRequiredWithoutPaymentsNestedInput
   tournament?: Prisma.TournamentUpdateOneWithoutPaymentsNestedInput
+  team?: Prisma.TeamUpdateOneWithoutPaymentsNestedInput
   refund?: Prisma.RefundUpdateOneWithoutPaymentNestedInput
   paymentEvents?: Prisma.PaymentEventUpdateManyWithoutPaymentNestedInput
 }
@@ -1013,6 +1095,7 @@ export type TelegramPaymentUncheckedUpdateWithoutRegistrationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   tournamentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   invoicePayload?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1025,9 +1108,70 @@ export type TelegramPaymentUncheckedUpdateWithoutRegistrationInput = {
   paymentEvents?: Prisma.PaymentEventUncheckedUpdateManyWithoutPaymentNestedInput
 }
 
+export type TelegramPaymentCreateWithoutTeamInput = {
+  id?: string
+  amount: number
+  currency?: string
+  invoicePayload?: string | null
+  telegramPaymentRef?: string | null
+  status: $Enums.PaymentStatus
+  createdAt?: Date | string
+  completedAt?: Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  user: Prisma.UserCreateNestedOneWithoutPaymentsInput
+  tournament?: Prisma.TournamentCreateNestedOneWithoutPaymentsInput
+  refund?: Prisma.RefundCreateNestedOneWithoutPaymentInput
+  registration?: Prisma.TournamentRegistrationCreateNestedOneWithoutPaymentInput
+  paymentEvents?: Prisma.PaymentEventCreateNestedManyWithoutPaymentInput
+}
+
+export type TelegramPaymentUncheckedCreateWithoutTeamInput = {
+  id?: string
+  userId: string
+  tournamentId?: string | null
+  amount: number
+  currency?: string
+  invoicePayload?: string | null
+  telegramPaymentRef?: string | null
+  status: $Enums.PaymentStatus
+  createdAt?: Date | string
+  completedAt?: Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  refund?: Prisma.RefundUncheckedCreateNestedOneWithoutPaymentInput
+  registration?: Prisma.TournamentRegistrationUncheckedCreateNestedOneWithoutPaymentInput
+  paymentEvents?: Prisma.PaymentEventUncheckedCreateNestedManyWithoutPaymentInput
+}
+
+export type TelegramPaymentCreateOrConnectWithoutTeamInput = {
+  where: Prisma.TelegramPaymentWhereUniqueInput
+  create: Prisma.XOR<Prisma.TelegramPaymentCreateWithoutTeamInput, Prisma.TelegramPaymentUncheckedCreateWithoutTeamInput>
+}
+
+export type TelegramPaymentCreateManyTeamInputEnvelope = {
+  data: Prisma.TelegramPaymentCreateManyTeamInput | Prisma.TelegramPaymentCreateManyTeamInput[]
+  skipDuplicates?: boolean
+}
+
+export type TelegramPaymentUpsertWithWhereUniqueWithoutTeamInput = {
+  where: Prisma.TelegramPaymentWhereUniqueInput
+  update: Prisma.XOR<Prisma.TelegramPaymentUpdateWithoutTeamInput, Prisma.TelegramPaymentUncheckedUpdateWithoutTeamInput>
+  create: Prisma.XOR<Prisma.TelegramPaymentCreateWithoutTeamInput, Prisma.TelegramPaymentUncheckedCreateWithoutTeamInput>
+}
+
+export type TelegramPaymentUpdateWithWhereUniqueWithoutTeamInput = {
+  where: Prisma.TelegramPaymentWhereUniqueInput
+  data: Prisma.XOR<Prisma.TelegramPaymentUpdateWithoutTeamInput, Prisma.TelegramPaymentUncheckedUpdateWithoutTeamInput>
+}
+
+export type TelegramPaymentUpdateManyWithWhereWithoutTeamInput = {
+  where: Prisma.TelegramPaymentScalarWhereInput
+  data: Prisma.XOR<Prisma.TelegramPaymentUpdateManyMutationInput, Prisma.TelegramPaymentUncheckedUpdateManyWithoutTeamInput>
+}
+
 export type TelegramPaymentCreateManyUserInput = {
   id?: string
   tournamentId?: string | null
+  teamId?: string | null
   amount: number
   currency?: string
   invoicePayload?: string | null
@@ -1049,6 +1193,7 @@ export type TelegramPaymentUpdateWithoutUserInput = {
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tournament?: Prisma.TournamentUpdateOneWithoutPaymentsNestedInput
+  team?: Prisma.TeamUpdateOneWithoutPaymentsNestedInput
   refund?: Prisma.RefundUpdateOneWithoutPaymentNestedInput
   registration?: Prisma.TournamentRegistrationUpdateOneWithoutPaymentNestedInput
   paymentEvents?: Prisma.PaymentEventUpdateManyWithoutPaymentNestedInput
@@ -1057,6 +1202,7 @@ export type TelegramPaymentUpdateWithoutUserInput = {
 export type TelegramPaymentUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tournamentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   invoicePayload?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1073,6 +1219,7 @@ export type TelegramPaymentUncheckedUpdateWithoutUserInput = {
 export type TelegramPaymentUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tournamentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   invoicePayload?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1086,6 +1233,7 @@ export type TelegramPaymentUncheckedUpdateManyWithoutUserInput = {
 export type TelegramPaymentCreateManyTournamentInput = {
   id?: string
   userId: string
+  teamId?: string | null
   amount: number
   currency?: string
   invoicePayload?: string | null
@@ -1107,6 +1255,7 @@ export type TelegramPaymentUpdateWithoutTournamentInput = {
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   user?: Prisma.UserUpdateOneRequiredWithoutPaymentsNestedInput
+  team?: Prisma.TeamUpdateOneWithoutPaymentsNestedInput
   refund?: Prisma.RefundUpdateOneWithoutPaymentNestedInput
   registration?: Prisma.TournamentRegistrationUpdateOneWithoutPaymentNestedInput
   paymentEvents?: Prisma.PaymentEventUpdateManyWithoutPaymentNestedInput
@@ -1115,6 +1264,7 @@ export type TelegramPaymentUpdateWithoutTournamentInput = {
 export type TelegramPaymentUncheckedUpdateWithoutTournamentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  teamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   invoicePayload?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1131,6 +1281,69 @@ export type TelegramPaymentUncheckedUpdateWithoutTournamentInput = {
 export type TelegramPaymentUncheckedUpdateManyWithoutTournamentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  teamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  amount?: Prisma.IntFieldUpdateOperationsInput | number
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  invoicePayload?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  telegramPaymentRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+}
+
+export type TelegramPaymentCreateManyTeamInput = {
+  id?: string
+  userId: string
+  tournamentId?: string | null
+  amount: number
+  currency?: string
+  invoicePayload?: string | null
+  telegramPaymentRef?: string | null
+  status: $Enums.PaymentStatus
+  createdAt?: Date | string
+  completedAt?: Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+}
+
+export type TelegramPaymentUpdateWithoutTeamInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  amount?: Prisma.IntFieldUpdateOperationsInput | number
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  invoicePayload?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  telegramPaymentRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  user?: Prisma.UserUpdateOneRequiredWithoutPaymentsNestedInput
+  tournament?: Prisma.TournamentUpdateOneWithoutPaymentsNestedInput
+  refund?: Prisma.RefundUpdateOneWithoutPaymentNestedInput
+  registration?: Prisma.TournamentRegistrationUpdateOneWithoutPaymentNestedInput
+  paymentEvents?: Prisma.PaymentEventUpdateManyWithoutPaymentNestedInput
+}
+
+export type TelegramPaymentUncheckedUpdateWithoutTeamInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  tournamentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  amount?: Prisma.IntFieldUpdateOperationsInput | number
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  invoicePayload?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  telegramPaymentRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  refund?: Prisma.RefundUncheckedUpdateOneWithoutPaymentNestedInput
+  registration?: Prisma.TournamentRegistrationUncheckedUpdateOneWithoutPaymentNestedInput
+  paymentEvents?: Prisma.PaymentEventUncheckedUpdateManyWithoutPaymentNestedInput
+}
+
+export type TelegramPaymentUncheckedUpdateManyWithoutTeamInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  tournamentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   invoicePayload?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1176,6 +1389,7 @@ export type TelegramPaymentSelect<ExtArgs extends runtime.Types.Extensions.Inter
   id?: boolean
   userId?: boolean
   tournamentId?: boolean
+  teamId?: boolean
   amount?: boolean
   currency?: boolean
   invoicePayload?: boolean
@@ -1186,6 +1400,7 @@ export type TelegramPaymentSelect<ExtArgs extends runtime.Types.Extensions.Inter
   metadata?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   tournament?: boolean | Prisma.TelegramPayment$tournamentArgs<ExtArgs>
+  team?: boolean | Prisma.TelegramPayment$teamArgs<ExtArgs>
   refund?: boolean | Prisma.TelegramPayment$refundArgs<ExtArgs>
   registration?: boolean | Prisma.TelegramPayment$registrationArgs<ExtArgs>
   paymentEvents?: boolean | Prisma.TelegramPayment$paymentEventsArgs<ExtArgs>
@@ -1196,6 +1411,7 @@ export type TelegramPaymentSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   id?: boolean
   userId?: boolean
   tournamentId?: boolean
+  teamId?: boolean
   amount?: boolean
   currency?: boolean
   invoicePayload?: boolean
@@ -1206,12 +1422,14 @@ export type TelegramPaymentSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   metadata?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   tournament?: boolean | Prisma.TelegramPayment$tournamentArgs<ExtArgs>
+  team?: boolean | Prisma.TelegramPayment$teamArgs<ExtArgs>
 }, ExtArgs["result"]["telegramPayment"]>
 
 export type TelegramPaymentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
   tournamentId?: boolean
+  teamId?: boolean
   amount?: boolean
   currency?: boolean
   invoicePayload?: boolean
@@ -1222,12 +1440,14 @@ export type TelegramPaymentSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   metadata?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   tournament?: boolean | Prisma.TelegramPayment$tournamentArgs<ExtArgs>
+  team?: boolean | Prisma.TelegramPayment$teamArgs<ExtArgs>
 }, ExtArgs["result"]["telegramPayment"]>
 
 export type TelegramPaymentSelectScalar = {
   id?: boolean
   userId?: boolean
   tournamentId?: boolean
+  teamId?: boolean
   amount?: boolean
   currency?: boolean
   invoicePayload?: boolean
@@ -1238,10 +1458,11 @@ export type TelegramPaymentSelectScalar = {
   metadata?: boolean
 }
 
-export type TelegramPaymentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "tournamentId" | "amount" | "currency" | "invoicePayload" | "telegramPaymentRef" | "status" | "createdAt" | "completedAt" | "metadata", ExtArgs["result"]["telegramPayment"]>
+export type TelegramPaymentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "tournamentId" | "teamId" | "amount" | "currency" | "invoicePayload" | "telegramPaymentRef" | "status" | "createdAt" | "completedAt" | "metadata", ExtArgs["result"]["telegramPayment"]>
 export type TelegramPaymentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   tournament?: boolean | Prisma.TelegramPayment$tournamentArgs<ExtArgs>
+  team?: boolean | Prisma.TelegramPayment$teamArgs<ExtArgs>
   refund?: boolean | Prisma.TelegramPayment$refundArgs<ExtArgs>
   registration?: boolean | Prisma.TelegramPayment$registrationArgs<ExtArgs>
   paymentEvents?: boolean | Prisma.TelegramPayment$paymentEventsArgs<ExtArgs>
@@ -1250,10 +1471,12 @@ export type TelegramPaymentInclude<ExtArgs extends runtime.Types.Extensions.Inte
 export type TelegramPaymentIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   tournament?: boolean | Prisma.TelegramPayment$tournamentArgs<ExtArgs>
+  team?: boolean | Prisma.TelegramPayment$teamArgs<ExtArgs>
 }
 export type TelegramPaymentIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   tournament?: boolean | Prisma.TelegramPayment$tournamentArgs<ExtArgs>
+  team?: boolean | Prisma.TelegramPayment$teamArgs<ExtArgs>
 }
 
 export type $TelegramPaymentPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1261,6 +1484,7 @@ export type $TelegramPaymentPayload<ExtArgs extends runtime.Types.Extensions.Int
   objects: {
     user: Prisma.$UserPayload<ExtArgs>
     tournament: Prisma.$TournamentPayload<ExtArgs> | null
+    team: Prisma.$TeamPayload<ExtArgs> | null
     refund: Prisma.$RefundPayload<ExtArgs> | null
     registration: Prisma.$TournamentRegistrationPayload<ExtArgs> | null
     paymentEvents: Prisma.$PaymentEventPayload<ExtArgs>[]
@@ -1269,6 +1493,7 @@ export type $TelegramPaymentPayload<ExtArgs extends runtime.Types.Extensions.Int
     id: string
     userId: string
     tournamentId: string | null
+    teamId: string | null
     amount: number
     currency: string
     invoicePayload: string | null
@@ -1673,6 +1898,7 @@ export interface Prisma__TelegramPaymentClient<T, Null = never, ExtArgs extends 
   readonly [Symbol.toStringTag]: "PrismaPromise"
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   tournament<T extends Prisma.TelegramPayment$tournamentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TelegramPayment$tournamentArgs<ExtArgs>>): Prisma.Prisma__TournamentClient<runtime.Types.Result.GetResult<Prisma.$TournamentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  team<T extends Prisma.TelegramPayment$teamArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TelegramPayment$teamArgs<ExtArgs>>): Prisma.Prisma__TeamClient<runtime.Types.Result.GetResult<Prisma.$TeamPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   refund<T extends Prisma.TelegramPayment$refundArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TelegramPayment$refundArgs<ExtArgs>>): Prisma.Prisma__RefundClient<runtime.Types.Result.GetResult<Prisma.$RefundPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   registration<T extends Prisma.TelegramPayment$registrationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TelegramPayment$registrationArgs<ExtArgs>>): Prisma.Prisma__TournamentRegistrationClient<runtime.Types.Result.GetResult<Prisma.$TournamentRegistrationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   paymentEvents<T extends Prisma.TelegramPayment$paymentEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TelegramPayment$paymentEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PaymentEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -1708,6 +1934,7 @@ export interface TelegramPaymentFieldRefs {
   readonly id: Prisma.FieldRef<"TelegramPayment", 'String'>
   readonly userId: Prisma.FieldRef<"TelegramPayment", 'String'>
   readonly tournamentId: Prisma.FieldRef<"TelegramPayment", 'String'>
+  readonly teamId: Prisma.FieldRef<"TelegramPayment", 'String'>
   readonly amount: Prisma.FieldRef<"TelegramPayment", 'Int'>
   readonly currency: Prisma.FieldRef<"TelegramPayment", 'String'>
   readonly invoicePayload: Prisma.FieldRef<"TelegramPayment", 'String'>
@@ -2133,6 +2360,25 @@ export type TelegramPayment$tournamentArgs<ExtArgs extends runtime.Types.Extensi
    */
   include?: Prisma.TournamentInclude<ExtArgs> | null
   where?: Prisma.TournamentWhereInput
+}
+
+/**
+ * TelegramPayment.team
+ */
+export type TelegramPayment$teamArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Team
+   */
+  select?: Prisma.TeamSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Team
+   */
+  omit?: Prisma.TeamOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TeamInclude<ExtArgs> | null
+  where?: Prisma.TeamWhereInput
 }
 
 /**

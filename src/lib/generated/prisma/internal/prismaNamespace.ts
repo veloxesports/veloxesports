@@ -2645,6 +2645,7 @@ export const TelegramPaymentScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   tournamentId: 'tournamentId',
+  teamId: 'teamId',
   amount: 'amount',
   currency: 'currency',
   invoicePayload: 'invoicePayload',
@@ -2699,6 +2700,8 @@ export const TournamentScalarFieldEnum = {
   registrationDeadline: 'registrationDeadline',
   startDate: 'startDate',
   format: 'format',
+  participantType: 'participantType',
+  teamSize: 'teamSize',
   region: 'region',
   status: 'status',
   gameMode: 'gameMode',
@@ -3200,6 +3203,20 @@ export type ListEnumTournamentFormatFieldRefInput<$PrismaModel> = FieldRefInputT
 
 
 /**
+ * Reference to a field of type 'TournamentParticipantType'
+ */
+export type EnumTournamentParticipantTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TournamentParticipantType'>
+
+
+
+/**
+ * Reference to a field of type 'TournamentParticipantType[]'
+ */
+export type ListEnumTournamentParticipantTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TournamentParticipantType[]'>
+
+
+
+/**
  * Reference to a field of type 'TournamentStatus'
  */
 export type EnumTournamentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TournamentStatus'>
@@ -3565,4 +3582,3 @@ export type PrismaAction =
  * `PrismaClient` proxy available in interactive transactions.
  */
 export type TransactionClient = Omit<DefaultPrismaClient, runtime.ITXClientDenyList>
-

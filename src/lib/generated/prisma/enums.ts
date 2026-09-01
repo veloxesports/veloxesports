@@ -106,6 +106,14 @@ export const TournamentFormat = {
 export type TournamentFormat = (typeof TournamentFormat)[keyof typeof TournamentFormat]
 
 
+export const TournamentParticipantType = {
+  INDIVIDUAL: 'INDIVIDUAL',
+  TEAM: 'TEAM'
+} as const
+
+export type TournamentParticipantType = (typeof TournamentParticipantType)[keyof typeof TournamentParticipantType]
+
+
 export const TournamentStatus = {
   DRAFT: 'DRAFT',
   REGISTRATION_OPEN: 'REGISTRATION_OPEN',
