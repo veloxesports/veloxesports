@@ -17,6 +17,7 @@ type Tournament = {
   registrationDeadline: Date;
   startDate: Date;
   format: string;
+  participantType: "INDIVIDUAL" | "TEAM";
   region: string | null;
   status: string;
   game: Game;
@@ -54,8 +55,8 @@ export function TournamentBrowser({ tournaments, games }: { tournaments: Tournam
         || (category === "upcoming" && ["REGISTRATION_OPEN", "REGISTRATION_CLOSED", "UPCOMING", "CHECK_IN"].includes(tournament.status))
         || (category === "free" && !tournament.isPaid)
         || (category === "paid" && tournament.isPaid)
-        || (category === "solo" && !["BATTLE_ROYALE", "LEAGUE"].includes(tournament.format))
-        || (category === "team" && ["BATTLE_ROYALE", "LEAGUE"].includes(tournament.format));
+        || (category === "solo" && tournament.participantType === "INDIVIDUAL")
+        || (category === "team" && tournament.participantType === "TEAM");
       return matchesCategory
         && (gameId === "all" || tournament.game.id === gameId)
         && (format === "all" || tournament.format === format)

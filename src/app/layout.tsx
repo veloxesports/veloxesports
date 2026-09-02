@@ -1,13 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { VeloxGuide } from "@/components/assistant/VeloxGuide";
 import { Providers } from "@/components/providers";
 import { TelegramInit } from "@/components/telegram-init";
 import Script from "next/script";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "VELOX | Esports Tournaments",
@@ -32,7 +29,7 @@ export default function RootLayout({
       <head>
         <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
       </head>
-      <body className={`${inter.className} min-h-full flex flex-col bg-[#080d09] text-gray-100 antialiased`}>
+      <body className="min-h-full flex flex-col bg-[#080d09] text-gray-100 antialiased">
         <TelegramInit />
         <Providers>
           <main className="flex-1 pb-20">

@@ -25,7 +25,6 @@ type Tournament = {
   rules: { content: string; checkInPeriodMins: number } | null;
 };
 
-const formats = ["SINGLE_ELIMINATION", "DOUBLE_ELIMINATION", "ROUND_ROBIN", "LEAGUE", "SWISS", "BATTLE_ROYALE", "CUSTOM"];
 const participantTypes = ["INDIVIDUAL", "TEAM"];
 const controlClass = "w-full rounded-2xl border border-[#344335] bg-[#080d09] px-3.5 py-3 text-sm text-white outline-none transition placeholder:text-[#6f796f] focus:border-[#c5f94d] focus:ring-2 focus:ring-[#c5f94d]/15 disabled:cursor-not-allowed disabled:opacity-60";
 
@@ -85,7 +84,7 @@ export function TournamentEditor({ tournament, games, onClose }: { tournament: T
       <div className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
         <Input name="title" label="Tournament title" defaultValue={tournament.title} className="sm:col-span-2" required />
         <Select name="gameId" label="Game" defaultValue={tournament.game.id} required>{games.map((game) => <option key={game.id} value={game.id} disabled={!game.isActive && game.id !== tournament.game.id}>{game.name}{!game.isActive ? " (inactive)" : ""}</option>)}</Select>
-        <Select name="format" label="Format" defaultValue={tournament.format}>{formats.map((format) => <option key={format} value={format}>{labelFor(format)}</option>)}</Select>
+        <label className="grid gap-2 text-sm font-bold text-[#dce8d7]"><span>Format</span><select name="format" defaultValue={tournament.format} className={controlClass}><option value="SINGLE_ELIMINATION">Single Elimination</option>{tournament.format !== "SINGLE_ELIMINATION" && <option value={tournament.format}>{labelFor(tournament.format)} (legacy)</option>}</select><span className="text-xs font-medium leading-relaxed text-[#748173]">New automated events use single elimination. Legacy formats can be retained or converted before they run.</span></label>
         <Select name="participantType" label="Entry type" defaultValue={tournament.participantType}>{participantTypes.map((type) => <option key={type} value={type}>{type === "TEAM" ? "Team roster" : "Individual players"}</option>)}</Select>
         <Input name="prizePool" label="Prize pool (XTR)" type="number" defaultValue={tournament.prizePool} min="0" required />
         <Input name="entryFee" label="Entry fee (XTR)" type="number" defaultValue={tournament.entryFee} min="0" required />

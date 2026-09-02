@@ -14,6 +14,12 @@ const administratorRoles = ["SUPER_ADMIN", "ADMIN"] as const;
 const tournamentManagerRoles = ["SUPER_ADMIN", "ADMIN", "TOURNAMENT_MANAGER"] as const;
 const financeRoles = ["SUPER_ADMIN", "ADMIN", "FINANCE_MANAGER"] as const;
 const moderatorRoles = ["SUPER_ADMIN", "ADMIN", "TOURNAMENT_MANAGER", "MODERATOR"] as const;
+const automatedTournamentFormat = TournamentFormat.SINGLE_ELIMINATION;
+const initialTournamentStatuses = new Set<TournamentStatus>([TournamentStatus.DRAFT, TournamentStatus.REGISTRATION_OPEN]);
+const manualStatusTransitions: Partial<Record<TournamentStatus, readonly TournamentStatus[]>> = {
+  [TournamentStatus.DRAFT]: [TournamentStatus.REGISTRATION_OPEN],
+  [TournamentStatus.REGISTRATION_OPEN]: [TournamentStatus.DRAFT, TournamentStatus.REGISTRATION_CLOSED],
+};
 
 const gameSchema = z.object({
   name: z.string().trim().min(2).max(80),
@@ -46,6 +52,8 @@ const tournamentSchema = tournamentFieldsSchema.extend({
   if (value.participantType === TournamentParticipantType.INDIVIDUAL && value.teamSize !== 1) context.addIssue({ code: "custom", path: ["teamSize"], message: "Individual tournaments must use a roster size of 1." });
   if (value.participantType === TournamentParticipantType.TEAM && value.teamSize < 2) context.addIssue({ code: "custom", path: ["teamSize"], message: "Team tournaments need at least two roster members." });
   if (value.status === "CHECK_IN") context.addIssue({ code: "custom", path: ["status"], message: "Create the tournament first, then open its check-in window when it is ready." });
+  if (!initialTournamentStatuses.has(value.status)) context.addIssue({ code: "custom", path: ["status"], message: "New tournaments can start as a draft or with registration open. Check-in, brackets, and completion are controlled by the tournament lifecycle." });
+  if (value.format !== automatedTournamentFormat) context.addIssue({ code: "custom", path: ["format"], message: "New events currently use single elimination so bracket generation, results, and prizes can run automatically." });
 });
 const tournamentUpdateSchema = tournamentFieldsSchema.extend({ tournamentId: z.string().uuid() }).superRefine((value, context) => {
   if (value.isPaid && value.entryFee < 1) context.addIssue({ code: "custom", path: ["entryFee"], message: "Paid tournaments must have an entry fee." });
@@ -456,6 +464,7 @@ export async function updateTournament(input: unknown) {
       });
       if (!current) throw new Error("TOURNAMENT_NOT_FOUND");
       if (["CANCELLED", "COMPLETED"].includes(current.status)) throw new Error("TOURNAMENT_FINALIZED");
+      if (current.format === automatedTournamentFormat && parsed.data.format !== automatedTournamentFormat) throw new Error("UNSUPPORTED_FORMAT");
       if (parsed.data.maxParticipants < current.currentParticipants) throw new Error("CAPACITY_TOO_LOW");
       if (current.status === "REGISTRATION_OPEN" && parsed.data.registrationDeadline <= new Date()) throw new Error("REGISTRATION_DEADLINE_PASSED");
 
@@ -527,6 +536,7 @@ export async function updateTournament(input: unknown) {
       REGISTRATION_DEADLINE_PASSED: "An open tournament needs a future registration deadline.",
       REGISTRATIONS_EXIST: "Game, format, and payment settings lock once players have registered.",
       BRACKET_EXISTS: "Schedule, capacity, game, and format lock once a bracket exists.",
+      UNSUPPORTED_FORMAT: "Automatic brackets, result progression, and prize payouts currently require single elimination.",
       GAME_NOT_ACTIVE: "Select an active game.",
       UNAUTHENTICATED: "You must be signed in.",
       FORBIDDEN: "You do not have permission to update tournaments.",
@@ -595,9 +605,13 @@ export async function setTournamentStatus(input: unknown) {
   if (parsed.data.status === "CHECK_IN") return { success: false, error: "Use Open check-in to start a protected check-in window." };
   try {
     const admin = await requireRole([...tournamentManagerRoles]);
-    const current = await prisma.tournament.findUnique({ where: { id: parsed.data.tournamentId }, select: { status: true } });
+    const current = await prisma.tournament.findUnique({ where: { id: parsed.data.tournamentId }, select: { status: true, registrationDeadline: true, startDate: true } });
     if (!current) return { success: false, error: "Tournament not found." };
-    if (current.status === "CHECK_IN" && parsed.data.status === "LIVE") return { success: false, error: "Lock no-shows before starting the tournament." };
+    if (current.status === parsed.data.status) return { success: true };
+    if (!manualStatusTransitions[current.status]?.includes(parsed.data.status)) return { success: false, error: "Use the protected tournament controls for check-in, bracket generation, live play, and completion." };
+    if (parsed.data.status === TournamentStatus.REGISTRATION_OPEN && (current.registrationDeadline <= new Date() || current.startDate <= new Date())) {
+      return { success: false, error: "Set future registration and start dates before opening registration." };
+    }
     await prisma.$transaction(async (tx) => {
       await tx.tournament.update({ where: { id: parsed.data.tournamentId }, data: { status: parsed.data.status } });
       await tx.auditLog.create({ data: { adminId: admin.id, action: "TOURNAMENT_STATUS_CHANGED", entity: "Tournament", entityId: parsed.data.tournamentId, oldValue: toAuditJson(current), newValue: toAuditJson({ status: parsed.data.status }) } });

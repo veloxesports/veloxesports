@@ -12,10 +12,9 @@ import { TournamentEditor } from "./TournamentEditor";
 type Game = { id: string; name: string; slug: string; isActive: boolean };
 type Tournament = { id: string; title: string; status: string; format: string; participantType: "INDIVIDUAL" | "TEAM"; teamSize: number; isPaid: boolean; entryFee: number; prizePool: number; maxParticipants: number; currentParticipants: number; registrationDeadline: Date; startDate: Date; region: string | null; gameMode: string | null; game: { id: string; name: string }; rules: { content: string; checkInPeriodMins: number } | null; registrations: { id: string }[]; _count: { registrations: number; matches: number } };
 
-const formats = ["SINGLE_ELIMINATION", "DOUBLE_ELIMINATION", "ROUND_ROBIN", "LEAGUE", "SWISS", "BATTLE_ROYALE", "CUSTOM"];
+const formats = ["SINGLE_ELIMINATION"];
 const participantTypes = ["INDIVIDUAL", "TEAM"];
-const statuses = ["DRAFT", "REGISTRATION_OPEN", "REGISTRATION_CLOSED", "UPCOMING", "CHECK_IN", "LIVE", "COMPLETED"];
-const initialStatuses = statuses.filter((status) => status !== "CHECK_IN");
+const initialStatuses = ["DRAFT", "REGISTRATION_OPEN"];
 const controlClass = "w-full rounded-2xl border border-[#344335] bg-[#080d09] px-3.5 py-3 text-sm text-white outline-none transition placeholder:text-[#6f796f] focus:border-[#c5f94d] focus:ring-2 focus:ring-[#c5f94d]/15 disabled:cursor-not-allowed disabled:opacity-60";
 
 export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; tournaments: Tournament[] }) {
@@ -141,7 +140,7 @@ export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; 
           <div className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
             <Input name="title" label="Tournament title" placeholder="Nightfall Championship" className="sm:col-span-2" required />
             <Select name="gameId" label="Game" value={selectedGameId} onChange={(event) => loadRulesForGame(event.target.value)} required>{activeGames.length === 0 && <option value="">No active games</option>}{activeGames.map((game) => <option key={game.id} value={game.id}>{game.name}</option>)}</Select>
-            <Select name="format" label="Format" defaultValue="SINGLE_ELIMINATION">{formats.map((format) => <option key={format} value={format}>{labelFor(format)}</option>)}</Select>
+            <label className="grid gap-2 text-sm font-bold text-[#dce8d7]"><span>Format</span><select name="format" defaultValue="SINGLE_ELIMINATION" className={controlClass}>{formats.map((format) => <option key={format} value={format}>{labelFor(format)}</option>)}</select><span className="text-xs font-medium leading-relaxed text-[#748173]">Single elimination is enabled because VELOX can automatically generate brackets, progress winners, and distribute prizes for it.</span></label>
             <Select name="participantType" label="Entry type" defaultValue="INDIVIDUAL">{participantTypes.map((type) => <option key={type} value={type}>{type === "TEAM" ? "Team roster" : "Individual players"}</option>)}</Select>
             <Input name="prizePool" label="Prize pool (XTR)" type="number" defaultValue="0" min="0" required />
             <Input name="entryFee" label="Entry fee (XTR)" type="number" defaultValue="0" min="0" required />
@@ -197,7 +196,7 @@ export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; 
                 <Stat label="Starts" value={formatDate(tournament.startDate)} icon={<CalendarDays className="h-3.5 w-3.5" aria-hidden />} />
               </div>
               <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto_auto_auto]">
-                <select aria-label={`Status for ${tournament.title}`} defaultValue={tournament.status} disabled={pending || tournament.status === "CHECK_IN"} onChange={(event) => { if (event.target.value !== tournament.status) void execute(() => setTournamentStatus({ tournamentId: tournament.id, status: event.target.value }), "Tournament status updated."); }} className={`${controlClass} py-2.5 text-xs font-bold`}>{statuses.map((status) => <option key={status} value={status} disabled={status === "CHECK_IN" && tournament.status !== "CHECK_IN"}>{status === "CHECK_IN" ? "Check In (use control)" : labelFor(status)}</option>)}</select>
+                <select aria-label={`Status for ${tournament.title}`} defaultValue={tournament.status} disabled={pending || !manualStatusChoices(tournament.status).some((status) => status !== tournament.status)} onChange={(event) => { if (event.target.value !== tournament.status) void execute(() => setTournamentStatus({ tournamentId: tournament.id, status: event.target.value }), "Tournament status updated."); }} className={`${controlClass} py-2.5 text-xs font-bold`}>{manualStatusChoices(tournament.status).map((status) => <option key={status} value={status}>{labelFor(status)}</option>)}</select>
                 <Link href={`/admin/tournaments/${tournament.id}`} className="velox-muted-button px-3 py-2.5 text-xs"><Users className="mr-1.5 h-4 w-4 text-[#c5f94d]" aria-hidden />Players</Link>
                 <button type="button" onClick={() => { setEditingTournament(tournament); setShowCreate(false); }} disabled={pending || ["CANCELLED", "COMPLETED"].includes(tournament.status)} className="velox-muted-button px-3 py-2.5 text-xs"><Pencil className="mr-1.5 h-4 w-4 text-[#c5f94d]" aria-hidden />Edit</button>
                 {tournament.status === "REGISTRATION_CLOSED" && <button type="button" onClick={() => void execute(() => openTournamentCheckIn(tournament.id), "Check-in is open and confirmed players were notified.")} disabled={pending} className="velox-muted-button px-3 py-2.5 text-xs"><Trophy className="mr-1.5 h-4 w-4 text-[#c5f94d]" aria-hidden />Open check-in</button>}
@@ -223,6 +222,12 @@ function Select({ name, label, children, ...props }: React.SelectHTMLAttributes<
 
 function DateTimeInput({ name, label }: { name: string; label: string }) {
   return <label className="grid gap-2 text-sm font-bold text-[#dce8d7]">{label}<span className="relative"><CalendarDays className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#c5f94d]" aria-hidden /><input name={name} type="datetime-local" required className={`${controlClass} [color-scheme:dark] pl-10`} /></span><span className="text-xs font-medium text-[#748173]">Choose a date and time with the calendar picker.</span></label>;
+}
+
+function manualStatusChoices(status: string) {
+  if (status === "DRAFT") return ["DRAFT", "REGISTRATION_OPEN"];
+  if (status === "REGISTRATION_OPEN") return ["REGISTRATION_OPEN", "DRAFT", "REGISTRATION_CLOSED"];
+  return [status];
 }
 
 function Notice({ tone, message }: { tone: "error" | "success"; message: string }) {
