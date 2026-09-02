@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
 import { Check, ChevronDown, X } from "lucide-react";
+import { TelegramBottomSheet } from "@/components/ui/TelegramBottomSheet";
 
 export type FilterOption = {
   value: string;
@@ -17,8 +17,6 @@ export type TournamentFilterSelectorProps = {
   options: FilterOption[];
 };
 
-const emptySubscribe = () => () => {};
-
 export function TournamentFilterSelector({
   label,
   title,
@@ -27,34 +25,10 @@ export function TournamentFilterSelector({
   options,
 }: TournamentFilterSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const mounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false
-  );
 
   // Find currently selected option
   const selectedOption = options.find((opt) => opt.value === value) || options[0];
   const isFiltered = value !== "all";
-
-  // Manage body scroll, modalOpen state, and ESC key
-  useEffect(() => {
-    if (!isOpen) return;
-
-    document.body.dataset.modalOpen = "true";
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setIsOpen(false);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      delete document.body.dataset.modalOpen;
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isOpen]);
 
   const triggerHaptic = () => {
     try {
@@ -83,22 +57,41 @@ export function TournamentFilterSelector({
     setIsOpen(true);
   };
 
-  const modalContent = isOpen ? (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
-      className="fixed inset-0 z-[80] flex flex-col justify-end p-3 pb-[calc(5.75rem+max(12px,env(safe-area-inset-bottom,0px)))] sm:pb-28 sm:items-center bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
-      style={{ minHeight: "var(--tg-viewport-stable-height, 100dvh)" }}
-      onClick={() => setIsOpen(false)}
-    >
-      <div
-        className="flex max-h-[min(65dvh,calc(var(--tg-viewport-stable-height,100dvh)-13rem))] w-full max-w-lg flex-col rounded-[22px] border border-[#2e422f] bg-[#0c130e] shadow-[0_16px_48px_rgba(0,0,0,0.95)] animate-in slide-in-from-bottom-5 duration-200"
-        onClick={(e) => e.stopPropagation()}
+  return (
+    <>
+      {/* Compact Trigger Button */}
+      <button
+        type="button"
+        onClick={handleOpen}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        aria-label={`${label}: ${selectedOption?.label ?? label}`}
+        className={`group relative flex h-10 w-full min-w-0 items-center justify-between rounded-xl border px-2.5 text-left transition active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-[#c5f94d] ${
+          isFiltered
+            ? "border-[#3e5934] bg-[#121c13] text-[#c5f94d] shadow-[0_0_10px_rgba(197,249,77,0.15)]"
+            : "border-[#233124] bg-[#0d140e] text-[#c8d4c6] hover:border-[#384c39] hover:bg-[#101911]"
+        }`}
       >
-        {/* Drag Handle */}
-        <div className="mx-auto mt-2.5 h-1.5 w-12 shrink-0 rounded-full bg-[#273729]" aria-hidden />
+        <span className="truncate text-[11px] font-bold tracking-tight">
+          {selectedOption?.label ?? label}
+        </span>
+        <ChevronDown
+          className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
+            isOpen ? "rotate-180 text-[#c5f94d]" : isFiltered ? "text-[#c5f94d]" : "text-[#798a7a]"
+          }`}
+          aria-hidden
+        />
+      </button>
 
+      {/* Shared Reusable Telegram Bottom Sheet */}
+      <TelegramBottomSheet
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        title={title}
+        maxWidthClass="max-w-lg"
+        maxHeightClass="max-h-[min(65dvh,calc(var(--tg-viewport-stable-height,100dvh)-13rem))]"
+        showDragHandle
+      >
         {/* Sheet Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-[#1f2d21] px-5 py-3.5">
           <div>
@@ -153,41 +146,9 @@ export function TournamentFilterSelector({
             );
           })}
         </div>
-      </div>
-    </div>
-  ) : null;
-
-  return (
-    <>
-      {/* Compact Trigger Button */}
-      <button
-        type="button"
-        onClick={handleOpen}
-        aria-haspopup="dialog"
-        aria-expanded={isOpen}
-        aria-label={`${label}: ${selectedOption?.label ?? label}`}
-        className={`group relative flex h-10 w-full min-w-0 items-center justify-between rounded-xl border px-2.5 text-left transition active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-[#c5f94d] ${
-          isFiltered
-            ? "border-[#3e5934] bg-[#121c13] text-[#c5f94d] shadow-[0_0_10px_rgba(197,249,77,0.15)]"
-            : "border-[#233124] bg-[#0d140e] text-[#c8d4c6] hover:border-[#384c39] hover:bg-[#101911]"
-        }`}
-      >
-        <span className="truncate text-[11px] font-bold tracking-tight">
-          {selectedOption?.label ?? label}
-        </span>
-        <ChevronDown
-          className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
-            isOpen ? "rotate-180 text-[#c5f94d]" : isFiltered ? "text-[#c5f94d]" : "text-[#798a7a]"
-          }`}
-          aria-hidden
-        />
-      </button>
-
-      {/* Render via Portal directly onto document.body */}
-      {mounted && typeof document !== "undefined"
-        ? createPortal(modalContent, document.body)
-        : modalContent}
+      </TelegramBottomSheet>
     </>
   );
 }
+
 
