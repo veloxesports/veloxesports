@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { User, Gamepad2, Globe, LogOut, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { disconnectDiscord, getPlayerProfile, updateCurrentProfile } from "@/features/profile/actions";
+import { disconnectDiscord, getDiscordConnectInfo, getPlayerProfile, updateCurrentProfile } from "@/features/profile/actions";
 import { logout } from "@/features/auth/actions";
 
 export default function SettingsPage() {
@@ -58,7 +58,16 @@ export default function SettingsPage() {
 
   const handleDiscord = async () => {
     if (!discordUsername) {
-      router.push("/api/discord/connect");
+      const info = await getDiscordConnectInfo("settings");
+      if (info.success && info.data?.isConfigured && info.data.oauthUrl) {
+        if (typeof window !== "undefined" && window.Telegram?.WebApp?.openLink) {
+          window.Telegram.WebApp.openLink(info.data.oauthUrl);
+        } else {
+          window.location.href = info.data.oauthUrl;
+        }
+      } else {
+        router.push("/profile");
+      }
       return;
     }
 

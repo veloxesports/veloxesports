@@ -1,6 +1,4 @@
 import {
-  ExternalLink,
-  Gamepad2,
   Gift,
   Medal,
   Send,
@@ -13,6 +11,7 @@ import {
 import Link from "next/link";
 import { getPlayerProfile } from "@/features/profile/actions";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
+import { DiscordConnectCard } from "@/components/profile/DiscordConnectCard";
 import { TelegramAccessRequired } from "@/components/auth/TelegramAccessRequired";
 
 export default async function ProfilePage() {
@@ -139,24 +138,11 @@ export default async function ProfilePage() {
               </span>
             </div>
 
-            {/* Discord Connection Link */}
-            <div className="flex items-center justify-between rounded-xl border border-[#212f22] bg-[#0c130e] p-3">
-              <div className="flex items-center gap-3">
-                <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#201d36] text-indigo-400">
-                  <Gamepad2 className="h-4 w-4" />
-                </span>
-                <div>
-                  <p className="text-xs font-black text-white">Discord Integration</p>
-                  <p className="text-[10px] font-medium text-[#7d8e7e]">Match notifications & lobbies</p>
-                </div>
-              </div>
-              <Link
-                href="/api/discord/connect"
-                className="inline-flex items-center gap-1 rounded-lg border border-[#303f4d] bg-[#141b24] px-2.5 py-1 text-[10px] font-black text-indigo-300 hover:bg-[#1b2533]"
-              >
-                Connect <ExternalLink className="h-3 w-3" />
-              </Link>
-            </div>
+            {/* Discord Connection Card */}
+            <DiscordConnectCard
+              initialDiscordUsername={profile.discordUsername}
+              initialDiscordAvatarUrl={profile.discordAvatarUrl}
+            />
           </div>
         </section>
 

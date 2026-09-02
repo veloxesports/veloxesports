@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { CheckCircle2, ChevronLeft, Clock3, ShieldAlert, Upload, XCircle } from "lucide-react";
+import { CheckCircle2, ChevronLeft, Clock3, Copy, Gamepad2, ShieldAlert, Upload, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,8 +19,8 @@ type MatchDetails = {
   status: string;
   score1: number | null;
   score2: number | null;
-  player1: { id: string | null; name: string };
-  player2: { id: string | null; name: string };
+  player1: { id: string | null; name: string; discordUsername?: string | null };
+  player2: { id: string | null; name: string; discordUsername?: string | null };
   pendingResult: { id: string; submitterId: string; score1: number; score2: number; winnerId: string; comment: string | null } | null;
   canSubmit: boolean;
   canConfirm: boolean;
@@ -146,6 +146,63 @@ export function MatchDetailsClient({ match }: { match: MatchDetails }) {
           </div>
           {match.scheduledTime && <p className="mt-3 flex items-center justify-center gap-1 text-xs text-slate-400"><Clock3 className="h-3.5 w-3.5" aria-hidden />{new Date(match.scheduledTime).toLocaleString()}</p>}
         </section>
+
+        {/* Discord Match Coordination Card */}
+        {(match.player1.discordUsername || match.player2.discordUsername) && (
+          <section className="flex flex-col gap-3 rounded-2xl border border-[#23313d] bg-[#0d151e] p-4 text-left">
+            <div className="flex items-center gap-2">
+              <span className="grid h-8 w-8 place-items-center rounded-xl bg-[#5865F2]/20 text-[#5865F2]">
+                <Gamepad2 className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="text-xs font-black text-white">Discord Match Lobby</p>
+                <p className="text-[10px] text-[#7d8e7e]">Coordinate server region & custom room codes with your opponent</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+              {match.player1.discordUsername && (
+                <div className="flex items-center justify-between rounded-xl border border-[#1b2836] bg-[#091017] p-2.5">
+                  <div className="min-w-0">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-[#687b8f]">{match.player1.name}</span>
+                    <p className="truncate text-xs font-black text-[#5865F2]">@{match.player1.discordUsername}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(match.player1.discordUsername!);
+                      alert(`Copied @${match.player1.discordUsername} to clipboard`);
+                    }}
+                    className="grid h-7 w-7 place-items-center rounded-lg border border-[#2b3c4d] bg-[#14202d] text-[#8ea5bc] hover:text-white transition"
+                    title="Copy Discord tag"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+
+              {match.player2.discordUsername && (
+                <div className="flex items-center justify-between rounded-xl border border-[#1b2836] bg-[#091017] p-2.5">
+                  <div className="min-w-0">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-[#687b8f]">{match.player2.name}</span>
+                    <p className="truncate text-xs font-black text-[#5865F2]">@{match.player2.discordUsername}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(match.player2.discordUsername!);
+                      alert(`Copied @${match.player2.discordUsername} to clipboard`);
+                    }}
+                    className="grid h-7 w-7 place-items-center rounded-lg border border-[#2b3c4d] bg-[#14202d] text-[#8ea5bc] hover:text-white transition"
+                    title="Copy Discord tag"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {error && <StatusNotice tone="error" message={error} />}
         {message && <StatusNotice tone="success" message={message} />}

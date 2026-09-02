@@ -1,63 +1,57 @@
-import crypto from "node:crypto";
-import { NextResponse } from "next/server";
-import { requireCurrentUser } from "@/lib/auth/current-user";
+import { NextRequest, NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/current-user";
+import {
+  appBaseUrl,
+  buildDiscordAuthorizeUrl,
+  createSignedDiscordState,
+  isDiscordOAuthConfigured,
+} from "@/lib/discord/oauth";
 
 const STATE_COOKIE = "velox_discord_oauth_state";
-const STATE_MAX_AGE_SECONDS = 10 * 60;
+const STATE_MAX_AGE_SECONDS = 15 * 60;
 
-function appUrl() {
-  const value = process.env.NEXT_PUBLIC_APP_URL;
-  if (!value) throw new Error("NEXT_PUBLIC_APP_URL is not configured");
+export async function GET(request: NextRequest) {
+  const returnTo = request.nextUrl.searchParams.get("returnTo") || "profile";
+  const user = await getCurrentUser();
 
-  const url = new URL(value);
-  if (url.protocol !== "http:" && url.protocol !== "https:") {
-    throw new Error("NEXT_PUBLIC_APP_URL must be an HTTP(S) URL");
+  if (!user) {
+    const errorUrl = new URL("/discord/status", appBaseUrl());
+    errorUrl.searchParams.set("status", "auth_required");
+    errorUrl.searchParams.set("returnTo", returnTo);
+    return NextResponse.redirect(errorUrl);
   }
-  return url;
-}
 
-function settingsUrl(status: string) {
-  const url = new URL("/settings", appUrl());
-  url.searchParams.set("discord", status);
-  return url;
-}
+  if (!isDiscordOAuthConfigured()) {
+    const errorUrl = new URL("/discord/status", appBaseUrl());
+    errorUrl.searchParams.set("status", "unavailable");
+    errorUrl.searchParams.set("returnTo", returnTo);
+    return NextResponse.redirect(errorUrl);
+  }
 
-export async function GET() {
   try {
-    await requireCurrentUser();
+    const signedState = createSignedDiscordState({
+      userId: user.id,
+      telegramId: user.telegramId,
+      returnTo,
+    });
 
-    const clientId = process.env.DISCORD_CLIENT_ID;
-    const clientSecret = process.env.DISCORD_CLIENT_SECRET;
-    if (!clientId || !clientSecret) {
-      return NextResponse.redirect(settingsUrl("unavailable"));
-    }
-
-    const redirectUri = new URL("/api/discord/callback", appUrl()).toString();
-    const state = crypto.randomBytes(32).toString("base64url");
-    const authorizeUrl = new URL("https://discord.com/api/oauth2/authorize");
-    authorizeUrl.search = new URLSearchParams({
-      client_id: clientId,
-      response_type: "code",
-      redirect_uri: redirectUri,
-      scope: "identify",
-      state,
-    }).toString();
-
+    const authorizeUrl = buildDiscordAuthorizeUrl(signedState);
     const response = NextResponse.redirect(authorizeUrl);
-    response.cookies.set(STATE_COOKIE, state, {
+
+    response.cookies.set(STATE_COOKIE, signedState, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: STATE_MAX_AGE_SECONDS,
-      path: "/api/discord/callback",
+      path: "/",
     });
+
     return response;
   } catch (error) {
-    console.error("Discord connection could not be started", error);
-    try {
-      return NextResponse.redirect(settingsUrl("auth_required"));
-    } catch {
-      return new NextResponse("Discord connection is unavailable.", { status: 503 });
-    }
+    console.error("Discord connection initiation failed", error);
+    const errorUrl = new URL("/discord/status", appBaseUrl());
+    errorUrl.searchParams.set("status", "failed");
+    errorUrl.searchParams.set("returnTo", returnTo);
+    return NextResponse.redirect(errorUrl);
   }
 }

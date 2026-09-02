@@ -598,10 +598,19 @@ export async function getMatchDetails(matchId: unknown) {
     const participantIds = [match.player1Id, match.player2Id].filter((id): id is string => Boolean(id));
     const teamIds = [match.team1Id, match.team2Id].filter((id): id is string => Boolean(id));
     const [players, teams] = await Promise.all([
-      prisma.user.findMany({ where: { id: { in: participantIds } }, select: { id: true, firstName: true, username: true } }),
+      prisma.user.findMany({
+        where: { id: { in: participantIds } },
+        select: {
+          id: true,
+          firstName: true,
+          username: true,
+          profile: { select: { discordUsername: true, discordAvatarUrl: true } },
+        },
+      }),
       prisma.team.findMany({ where: { id: { in: teamIds } }, select: { id: true, name: true } }),
     ]);
     const playerNames = new Map(players.map((player) => [player.id, player.username ?? player.firstName ?? "Player"]));
+    const playerDiscords = new Map(players.map((player) => [player.id, player.profile?.discordUsername ?? null]));
     const teamNames = new Map(teams.map((team) => [team.id, team.name]));
     const labelFor = (playerId: string | null, teamId: string | null) =>
       playerId ? playerNames.get(playerId) ?? "Player" : teamId ? teamNames.get(teamId) ?? "Team" : "TBD";
@@ -633,8 +642,16 @@ export async function getMatchDetails(matchId: unknown) {
         status: match.status,
         score1: match.score1,
         score2: match.score2,
-        player1: { id: match.player1Id ?? match.team1Id, name: labelFor(match.player1Id, match.team1Id) },
-        player2: { id: match.player2Id ?? match.team2Id, name: labelFor(match.player2Id, match.team2Id) },
+        player1: {
+          id: match.player1Id ?? match.team1Id,
+          name: labelFor(match.player1Id, match.team1Id),
+          discordUsername: match.player1Id ? playerDiscords.get(match.player1Id) ?? null : null,
+        },
+        player2: {
+          id: match.player2Id ?? match.team2Id,
+          name: labelFor(match.player2Id, match.team2Id),
+          discordUsername: match.player2Id ? playerDiscords.get(match.player2Id) ?? null : null,
+        },
         pendingResult: pendingResult && {
           id: pendingResult.id,
           submitterId: pendingResult.submitterId,

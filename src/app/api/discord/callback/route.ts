@@ -1,103 +1,114 @@
-import crypto from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { requireCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/database/prisma";
+import { createSession } from "@/lib/auth/session";
+import {
+  appBaseUrl,
+  exchangeDiscordCode,
+  fetchDiscordUserProfile,
+  verifySignedDiscordState,
+} from "@/lib/discord/oauth";
 
 const STATE_COOKIE = "velox_discord_oauth_state";
-const tokenSchema = z.object({ access_token: z.string().min(1) });
-const discordUserSchema = z.object({
-  id: z.string().min(1).max(32),
-  username: z.string().min(1).max(64),
-  global_name: z.string().max(64).nullable().optional(),
-  avatar: z.string().max(256).nullable().optional(),
-});
 
-function appUrl() {
-  const value = process.env.NEXT_PUBLIC_APP_URL;
-  if (!value) throw new Error("NEXT_PUBLIC_APP_URL is not configured");
-  const url = new URL(value);
-  if (url.protocol !== "http:" && url.protocol !== "https:") {
-    throw new Error("NEXT_PUBLIC_APP_URL must be an HTTP(S) URL");
-  }
-  return url;
-}
-
-function settingsRedirect(status: string) {
-  const url = new URL("/settings", appUrl());
-  url.searchParams.set("discord", status);
-  return NextResponse.redirect(url);
-}
-
-function stateMatches(expected: string | undefined, actual: string | null) {
-  if (!expected || !actual) return false;
-  const expectedBuffer = Buffer.from(expected);
-  const actualBuffer = Buffer.from(actual);
-  return expectedBuffer.length === actualBuffer.length && crypto.timingSafeEqual(expectedBuffer, actualBuffer);
-}
-
-function withStateCookieCleared(response: NextResponse) {
-  response.cookies.set(STATE_COOKIE, "", { maxAge: 0, path: "/api/discord/callback" });
-  return response;
+function statusRedirect(status: string, returnTo: string = "profile") {
+  const url = new URL("/discord/status", appBaseUrl());
+  url.searchParams.set("status", status);
+  url.searchParams.set("returnTo", returnTo);
+  const res = NextResponse.redirect(url);
+  res.cookies.set(STATE_COOKIE, "", { maxAge: 0, path: "/" });
+  return res;
 }
 
 export async function GET(request: NextRequest) {
-  const state = request.nextUrl.searchParams.get("state");
-  const code = request.nextUrl.searchParams.get("code");
-  const expectedState = request.cookies.get(STATE_COOKIE)?.value;
+  const searchParams = request.nextUrl.searchParams;
+  const state = searchParams.get("state");
+  const code = searchParams.get("code");
+  const errorParam = searchParams.get("error");
 
-  if (!stateMatches(expectedState, state) || !code) {
-    return withStateCookieCleared(settingsRedirect("cancelled"));
+  // User cancelled or Discord reported error
+  if (errorParam === "access_denied") {
+    return statusRedirect("cancelled");
+  }
+  if (errorParam || !state || !code) {
+    return statusRedirect("failed");
   }
 
+  // Cryptographically verify HMAC-signed state token
+  const statePayload = verifySignedDiscordState(state);
+  if (!statePayload) {
+    return statusRedirect("invalid_state");
+  }
+
+  const returnTo = statePayload.returnTo || "profile";
+
   try {
-    const user = await requireCurrentUser();
-    const clientId = process.env.DISCORD_CLIENT_ID;
-    const clientSecret = process.env.DISCORD_CLIENT_SECRET;
-    if (!clientId || !clientSecret) return withStateCookieCleared(settingsRedirect("unavailable"));
+    // 1. Exchange code for access token with Discord
+    const tokenResult = await exchangeDiscordCode(code);
+    if (!tokenResult?.accessToken) {
+      return statusRedirect("token_error", returnTo);
+    }
 
-    const redirectUri = new URL("/api/discord/callback", appUrl()).toString();
-    const tokenResponse = await fetch("https://discord.com/api/oauth2/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
-        grant_type: "authorization_code",
-        code,
-        redirect_uri: redirectUri,
-      }),
-      cache: "no-store",
-    });
-    const token = tokenSchema.safeParse(await tokenResponse.json().catch(() => null));
-    if (!tokenResponse.ok || !token.success) return withStateCookieCleared(settingsRedirect("failed"));
+    // 2. Fetch user profile from Discord @me
+    const discordUser = await fetchDiscordUserProfile(tokenResult.accessToken);
+    if (!discordUser?.id) {
+      return statusRedirect("identity_error", returnTo);
+    }
 
-    const identityResponse = await fetch("https://discord.com/api/users/@me", {
-      headers: { Authorization: `Bearer ${token.data.access_token}` },
-      cache: "no-store",
-    });
-    const identity = discordUserSchema.safeParse(await identityResponse.json().catch(() => null));
-    if (!identityResponse.ok || !identity.success) return withStateCookieCleared(settingsRedirect("failed"));
-
-    const avatarUrl = identity.data.avatar
-      ? `https://cdn.discordapp.com/avatars/${identity.data.id}/${identity.data.avatar}.png?size=128`
-      : null;
-
-    await prisma.userProfile.update({
-      where: { userId: user.id },
-      data: {
-        discordId: identity.data.id,
-        discordUsername: identity.data.global_name || identity.data.username,
-        discordAvatarUrl: avatarUrl,
+    // 3. Prevent duplicate account linking across different VELOX users
+    const existing = await prisma.userProfile.findFirst({
+      where: {
+        discordId: discordUser.id,
+        userId: { not: statePayload.userId },
       },
     });
 
-    return withStateCookieCleared(settingsRedirect("connected"));
-  } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "P2002") {
-      return withStateCookieCleared(settingsRedirect("already_connected"));
+    if (existing) {
+      return statusRedirect("already_connected", returnTo);
     }
-    console.error("Discord connection failed", error);
-    return withStateCookieCleared(settingsRedirect("failed"));
+
+    const avatarUrl = discordUser.avatar
+      ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png?size=128`
+      : null;
+    const discordUsername = discordUser.global_name || discordUser.username;
+
+    // 4. Save Discord link in database
+    await prisma.userProfile.upsert({
+      where: { userId: statePayload.userId },
+      update: {
+        discordId: discordUser.id,
+        discordUsername,
+        discordAvatarUrl: avatarUrl,
+      },
+      create: {
+        userId: statePayload.userId,
+        discordId: discordUser.id,
+        discordUsername,
+        discordAvatarUrl: avatarUrl,
+        favoriteGames: [],
+      },
+    });
+
+    // 5. If user has a telegramId, maintain or establish the browser session
+    const targetUser = await prisma.user.findUnique({
+      where: { id: statePayload.userId },
+      select: { id: true, telegramId: true },
+    });
+
+    if (targetUser) {
+      await createSession(targetUser.id, targetUser.telegramId).catch(() => null);
+    }
+
+    // 6. Redirect to connected success screen
+    const successUrl = new URL("/discord/connected", appBaseUrl());
+    successUrl.searchParams.set("username", discordUsername);
+    if (avatarUrl) successUrl.searchParams.set("avatar", avatarUrl);
+    successUrl.searchParams.set("returnTo", returnTo);
+
+    const response = NextResponse.redirect(successUrl);
+    response.cookies.set(STATE_COOKIE, "", { maxAge: 0, path: "/" });
+    return response;
+  } catch (error) {
+    console.error("Discord connection callback error", error);
+    return statusRedirect("failed", returnTo);
   }
 }

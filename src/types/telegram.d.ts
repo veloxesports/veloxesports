@@ -19,6 +19,8 @@ interface TelegramWebApp {
   setHeaderColor(color: string): void;
   setBackgroundColor(color: string): void;
   openInvoice(url: string, callback?: (status: 'paid' | 'cancelled' | 'failed' | 'pending') => void): void;
+  openLink?(url: string, options?: { try_instant_view?: boolean }): void;
+  openTelegramLink?(url: string): void;
   initData: string;
   initDataUnsafe: unknown;
   colorScheme: 'light' | 'dark';
