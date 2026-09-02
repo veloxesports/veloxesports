@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import {
   Calendar,
-  ChevronDown,
   ChevronRight,
   Gamepad2,
   RotateCcw,
@@ -13,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
+import { TournamentFilterSelector } from "@/components/tournaments/TournamentFilterSelector";
 
 type Game = { id: string; name: string };
 type Tournament = {
@@ -175,10 +175,11 @@ export function TournamentBrowser({
         })}
       </div>
 
-      {/* Select Filter Dropdowns */}
+      {/* Custom Esports Filter Selectors */}
       <div className="mt-2.5 grid grid-cols-3 gap-2">
-        <FilterSelect
-          ariaLabel="Game"
+        <TournamentFilterSelector
+          label="Game"
+          title="Select Game"
           value={gameId}
           onChange={setGameId}
           options={[
@@ -186,8 +187,9 @@ export function TournamentBrowser({
             ...games.map((game) => ({ value: game.id, label: game.name })),
           ]}
         />
-        <FilterSelect
-          ariaLabel="Format"
+        <TournamentFilterSelector
+          label="Format"
+          title="Select Format"
           value={format}
           onChange={setFormat}
           options={[
@@ -195,8 +197,9 @@ export function TournamentBrowser({
             ...formats.map((value) => ({ value, label: formatLabel(value) })),
           ]}
         />
-        <FilterSelect
-          ariaLabel="Region"
+        <TournamentFilterSelector
+          label="Region"
+          title="Select Region"
           value={region}
           onChange={setRegion}
           options={[
@@ -369,39 +372,6 @@ function EmptyState({ onReset }: { onReset: () => void }) {
       >
         Reset all filters
       </button>
-    </div>
-  );
-}
-
-function FilterSelect({
-  ariaLabel,
-  value,
-  onChange,
-  options,
-}: {
-  ariaLabel: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: Array<{ value: string; label: string }>;
-}) {
-  return (
-    <div className="relative min-w-0">
-      <select
-        aria-label={ariaLabel}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-10 w-full min-w-0 appearance-none truncate rounded-xl border border-[#233124] bg-[#0d140e] px-2.5 pr-7 text-[11px] font-bold text-[#c8d4c6] outline-none transition focus:border-[#c5f94d] focus:ring-1 focus:ring-[#c5f94d]/20"
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value} className="bg-[#0e1610] text-white">
-            {option.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDown
-        className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#798a7a]"
-        aria-hidden
-      />
     </div>
   );
 }
