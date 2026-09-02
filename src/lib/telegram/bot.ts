@@ -22,6 +22,30 @@ async function telegramApi<T>(method: string, payload: Record<string, unknown>) 
   return data.result;
 }
 
+async function telegramMultipartApi<T>(method: string, formData: FormData) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) throw new Error("TELEGRAM_NOT_CONFIGURED");
+
+  const response = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
+    method: "POST",
+    body: formData,
+    cache: "no-store",
+  });
+
+  const data = (await response.json()) as TelegramApiResponse<T>;
+  if (!response.ok || !data.ok) {
+    console.error("Telegram Bot API multipart request failed", {
+      method,
+      status: response.status,
+      code: data.ok ? undefined : data.error_code,
+      description: data.ok ? undefined : data.description,
+    });
+    throw new Error("TELEGRAM_API_ERROR");
+  }
+
+  return data.result;
+}
+
 export function createTournamentInvoice(input: {
   paymentId: string;
   title: string;
@@ -87,3 +111,97 @@ export async function sendTelegramMiniAppNotification(input: {
     } : {}),
   });
 }
+
+export async function sendTelegramPhoto(input: {
+  chatId: number | string;
+  photo: Buffer | string;
+  caption: string;
+  parseMode?: "HTML" | "MarkdownV2";
+  replyMarkup?: Record<string, unknown>;
+}): Promise<{ message_id: number }> {
+  const targetChatId = Number(input.chatId);
+  if (!Number.isSafeInteger(targetChatId) || targetChatId === 0) throw new Error("TELEGRAM_INVALID_CHAT");
+
+  if (typeof input.photo === "string" && (input.photo.startsWith("http://") || input.photo.startsWith("https://"))) {
+    return telegramApi<{ message_id: number }>("sendPhoto", {
+      chat_id: targetChatId,
+      photo: input.photo,
+      caption: input.caption,
+      parse_mode: input.parseMode ?? "HTML",
+      ...(input.replyMarkup ? { reply_markup: input.replyMarkup } : {}),
+    });
+  }
+
+  const form = new FormData();
+  form.append("chat_id", String(targetChatId));
+  form.append("caption", input.caption);
+  form.append("parse_mode", input.parseMode ?? "HTML");
+  if (input.replyMarkup) {
+    form.append("reply_markup", JSON.stringify(input.replyMarkup));
+  }
+
+  const buffer = typeof input.photo === "string" ? Buffer.from(input.photo) : input.photo;
+  form.append("photo", new Blob([new Uint8Array(buffer)], { type: "image/jpeg" }), "photo.jpg");
+
+  return telegramMultipartApi<{ message_id: number }>("sendPhoto", form);
+}
+
+export async function editTelegramMessageMedia(input: {
+  chatId: number | string;
+  messageId: number;
+  photo: Buffer | string;
+  caption: string;
+  parseMode?: "HTML" | "MarkdownV2";
+  replyMarkup?: Record<string, unknown>;
+}): Promise<{ message_id: number }> {
+  const targetChatId = Number(input.chatId);
+  if (!Number.isSafeInteger(targetChatId) || targetChatId === 0) throw new Error("TELEGRAM_INVALID_CHAT");
+
+  if (typeof input.photo === "string" && (input.photo.startsWith("http://") || input.photo.startsWith("https://"))) {
+    return telegramApi<{ message_id: number }>("editMessageMedia", {
+      chat_id: targetChatId,
+      message_id: input.messageId,
+      media: {
+        type: "photo",
+        media: input.photo,
+        caption: input.caption,
+        parse_mode: input.parseMode ?? "HTML",
+      },
+      ...(input.replyMarkup ? { reply_markup: input.replyMarkup } : {}),
+    });
+  }
+
+  const form = new FormData();
+  form.append("chat_id", String(targetChatId));
+  form.append("message_id", String(input.messageId));
+  form.append(
+    "media",
+    JSON.stringify({
+      type: "photo",
+      media: "attach://photo_update",
+      caption: input.caption,
+      parse_mode: input.parseMode ?? "HTML",
+    }),
+  );
+  if (input.replyMarkup) {
+    form.append("reply_markup", JSON.stringify(input.replyMarkup));
+  }
+
+  const buffer = typeof input.photo === "string" ? Buffer.from(input.photo) : input.photo;
+  form.append("photo_update", new Blob([new Uint8Array(buffer)], { type: "image/jpeg" }), "photo.jpg");
+
+  return telegramMultipartApi<{ message_id: number }>("editMessageMedia", form);
+}
+
+export async function answerCallbackQuery(input: {
+  callbackQueryId: string;
+  text?: string;
+  showAlert?: boolean;
+}): Promise<boolean> {
+  return telegramApi<boolean>("answerCallbackQuery", {
+    callback_query_id: input.callbackQueryId,
+    ...(input.text ? { text: input.text } : {}),
+    ...(input.showAlert !== undefined ? { show_alert: input.showAlert } : {}),
+  });
+}
+

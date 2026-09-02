@@ -33,7 +33,13 @@ async function main() {
   await telegram("setWebhook", {
     url: new URL("/api/telegram/webhook", appUrl).toString(),
     secret_token: webhookSecret,
-    allowed_updates: ["message", "pre_checkout_query"],
+    allowed_updates: ["message", "pre_checkout_query", "callback_query"],
+  }, token);
+  await telegram("setMyCommands", {
+    commands: [
+      { command: "start", description: "Open VELOX Esports Arena" },
+      { command: "onboarding", description: "Tour & How it works" },
+    ],
   }, token);
   await telegram("setChatMenuButton", {
     menu_button: {
@@ -43,7 +49,7 @@ async function main() {
     },
   }, token);
 
-  console.log(`Configured @${bot.username}: webhook and Open VELOX menu button are ready.`);
+  console.log(`Configured @${bot.username}: webhook, commands, and Open VELOX menu button are ready.`);
 }
 
 main().catch((error: unknown) => {

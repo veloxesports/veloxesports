@@ -9,6 +9,7 @@ import { canAcceptTournamentRegistration, invoicePayloadSchema, isVerifiedStarsP
 import { TournamentParticipantType } from "@/lib/generated/prisma/client";
 import { validateTeamEntry } from "@/lib/tournaments/team-registration";
 import { dispatchTelegramNotificationsCreatedSince } from "@/lib/notifications/delivery";
+import { handleBotCallbackQuery, handleBotStartCommand } from "@/lib/telegram/onboarding";
 
 export const runtime = "nodejs";
 
@@ -28,12 +29,44 @@ const successfulPaymentSchema = z.object({
   total_amount: z.number().int().positive(),
 });
 
+const telegramUserSchema = z.object({
+  id: z.number().int().positive(),
+  is_bot: z.boolean().optional(),
+  first_name: z.string(),
+  last_name: z.string().optional(),
+  username: z.string().optional(),
+  language_code: z.string().optional(),
+});
+
+const telegramChatSchema = z.object({
+  id: z.number().int(),
+  type: z.string(),
+  title: z.string().optional(),
+  username: z.string().optional(),
+  first_name: z.string().optional(),
+  last_name: z.string().optional(),
+});
+
+const callbackQuerySchema = z.object({
+  id: z.string(),
+  from: telegramUserSchema,
+  message: z.object({
+    message_id: z.number().int(),
+    chat: telegramChatSchema,
+  }).optional(),
+  data: z.string().optional(),
+});
+
 const updateSchema = z.object({
   pre_checkout_query: preCheckoutSchema.optional(),
   message: z.object({
-    from: z.object({ id: z.number().int().positive() }).optional(),
+    message_id: z.number().int().optional(),
+    from: telegramUserSchema.optional(),
+    chat: telegramChatSchema.optional(),
+    text: z.string().optional(),
     successful_payment: successfulPaymentSchema.optional(),
   }).optional(),
+  callback_query: callbackQuerySchema.optional(),
 }).passthrough();
 
 function hasValidWebhookSecret(request: NextRequest) {
@@ -321,6 +354,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    if (parsed.data.callback_query) {
+      try {
+        await handleBotCallbackQuery(parsed.data.callback_query);
+      } catch (error) {
+        console.error("Telegram callback query handler error", error);
+      }
+      return NextResponse.json({ ok: true });
+    }
+
     const successfulPayment = parsed.data.message?.successful_payment;
     const messageFromId = parsed.data.message?.from?.id;
     if (successfulPayment && messageFromId) {
@@ -330,6 +372,22 @@ export async function POST(request: NextRequest) {
         // A unique payment-event collision means Telegram retried a payment we already handled.
         if (!(error instanceof Error && "code" in error && error.code === "P2002")) throw error;
       }
+      return NextResponse.json({ ok: true });
+    }
+
+    const message = parsed.data.message;
+    if (message?.text && message.from && message.chat) {
+      try {
+        await handleBotStartCommand({
+          messageId: message.message_id ?? 0,
+          from: message.from,
+          chat: message.chat,
+          text: message.text,
+        });
+      } catch (error) {
+        console.error("Telegram start command handler error", error);
+      }
+      return NextResponse.json({ ok: true });
     }
 
     return NextResponse.json({ ok: true });
