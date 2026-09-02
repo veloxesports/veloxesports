@@ -32,9 +32,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-[#080d09] text-gray-100 antialiased">
         <TelegramInit />
         <Providers>
-          <main className="flex-1 pb-20">
+          <div className="flex-1 pb-20 has-[.admin-shell]:pb-0">
             {children}
-          </main>
+          </div>
           <BottomNav />
           <VeloxGuide />
         </Providers>

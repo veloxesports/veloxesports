@@ -941,3 +941,81 @@ export async function getOpenDisputes() {
     return { success: false, error: "We couldn't load disputes." };
   }
 }
+
+export async function getAdminSettings() {
+  try {
+    await requireRole([...administratorRoles]);
+    const [settings, adminAccounts] = await Promise.all([
+      prisma.systemSetting.findMany({ orderBy: { key: "asc" } }),
+      prisma.webAdminAccount.findMany({
+        select: {
+          id: true,
+          username: true,
+          role: true,
+          isActive: true,
+          lastLoginAt: true,
+          failedLoginCount: true,
+          lockedUntil: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "asc" },
+      }),
+    ]);
+
+    const systemStatus = {
+      database: true,
+      telegramBot: Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_WEBHOOK_SECRET),
+      storage: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY),
+      discord: Boolean(process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET),
+      aiAssistant: Boolean(process.env.OPENAI_API_KEY),
+      appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "Not configured",
+    };
+
+    return { success: true, data: { settings, adminAccounts, systemStatus } };
+  } catch (error) {
+    if (error instanceof Error && ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.message)) {
+      return { success: false, error: "You do not have permission to view administrator settings." };
+    }
+    console.error("Admin settings fetch failed", error);
+    return { success: false, error: "We couldn't load administrator settings." };
+  }
+}
+
+const systemSettingSchema = z.object({
+  key: z.string().trim().min(1).max(64),
+  value: z.unknown(),
+});
+
+export async function updateSystemSetting(input: unknown) {
+  const parsed = systemSettingSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: "Invalid setting payload." };
+
+  try {
+    const admin = await requireRole(["SUPER_ADMIN"]);
+    const setting = await prisma.systemSetting.upsert({
+      where: { key: parsed.data.key },
+      update: { value: parsed.data.value as Prisma.InputJsonValue },
+      create: { key: parsed.data.key, value: parsed.data.value as Prisma.InputJsonValue },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        adminId: admin.id,
+        action: "SYSTEM_SETTING_UPDATED",
+        entity: "SystemSetting",
+        entityId: setting.key,
+        newValue: toAuditJson({ key: setting.key, value: setting.value }),
+      },
+    });
+
+    revalidatePath("/admin/settings");
+    return { success: true, data: setting };
+  } catch (error) {
+    if (error instanceof Error && ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.message)) {
+      return { success: false, error: "Only Super Admins can update system settings." };
+    }
+    console.error("Admin setting update failed", error);
+    return { success: false, error: "We couldn't update that setting." };
+  }
+}
+

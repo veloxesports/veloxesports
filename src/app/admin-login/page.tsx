@@ -3,7 +3,7 @@ import { AdminLoginForm } from "./AdminLoginForm";
 
 export default function AdminLoginPage() {
   return (
-    <main className="mx-auto flex min-h-[100dvh] w-full max-w-3xl items-center px-5 py-10 sm:px-8">
+    <main className="admin-shell mx-auto flex min-h-[100dvh] w-full max-w-3xl items-center px-5 py-10 sm:px-8">
       <section className="relative mx-auto w-full max-w-md overflow-hidden rounded-[30px] border border-[#3d5832] bg-[#101811] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.4)] sm:p-8">
         <div className="absolute -right-16 -top-20 h-52 w-52 rounded-full border-[36px] border-[#2e4821]" aria-hidden />
         <div className="relative">

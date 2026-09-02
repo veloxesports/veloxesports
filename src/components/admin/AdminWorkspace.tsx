@@ -7,7 +7,15 @@ import { Bell, ChevronLeft, ChevronRight, CircleDollarSign, ClipboardList, Layou
 
 type NavCounts = { disputes: number; finance: number; matches: number; registrations: number };
 
-const navigation = [
+type NavItem = {
+  label: string;
+  href: string;
+  icon: typeof LayoutDashboard;
+  countKey?: keyof NavCounts;
+  external?: boolean;
+};
+
+const navigation: NavItem[] = [
   { label: "Command Center", href: "/admin", icon: LayoutDashboard },
   { label: "Tournaments", href: "/admin/tournaments", icon: Trophy },
   { label: "Matches", href: "/admin/matches", icon: Swords, countKey: "matches" as const },
@@ -18,7 +26,7 @@ const navigation = [
   { label: "Rewards", href: "/admin/insights/prize-rewards", icon: Zap },
   { label: "Notifications", href: "/admin#activity", icon: Bell },
   { label: "Admin activity", href: "/admin#activity", icon: ClipboardList },
-  { label: "Settings", href: "/settings", icon: Settings, external: true },
+  { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 export function AdminWorkspace({ children, adminName, adminRole, counts }: { children: ReactNode; adminName: string; adminRole: string; counts: NavCounts }) {

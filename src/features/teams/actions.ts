@@ -45,7 +45,30 @@ export async function getMyTeams() {
           include: {
             _count: { select: { members: true, registrations: true } },
             members: {
-              select: { userId: true },
+              orderBy: [{ role: "asc" }, { joinedAt: "asc" }],
+              select: {
+                id: true,
+                userId: true,
+                role: true,
+                joinedAt: true,
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                    firstName: true,
+                    profileImage: true,
+                    profile: {
+                      select: {
+                        veloxUsername: true,
+                        rank: true,
+                        level: true,
+                        wins: true,
+                        losses: true,
+                      },
+                    },
+                  },
+                },
+              },
             },
           },
         },
@@ -53,15 +76,6 @@ export async function getMyTeams() {
     });
 
     const teamIds = memberships.map((membership) => membership.teamId);
-    const memberIds = memberships.flatMap((membership) => membership.team.members.map((member) => member.userId));
-    const profiles = memberIds.length
-      ? await prisma.userProfile.findMany({
-          where: { userId: { in: memberIds } },
-          select: { userId: true, wins: true, losses: true },
-        })
-      : [];
-    const statsByUser = new Map(profiles.map((profile) => [profile.userId, profile]));
-
     const invites = teamIds.length
       ? await prisma.teamInvite.findMany({
           where: { teamId: { in: teamIds }, createdById: user.id, expiresAt: { gt: new Date() } },
@@ -74,7 +88,18 @@ export async function getMyTeams() {
     return {
       success: true,
       data: memberships.map((membership) => {
-        const members = membership.team.members.map((member) => statsByUser.get(member.userId));
+        const roster = membership.team.members.map((member) => ({
+          id: member.id,
+          userId: member.userId,
+          role: member.role,
+          name: member.user.profile?.veloxUsername ?? member.user.username ?? member.user.firstName ?? "Player",
+          profileImage: member.user.profileImage,
+          rank: member.user.profile?.rank ?? "BRONZE",
+          level: member.user.profile?.level ?? 1,
+          wins: member.user.profile?.wins ?? 0,
+          losses: member.user.profile?.losses ?? 0,
+          joinedAt: member.joinedAt,
+        }));
         return {
           id: membership.team.id,
           name: membership.team.name,
@@ -82,9 +107,10 @@ export async function getMyTeams() {
           role: membership.role,
           members: membership.team._count.members,
           tournamentEntries: membership.team._count.registrations,
-          wins: members.reduce((total, profile) => total + (profile?.wins ?? 0), 0),
-          losses: members.reduce((total, profile) => total + (profile?.losses ?? 0), 0),
+          wins: roster.reduce((total, member) => total + member.wins, 0),
+          losses: roster.reduce((total, member) => total + member.losses, 0),
           invite: membership.role === "CAPTAIN" ? inviteByTeam.get(membership.team.id) ?? null : null,
+          roster,
         };
       }),
     };
@@ -220,5 +246,131 @@ export async function leaveTeam(teamId: unknown) {
     if (message === "UNAUTHENTICATED") return { success: false, error: "Open VELOX in Telegram to manage your teams." };
     console.error("Leave team failed", error);
     return { success: false, error: "We couldn't leave the team. Please try again." };
+  }
+}
+
+const transferCaptaincySchema = z.object({
+  teamId: z.string().uuid(),
+  newCaptainUserId: z.string().uuid(),
+});
+
+export async function transferCaptaincy(input: unknown) {
+  const parsed = transferCaptaincySchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: "Invalid transfer request." };
+
+  try {
+    const user = await requireCurrentUser();
+    await prisma.$transaction(async (tx) => {
+      const captainMembership = await tx.teamMember.findUnique({
+        where: { teamId_userId: { teamId: parsed.data.teamId, userId: user.id } },
+      });
+      if (!captainMembership || captainMembership.role !== "CAPTAIN") {
+        throw new Error("NOT_CAPTAIN");
+      }
+
+      const targetMembership = await tx.teamMember.findUnique({
+        where: { teamId_userId: { teamId: parsed.data.teamId, userId: parsed.data.newCaptainUserId } },
+      });
+      if (!targetMembership) throw new Error("TARGET_NOT_MEMBER");
+
+      await tx.teamMember.update({
+        where: { id: captainMembership.id },
+        data: { role: "MEMBER" },
+      });
+      await tx.teamMember.update({
+        where: { id: targetMembership.id },
+        data: { role: "CAPTAIN" },
+      });
+      await tx.team.update({
+        where: { id: parsed.data.teamId },
+        data: { captainId: parsed.data.newCaptainUserId },
+      });
+    }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
+
+    revalidateTeams();
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (message === "NOT_CAPTAIN") return { success: false, error: "Only the team captain can transfer leadership." };
+    if (message === "TARGET_NOT_MEMBER") return { success: false, error: "The new captain must already be a member of the team." };
+    if (message === "UNAUTHENTICATED") return { success: false, error: "Open VELOX in Telegram to manage your teams." };
+    console.error("Transfer captaincy failed", error);
+    return { success: false, error: "We couldn't transfer team captaincy." };
+  }
+}
+
+const removeMemberSchema = z.object({
+  teamId: z.string().uuid(),
+  memberUserId: z.string().uuid(),
+});
+
+export async function removeTeamMember(input: unknown) {
+  const parsed = removeMemberSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: "Invalid remove request." };
+
+  try {
+    const user = await requireCurrentUser();
+    await prisma.$transaction(async (tx) => {
+      const captainMembership = await tx.teamMember.findUnique({
+        where: { teamId_userId: { teamId: parsed.data.teamId, userId: user.id } },
+      });
+      if (!captainMembership || captainMembership.role !== "CAPTAIN") {
+        throw new Error("NOT_CAPTAIN");
+      }
+      if (parsed.data.memberUserId === user.id) throw new Error("CANNOT_REMOVE_SELF");
+
+      if (await teamRosterIsLocked(tx, parsed.data.teamId)) throw new Error("ROSTER_LOCKED");
+
+      const targetMembership = await tx.teamMember.findUnique({
+        where: { teamId_userId: { teamId: parsed.data.teamId, userId: parsed.data.memberUserId } },
+      });
+      if (!targetMembership) throw new Error("TARGET_NOT_MEMBER");
+
+      await tx.teamMember.delete({ where: { id: targetMembership.id } });
+    }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
+
+    revalidateTeams();
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (message === "NOT_CAPTAIN") return { success: false, error: "Only the team captain can remove members." };
+    if (message === "CANNOT_REMOVE_SELF") return { success: false, error: "Transfer captaincy or disband the team instead." };
+    if (message === "ROSTER_LOCKED") return { success: false, error: "This roster is locked while it has an active tournament entry." };
+    if (message === "TARGET_NOT_MEMBER") return { success: false, error: "That player is no longer on the team." };
+    if (message === "UNAUTHENTICATED") return { success: false, error: "Open VELOX in Telegram to manage your teams." };
+    console.error("Remove team member failed", error);
+    return { success: false, error: "We couldn't remove that player." };
+  }
+}
+
+export async function disbandTeam(teamId: unknown) {
+  const parsed = teamIdSchema.safeParse(teamId);
+  if (!parsed.success) return { success: false, error: "Invalid team." };
+
+  try {
+    const user = await requireCurrentUser();
+    await prisma.$transaction(async (tx) => {
+      const captainMembership = await tx.teamMember.findUnique({
+        where: { teamId_userId: { teamId: parsed.data, userId: user.id } },
+      });
+      if (!captainMembership || captainMembership.role !== "CAPTAIN") {
+        throw new Error("NOT_CAPTAIN");
+      }
+      if (await teamRosterIsLocked(tx, parsed.data)) throw new Error("ROSTER_LOCKED");
+
+      await tx.teamInvite.deleteMany({ where: { teamId: parsed.data } });
+      await tx.teamMember.deleteMany({ where: { teamId: parsed.data } });
+      await tx.team.delete({ where: { id: parsed.data } });
+    }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
+
+    revalidateTeams();
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (message === "NOT_CAPTAIN") return { success: false, error: "Only the team captain can disband the team." };
+    if (message === "ROSTER_LOCKED") return { success: false, error: "This team cannot be disbanded while registered in an active tournament." };
+    if (message === "UNAUTHENTICATED") return { success: false, error: "Open VELOX in Telegram to manage your teams." };
+    console.error("Disband team failed", error);
+    return { success: false, error: "We couldn't disband the team." };
   }
 }

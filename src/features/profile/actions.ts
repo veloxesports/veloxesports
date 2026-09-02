@@ -15,7 +15,7 @@ const profileUpdateSchema = z.object({
 export async function getPlayerProfile() {
   try {
     const user = await requireCurrentUser();
-    const profile = await prisma.userProfile.findUnique({
+    let profile = await prisma.userProfile.findUnique({
       where: { userId: user.id },
       include: {
         user: true,
@@ -23,8 +23,10 @@ export async function getPlayerProfile() {
     });
 
     if (!profile) {
-      // In a real app we'd trigger creation if missing
-      return { success: false, error: "Profile not found" };
+      profile = await prisma.userProfile.create({
+        data: { userId: user.id, favoriteGames: [] },
+        include: { user: true },
+      });
     }
 
     const achievements = await prisma.userAchievement.findMany({
@@ -50,11 +52,17 @@ export async function updateCurrentProfile(input: unknown) {
 
   try {
     const user = await requireCurrentUser();
-    const profile = await prisma.userProfile.update({
+    const profile = await prisma.userProfile.upsert({
       where: { userId: user.id },
-      data: {
+      update: {
         veloxUsername: parsed.data.veloxUsername || null,
         country: parsed.data.country || null,
+      },
+      create: {
+        userId: user.id,
+        veloxUsername: parsed.data.veloxUsername || null,
+        country: parsed.data.country || null,
+        favoriteGames: [],
       },
     });
     revalidatePath("/");

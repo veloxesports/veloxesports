@@ -45,6 +45,8 @@ async function main() {
           lastName: "Administrator",
           role: "SUPER_ADMIN",
           status: "ACTIVE",
+          profile: { create: { veloxUsername: username, favoriteGames: [] } },
+          wallet: { create: {} },
         },
       });
       await tx.webAdminAccount.create({

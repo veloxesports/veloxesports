@@ -178,7 +178,7 @@ async function askOpenAi(message: string, history: Array<{ role: "user" | "assis
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || "gpt-5.4",
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
       instructions: buildInstructions(tournaments),
       input: conversation,
       max_output_tokens: 300,

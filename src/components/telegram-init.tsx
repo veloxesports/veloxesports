@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { authenticateTelegram } from "@/features/auth/actions";
 
 export function TelegramInit() {
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     // Check if we are running inside Telegram
@@ -34,6 +35,24 @@ export function TelegramInit() {
       }
     }
   }, [router]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.Telegram?.WebApp?.BackButton) {
+      const backButton = window.Telegram.WebApp.BackButton;
+      const isTopLevel = pathname === "/" || pathname === "/tournaments" || pathname.startsWith("/admin");
+
+      if (isTopLevel) {
+        backButton.hide();
+      } else {
+        backButton.show();
+        const handleBack = () => router.back();
+        backButton.onClick(handleBack);
+        return () => {
+          backButton.offClick(handleBack);
+        };
+      }
+    }
+  }, [pathname, router]);
 
   return null;
 }

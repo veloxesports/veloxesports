@@ -270,6 +270,16 @@ async function processSuccessfulPayment(
         reason: "Tournament reached capacity after checkout.",
       },
     });
+    await tx.notification.create({
+      data: {
+        userId: payment.userId,
+        type: "PAYMENT",
+        title: "Tournament entry refunded",
+        message: `${payment.tournament?.title ?? "Tournament"} reached maximum capacity before payment verification. Your Telegram Stars were refunded.`,
+        metadata: { paymentId: payment.id, tournamentId: payment.tournamentId },
+        telegramDeliveryEligible: true,
+      },
+    });
 
     return {
       kind: "REFUND_REQUIRED" as const,

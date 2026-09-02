@@ -1,3 +1,17 @@
+interface TelegramBackButton {
+  isVisible: boolean;
+  show(): void;
+  hide(): void;
+  onClick(callback: () => void): void;
+  offClick(callback: () => void): void;
+}
+
+interface TelegramHapticFeedback {
+  impactOccurred(style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft'): void;
+  notificationOccurred(type: 'error' | 'success' | 'warning'): void;
+  selectionChanged(): void;
+}
+
 interface TelegramWebApp {
   ready(): void;
   expand(): void;
@@ -10,6 +24,8 @@ interface TelegramWebApp {
   colorScheme: 'light' | 'dark';
   version?: string;
   isVersionAtLeast?(version: string): boolean;
+  BackButton?: TelegramBackButton;
+  HapticFeedback?: TelegramHapticFeedback;
 }
 
 interface Window {

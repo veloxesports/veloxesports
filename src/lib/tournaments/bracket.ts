@@ -107,7 +107,7 @@ export async function generateSingleEliminationBracketInTransaction(tx: Prisma.T
           round,
           bracketPosition,
           ...(usesTeams ? { team1Id: first, team2Id: second } : { player1Id: first, player2Id: second }),
-          status: winnerId || (!first && !second) ? "COMPLETED" : "SCHEDULED",
+          status: winnerId || (round === 1 && !first && !second) ? "COMPLETED" : "SCHEDULED",
           winnerId,
         },
       });
