@@ -1,15 +1,18 @@
-import { ArrowUpRight, Bell, ChevronRight, Gamepad2, Trophy, Zap } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Gamepad2, Trophy, Zap } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { getTournaments } from "@/features/tournaments/actions";
 import { getWalletSummary } from "@/features/wallet/services";
+import { getUnreadNotificationCount } from "@/features/notifications/actions";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 export default async function Home() {
-  const [user, tournamentsResult, walletResult] = await Promise.all([
+  const [user, tournamentsResult, walletResult, unreadNotificationsResult] = await Promise.all([
     getCurrentUser(),
     getTournaments({ status: "REGISTRATION_OPEN" }),
     getWalletSummary(),
+    getUnreadNotificationCount(),
   ]);
   const featuredTournament = tournamentsResult.success && tournamentsResult.data ? tournamentsResult.data[0] : undefined;
   const wallet = walletResult.success && walletResult.data ? walletResult.data.wallet : null;
@@ -31,9 +34,7 @@ export default async function Home() {
             Welcome back, <span className="text-[#c5f94d]">{displayName}</span>
           </h1>
         </div>
-        <Link href="/notifications" aria-label="Open notifications" className="mt-1 grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-[#2a352b] bg-[#111811] text-[#dce3d6] transition hover:border-[#c5f94d]/50 hover:text-[#c5f94d]">
-          <Bell className="h-5 w-5" aria-hidden />
-        </Link>
+        <NotificationBell initialUnreadCount={unreadNotificationsResult.success ? unreadNotificationsResult.data ?? 0 : 0} />
       </header>
 
       <section className="velox-card mt-7 grid grid-cols-3 divide-x divide-[#2a352b] px-1 py-4">

@@ -67,6 +67,7 @@ async function openCheckInIfDue(tournamentId: string, now: Date) {
           title: "Tournament check-in is open",
           message: `Check in for ${tournament.title} before the deadline to keep your place.`,
           metadata: { tournamentId: tournament.id, opensAt: window.opensAt, closesAt: window.closesAt },
+          telegramDeliveryEligible: true,
         })),
       });
     }
@@ -107,6 +108,7 @@ async function lockNoShowsAndGenerateBracket(tournamentId: string, now: Date) {
             title: "Tournament check-in missed",
             message: `Your place in ${tournament.title} was released because check-in was not completed in time.`,
             metadata: { tournamentId: tournament.id },
+            telegramDeliveryEligible: true,
           })),
         });
       }
@@ -128,6 +130,7 @@ async function lockNoShowsAndGenerateBracket(tournamentId: string, now: Date) {
           title: "Check-in closed",
           message: `${tournament.title} check-in is locked. Your confirmed entry is being placed into the bracket.`,
           metadata: { tournamentId: tournament.id },
+          telegramDeliveryEligible: true,
         })),
       });
     }
@@ -222,6 +225,7 @@ export async function completeTournamentIfReady(tournamentId: string) {
               title: "Tournament prize awarded",
               message: `${placement === 1 ? "Champion" : `Place ${placement}`} reward: ${payout.amount.toLocaleString()} Telegram Stars added to your VELOX wallet.`,
               metadata: { tournamentId: tournament.id, placement, amount: payout.amount },
+              telegramDeliveryEligible: true,
             },
           });
           rewardCount += 1;
@@ -241,6 +245,7 @@ export async function completeTournamentIfReady(tournamentId: string) {
           title: "Tournament completed",
           message: `${tournament.title} has concluded. Results and rewards are now available.`,
           metadata: { tournamentId: tournament.id, championId: final.winnerId },
+          telegramDeliveryEligible: true,
         })),
       });
     }
@@ -316,6 +321,7 @@ export async function runTournamentLifecycle(now = new Date()): Promise<Lifecycl
             title: "Tournament is live",
             message: "Your tournament bracket is now live. Open Match Center to see your fixture.",
             metadata: { tournamentId: candidate.id },
+            telegramDeliveryEligible: true,
           })),
         });
       }

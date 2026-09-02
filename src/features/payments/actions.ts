@@ -7,6 +7,7 @@ import { createTournamentInvoice, refundTelegramStarsPayment } from "@/lib/teleg
 import { createLedgerTransactionInTransaction } from "@/features/wallet/services";
 import { TournamentParticipantType } from "@/lib/generated/prisma/client";
 import { teamEntryErrorMessage, validateTeamEntry } from "@/lib/tournaments/team-registration";
+import { dispatchTelegramNotificationsCreatedSince } from "@/lib/notifications/delivery";
 import { revalidatePath } from "next/cache";
 
 const paymentIdSchema = z.string().uuid();
@@ -151,6 +152,7 @@ export async function refundStarsPayment(paymentId: unknown) {
   if (!parsedPaymentId.success) return { success: false, error: "Invalid payment." };
 
   try {
+    const notificationSince = new Date();
     await requireRole(["SUPER_ADMIN", "ADMIN", "FINANCE_MANAGER"]);
 
     const prepared = await prisma.$transaction(async (tx) => {
@@ -242,10 +244,12 @@ export async function refundStarsPayment(paymentId: unknown) {
           title: "Tournament refund completed",
           message: "Your Telegram Stars refund has been processed.",
           metadata: { paymentId: prepared.payment.id, refundId: refund.id },
+          telegramDeliveryEligible: true,
         },
       });
     }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
 
+    await dispatchTelegramNotificationsCreatedSince(notificationSince);
     revalidatePath("/wallet");
     return { success: true };
   } catch (error) {

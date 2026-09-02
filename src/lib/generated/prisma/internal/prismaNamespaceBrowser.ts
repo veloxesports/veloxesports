@@ -440,7 +440,12 @@ export const NotificationScalarFieldEnum = {
   title: 'title',
   message: 'message',
   isRead: 'isRead',
+  readAt: 'readAt',
   metadata: 'metadata',
+  telegramDeliveryEligible: 'telegramDeliveryEligible',
+  telegramSentAt: 'telegramSentAt',
+  telegramDeliveryError: 'telegramDeliveryError',
+  telegramDeliveryAttempts: 'telegramDeliveryAttempts',
   createdAt: 'createdAt'
 } as const
 

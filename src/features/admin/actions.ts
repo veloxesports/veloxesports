@@ -9,6 +9,7 @@ import { getTournamentRulesTemplate } from "@/lib/tournaments/rule-templates";
 import { getCheckInWindow } from "@/lib/tournaments/check-in";
 import { generateSingleEliminationBracketInTransaction } from "@/lib/tournaments/bracket";
 import { runTournamentLifecycle } from "@/lib/tournaments/lifecycle";
+import { dispatchTelegramNotificationsCreatedSince } from "@/lib/notifications/delivery";
 import { refundStarsPayment } from "@/features/payments/actions";
 
 const administratorRoles = ["SUPER_ADMIN", "ADMIN"] as const;
@@ -633,6 +634,7 @@ export async function openTournamentCheckIn(tournamentId: unknown) {
   if (!parsed.success) return { success: false, error: "Invalid tournament." };
 
   try {
+    const notificationSince = new Date();
     const admin = await requireRole([...tournamentManagerRoles]);
     const tournament = await prisma.$transaction(async (tx) => {
       const current = await tx.tournament.findUnique({
@@ -657,6 +659,7 @@ export async function openTournamentCheckIn(tournamentId: unknown) {
             title: "Tournament check-in is open",
             message: `Check in for ${current.title} before the tournament starts to keep your place.`,
             metadata: { tournamentId: current.id },
+            telegramDeliveryEligible: true,
           })),
         });
       }
@@ -674,6 +677,7 @@ export async function openTournamentCheckIn(tournamentId: unknown) {
     }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
 
     revalidateTournamentCheckIn(tournament);
+    await dispatchTelegramNotificationsCreatedSince(notificationSince);
     return { success: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
@@ -697,6 +701,7 @@ export async function finalizeTournamentCheckIn(tournamentId: unknown) {
   if (!parsed.success) return { success: false, error: "Invalid tournament." };
 
   try {
+    const notificationSince = new Date();
     const admin = await requireRole([...tournamentManagerRoles]);
     const outcome = await prisma.$transaction(async (tx) => {
       const tournament = await tx.tournament.findUnique({
@@ -720,6 +725,7 @@ export async function finalizeTournamentCheckIn(tournamentId: unknown) {
             title: "Tournament check-in missed",
             message: `Your place in ${tournament.title} was released because check-in was not completed before the deadline.`,
             metadata: { tournamentId: tournament.id },
+            telegramDeliveryEligible: true,
           })),
         });
       }
@@ -742,6 +748,7 @@ export async function finalizeTournamentCheckIn(tournamentId: unknown) {
     }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
 
     revalidateTournamentCheckIn(outcome.tournament);
+    await dispatchTelegramNotificationsCreatedSince(notificationSince);
     return { success: true, data: { checkedInCount: outcome.checkedInCount, noShowCount: outcome.noShowCount, bracketGenerated: outcome.bracketGenerated } };
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
@@ -761,6 +768,7 @@ export async function finalizeTournamentCheckIn(tournamentId: unknown) {
 export async function runTournamentLifecycleManually() {
   try {
     const admin = await requireRole([...tournamentManagerRoles]);
+    const notificationSince = new Date();
     const summary = await runTournamentLifecycle();
     const processed = summary.registrationsClosed + summary.checkInOpened + summary.noShowsLocked + summary.bracketsGenerated + summary.tournamentsStarted + summary.tournamentsCompleted + summary.prizeRewards;
     const description = processed
@@ -779,6 +787,7 @@ export async function runTournamentLifecycleManually() {
 
     revalidatePath("/", "layout");
     revalidatePath("/admin", "layout");
+    await dispatchTelegramNotificationsCreatedSince(notificationSince);
     return {
       success: true,
       data: summary,
@@ -805,6 +814,7 @@ export async function cancelTournamentAndRefund(tournamentId: unknown) {
   const parsed = tournamentIdSchema.safeParse(tournamentId);
   if (!parsed.success) return { success: false, error: "Invalid tournament." };
   try {
+    const notificationSince = new Date();
     const admin = await requireRole([...administratorRoles]);
     const payments = await prisma.$transaction(async (tx) => {
       const tournament = await tx.tournament.findUnique({ where: { id: parsed.data }, select: { id: true, title: true, status: true } });
@@ -813,7 +823,7 @@ export async function cancelTournamentAndRefund(tournamentId: unknown) {
       await tx.tournament.update({ where: { id: tournament.id }, data: { status: "CANCELLED" } });
       await tx.auditLog.create({ data: { adminId: admin.id, action: "TOURNAMENT_CANCELLED", entity: "Tournament", entityId: tournament.id, oldValue: toAuditJson({ status: tournament.status }), newValue: toAuditJson({ status: "CANCELLED" }) } });
       await tx.notification.createMany({
-        data: (await tx.tournamentRegistration.findMany({ where: { tournamentId: tournament.id, status: "CONFIRMED" }, select: { userId: true } })).map((registration) => ({ userId: registration.userId, type: "TOURNAMENT", title: "Tournament cancelled", message: `${tournament.title} was cancelled. Eligible paid entries are being refunded.`, metadata: { tournamentId: tournament.id } })),
+        data: (await tx.tournamentRegistration.findMany({ where: { tournamentId: tournament.id, status: "CONFIRMED" }, select: { userId: true } })).map((registration) => ({ userId: registration.userId, type: "TOURNAMENT", title: "Tournament cancelled", message: `${tournament.title} was cancelled. Eligible paid entries are being refunded.`, metadata: { tournamentId: tournament.id }, telegramDeliveryEligible: true })),
       });
       return tx.telegramPayment.findMany({ where: { tournamentId: tournament.id, status: "COMPLETED" }, select: { id: true } });
     }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 15_000 });
@@ -824,6 +834,7 @@ export async function cancelTournamentAndRefund(tournamentId: unknown) {
     revalidatePath("/admin");
     revalidatePath("/admin/tournaments");
     revalidatePath("/admin/finance");
+    await dispatchTelegramNotificationsCreatedSince(notificationSince);
     return { success: true, data: { refunded, pending: payments.length - refunded }, warning: payments.length - refunded ? "Some refunds need finance reconciliation." : undefined };
   } catch (error) {
     const message = error instanceof Error ? error.message : "";

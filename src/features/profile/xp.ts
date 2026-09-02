@@ -109,6 +109,7 @@ export async function checkAndAwardAchievements(userId: string) {
           title: "Achievement unlocked",
           message: `You earned ${achievement.name}${achievement.xpReward ? ` and ${achievement.xpReward} XP` : ""}.`,
           metadata: { achievementId: achievement.id },
+          telegramDeliveryEligible: true,
         },
       });
       return true;

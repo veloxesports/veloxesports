@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { canCheckIn, getCheckInWindow } from "@/lib/tournaments/check-in";
 import { teamEntryErrorMessage, validateTeamEntry } from "@/lib/tournaments/team-registration";
+import { dispatchTelegramNotificationsCreatedSince } from "@/lib/notifications/delivery";
 
 const tournamentIdSchema = z.string().uuid();
 const teamRegistrationSchema = z.object({ tournamentId: z.string().uuid(), teamId: z.string().uuid() });
@@ -136,6 +137,7 @@ export async function checkInForTournament(tournamentId: unknown) {
   if (!validatedTournamentId.success) return { success: false, error: "Invalid tournament." };
 
   try {
+    const notificationSince = new Date();
     const user = await requireCurrentUser();
     const result = await prisma.$transaction(async (tx) => {
       const tournament = await tx.tournament.findUnique({
@@ -186,11 +188,13 @@ export async function checkInForTournament(tournamentId: unknown) {
           title: registration.team ? "Team checked in" : "Check-in confirmed",
           message: registration.team ? `${registration.team.name} is checked in for ${tournament.title}.` : `You are checked in for ${tournament.title}.`,
           metadata: { tournamentId: tournament.id },
+          telegramDeliveryEligible: true,
         })),
       });
 
       return { tournament, alreadyCheckedIn: false, teamName: registration.team?.name ?? null };
     }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
+    await dispatchTelegramNotificationsCreatedSince(notificationSince);
 
     revalidatePath("/tournaments");
     revalidatePath(`/tournaments/${result.tournament.slug}`);
@@ -287,6 +291,7 @@ export async function registerForFreeTournament(tournamentId: unknown) {
   if (!validatedTournamentId.success) return { success: false, error: "Invalid tournament." };
 
   try {
+    const notificationSince = new Date();
     const user = await requireCurrentUser();
     const now = new Date();
     const result = await prisma.$transaction(async (tx) => {
@@ -294,6 +299,8 @@ export async function registerForFreeTournament(tournamentId: unknown) {
         where: { id: validatedTournamentId.data },
         select: {
           id: true,
+          title: true,
+          slug: true,
           isPaid: true,
           participantType: true,
           status: true,
@@ -336,8 +343,20 @@ export async function registerForFreeTournament(tournamentId: unknown) {
 
       if (capacityUpdate.count !== 1) throw new TournamentRegistrationError("FULL");
 
+      await tx.notification.create({
+        data: {
+          userId: user.id,
+          type: "TOURNAMENT",
+          title: "Tournament entry confirmed",
+          message: `Your entry for ${tournament.title} is confirmed.`,
+          metadata: { tournamentId: tournament.id, tournamentSlug: tournament.slug },
+          telegramDeliveryEligible: true,
+        },
+      });
+
       return registration;
     }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
+    await dispatchTelegramNotificationsCreatedSince(notificationSince);
 
     revalidatePath(`/tournaments`);
     revalidatePath(`/tournaments/${result.tournamentId}`);
@@ -366,12 +385,13 @@ export async function registerTeamForFreeTournament(input: unknown) {
   if (!parsed.success) return { success: false, error: "Choose a valid team." };
 
   try {
+    const notificationSince = new Date();
     const user = await requireCurrentUser();
     const now = new Date();
     const registration = await prisma.$transaction(async (tx) => {
       const tournament = await tx.tournament.findUnique({
         where: { id: parsed.data.tournamentId },
-        select: { id: true, isPaid: true, participantType: true, teamSize: true, status: true, maxParticipants: true, registrationDeadline: true },
+        select: { id: true, title: true, slug: true, isPaid: true, participantType: true, teamSize: true, status: true, maxParticipants: true, registrationDeadline: true },
       });
       if (!tournament) throw new Error("TOURNAMENT_NOT_FOUND");
       if (tournament.isPaid) throw new TournamentRegistrationError("PAID_TOURNAMENT");
@@ -392,11 +412,13 @@ export async function registerTeamForFreeTournament(input: unknown) {
           type: "TEAM",
           title: "Team tournament entry confirmed",
           message: `${team.teamName} is registered for this tournament. Your captain will check in for the roster.`,
-          metadata: { tournamentId: tournament.id, teamId: team.teamId },
+          metadata: { tournamentId: tournament.id, tournamentSlug: tournament.slug, teamId: team.teamId },
+          telegramDeliveryEligible: true,
         })),
       });
       return created;
     }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
+    await dispatchTelegramNotificationsCreatedSince(notificationSince);
 
     revalidatePath("/tournaments");
     revalidatePath(`/tournaments/${registration.tournamentId}`);

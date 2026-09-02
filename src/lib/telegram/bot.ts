@@ -61,3 +61,29 @@ export async function refundTelegramStarsPayment(input: {
     telegram_payment_charge_id: input.telegramPaymentChargeId,
   });
 }
+
+export async function sendTelegramMiniAppNotification(input: {
+  telegramUserId: string;
+  title: string;
+  message: string;
+  actionLabel: string;
+  webAppUrl: string | null;
+}) {
+  const chatId = Number(input.telegramUserId);
+  if (!Number.isSafeInteger(chatId) || chatId <= 0) throw new Error("TELEGRAM_INVALID_CHAT");
+
+  const text = `🔔 VELOX\n\n${input.title}\n${input.message}`.slice(0, 4_096);
+  await telegramApi<boolean>("sendMessage", {
+    chat_id: chatId,
+    text,
+    disable_web_page_preview: true,
+    ...(input.webAppUrl ? {
+      reply_markup: {
+        inline_keyboard: [[{
+          text: input.actionLabel,
+          web_app: { url: input.webAppUrl },
+        }]],
+      },
+    } : {}),
+  });
+}

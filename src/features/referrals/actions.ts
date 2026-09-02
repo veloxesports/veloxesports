@@ -6,6 +6,7 @@ import { prisma } from "@/lib/database/prisma";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { createLedgerTransactionInTransaction } from "@/features/wallet/services";
 import { ensureReferralCode } from "./service";
+import { dispatchTelegramNotificationsCreatedSince } from "@/lib/notifications/delivery";
 
 const referralCodeSchema = z.string().trim().toUpperCase().regex(/^[A-Z0-9]{8}$/);
 
@@ -40,6 +41,7 @@ export async function redeemReferralCode(code: unknown) {
   if (!parsed.success) return { success: false, error: "Enter an 8-character referral code." };
 
   try {
+    const notificationSince = new Date();
     const user = await requireCurrentUser();
     const rewardAmount = await getReferralReward();
     const referral = await prisma.$transaction(async (tx) => {
@@ -72,10 +74,12 @@ export async function redeemReferralCode(code: unknown) {
           title: "Referral completed",
           message: "A player you invited joined VELOX.",
           metadata: { referralId: source.id },
+          telegramDeliveryEligible: true,
         },
       });
       return source.id;
     }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
+    await dispatchTelegramNotificationsCreatedSince(notificationSince);
     revalidatePath("/referrals");
     revalidatePath("/wallet");
     return { success: true, data: { referralId: referral } };

@@ -20,8 +20,18 @@ export type NotificationModel = runtime.Types.Result.DefaultSelection<Prisma.$No
 
 export type AggregateNotification = {
   _count: NotificationCountAggregateOutputType | null
+  _avg: NotificationAvgAggregateOutputType | null
+  _sum: NotificationSumAggregateOutputType | null
   _min: NotificationMinAggregateOutputType | null
   _max: NotificationMaxAggregateOutputType | null
+}
+
+export type NotificationAvgAggregateOutputType = {
+  telegramDeliveryAttempts: number | null
+}
+
+export type NotificationSumAggregateOutputType = {
+  telegramDeliveryAttempts: number | null
 }
 
 export type NotificationMinAggregateOutputType = {
@@ -31,6 +41,11 @@ export type NotificationMinAggregateOutputType = {
   title: string | null
   message: string | null
   isRead: boolean | null
+  readAt: Date | null
+  telegramDeliveryEligible: boolean | null
+  telegramSentAt: Date | null
+  telegramDeliveryError: string | null
+  telegramDeliveryAttempts: number | null
   createdAt: Date | null
 }
 
@@ -41,6 +56,11 @@ export type NotificationMaxAggregateOutputType = {
   title: string | null
   message: string | null
   isRead: boolean | null
+  readAt: Date | null
+  telegramDeliveryEligible: boolean | null
+  telegramSentAt: Date | null
+  telegramDeliveryError: string | null
+  telegramDeliveryAttempts: number | null
   createdAt: Date | null
 }
 
@@ -51,11 +71,24 @@ export type NotificationCountAggregateOutputType = {
   title: number
   message: number
   isRead: number
+  readAt: number
   metadata: number
+  telegramDeliveryEligible: number
+  telegramSentAt: number
+  telegramDeliveryError: number
+  telegramDeliveryAttempts: number
   createdAt: number
   _all: number
 }
 
+
+export type NotificationAvgAggregateInputType = {
+  telegramDeliveryAttempts?: true
+}
+
+export type NotificationSumAggregateInputType = {
+  telegramDeliveryAttempts?: true
+}
 
 export type NotificationMinAggregateInputType = {
   id?: true
@@ -64,6 +97,11 @@ export type NotificationMinAggregateInputType = {
   title?: true
   message?: true
   isRead?: true
+  readAt?: true
+  telegramDeliveryEligible?: true
+  telegramSentAt?: true
+  telegramDeliveryError?: true
+  telegramDeliveryAttempts?: true
   createdAt?: true
 }
 
@@ -74,6 +112,11 @@ export type NotificationMaxAggregateInputType = {
   title?: true
   message?: true
   isRead?: true
+  readAt?: true
+  telegramDeliveryEligible?: true
+  telegramSentAt?: true
+  telegramDeliveryError?: true
+  telegramDeliveryAttempts?: true
   createdAt?: true
 }
 
@@ -84,7 +127,12 @@ export type NotificationCountAggregateInputType = {
   title?: true
   message?: true
   isRead?: true
+  readAt?: true
   metadata?: true
+  telegramDeliveryEligible?: true
+  telegramSentAt?: true
+  telegramDeliveryError?: true
+  telegramDeliveryAttempts?: true
   createdAt?: true
   _all?: true
 }
@@ -96,13 +144,13 @@ export type NotificationAggregateArgs<ExtArgs extends runtime.Types.Extensions.I
   where?: Prisma.NotificationWhereInput
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-   * 
+   *
    * Determine the order of Notifications to fetch.
    */
   orderBy?: Prisma.NotificationOrderByWithRelationInput | Prisma.NotificationOrderByWithRelationInput[]
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-   * 
+   *
    * Sets the start position
    */
   cursor?: Prisma.NotificationWhereUniqueInput
@@ -124,6 +172,18 @@ export type NotificationAggregateArgs<ExtArgs extends runtime.Types.Extensions.I
    * Count returned Notifications
   **/
   _count?: true | NotificationCountAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to average
+  **/
+  _avg?: NotificationAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: NotificationSumAggregateInputType
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
@@ -157,6 +217,8 @@ export type NotificationGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   _count?: NotificationCountAggregateInputType | true
+  _avg?: NotificationAvgAggregateInputType
+  _sum?: NotificationSumAggregateInputType
   _min?: NotificationMinAggregateInputType
   _max?: NotificationMaxAggregateInputType
 }
@@ -168,9 +230,16 @@ export type NotificationGroupByOutputType = {
   title: string
   message: string
   isRead: boolean
+  readAt: Date | null
   metadata: runtime.JsonValue | null
+  telegramDeliveryEligible: boolean
+  telegramSentAt: Date | null
+  telegramDeliveryError: string | null
+  telegramDeliveryAttempts: number
   createdAt: Date
   _count: NotificationCountAggregateOutputType | null
+  _avg: NotificationAvgAggregateOutputType | null
+  _sum: NotificationSumAggregateOutputType | null
   _min: NotificationMinAggregateOutputType | null
   _max: NotificationMaxAggregateOutputType | null
 }
@@ -200,7 +269,12 @@ export type NotificationWhereInput = {
   title?: Prisma.StringFilter<"Notification"> | string
   message?: Prisma.StringFilter<"Notification"> | string
   isRead?: Prisma.BoolFilter<"Notification"> | boolean
+  readAt?: Prisma.DateTimeNullableFilter<"Notification"> | Date | string | null
   metadata?: Prisma.JsonNullableFilter<"Notification">
+  telegramDeliveryEligible?: Prisma.BoolFilter<"Notification"> | boolean
+  telegramSentAt?: Prisma.DateTimeNullableFilter<"Notification"> | Date | string | null
+  telegramDeliveryError?: Prisma.StringNullableFilter<"Notification"> | string | null
+  telegramDeliveryAttempts?: Prisma.IntFilter<"Notification"> | number
   createdAt?: Prisma.DateTimeFilter<"Notification"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
@@ -212,7 +286,12 @@ export type NotificationOrderByWithRelationInput = {
   title?: Prisma.SortOrder
   message?: Prisma.SortOrder
   isRead?: Prisma.SortOrder
+  readAt?: Prisma.SortOrderInput | Prisma.SortOrder
   metadata?: Prisma.SortOrderInput | Prisma.SortOrder
+  telegramDeliveryEligible?: Prisma.SortOrder
+  telegramSentAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  telegramDeliveryError?: Prisma.SortOrderInput | Prisma.SortOrder
+  telegramDeliveryAttempts?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
 }
@@ -227,7 +306,12 @@ export type NotificationWhereUniqueInput = Prisma.AtLeast<{
   title?: Prisma.StringFilter<"Notification"> | string
   message?: Prisma.StringFilter<"Notification"> | string
   isRead?: Prisma.BoolFilter<"Notification"> | boolean
+  readAt?: Prisma.DateTimeNullableFilter<"Notification"> | Date | string | null
   metadata?: Prisma.JsonNullableFilter<"Notification">
+  telegramDeliveryEligible?: Prisma.BoolFilter<"Notification"> | boolean
+  telegramSentAt?: Prisma.DateTimeNullableFilter<"Notification"> | Date | string | null
+  telegramDeliveryError?: Prisma.StringNullableFilter<"Notification"> | string | null
+  telegramDeliveryAttempts?: Prisma.IntFilter<"Notification"> | number
   createdAt?: Prisma.DateTimeFilter<"Notification"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id">
@@ -239,11 +323,18 @@ export type NotificationOrderByWithAggregationInput = {
   title?: Prisma.SortOrder
   message?: Prisma.SortOrder
   isRead?: Prisma.SortOrder
+  readAt?: Prisma.SortOrderInput | Prisma.SortOrder
   metadata?: Prisma.SortOrderInput | Prisma.SortOrder
+  telegramDeliveryEligible?: Prisma.SortOrder
+  telegramSentAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  telegramDeliveryError?: Prisma.SortOrderInput | Prisma.SortOrder
+  telegramDeliveryAttempts?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.NotificationCountOrderByAggregateInput
+  _avg?: Prisma.NotificationAvgOrderByAggregateInput
   _max?: Prisma.NotificationMaxOrderByAggregateInput
   _min?: Prisma.NotificationMinOrderByAggregateInput
+  _sum?: Prisma.NotificationSumOrderByAggregateInput
 }
 
 export type NotificationScalarWhereWithAggregatesInput = {
@@ -256,7 +347,12 @@ export type NotificationScalarWhereWithAggregatesInput = {
   title?: Prisma.StringWithAggregatesFilter<"Notification"> | string
   message?: Prisma.StringWithAggregatesFilter<"Notification"> | string
   isRead?: Prisma.BoolWithAggregatesFilter<"Notification"> | boolean
+  readAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Notification"> | Date | string | null
   metadata?: Prisma.JsonNullableWithAggregatesFilter<"Notification">
+  telegramDeliveryEligible?: Prisma.BoolWithAggregatesFilter<"Notification"> | boolean
+  telegramSentAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Notification"> | Date | string | null
+  telegramDeliveryError?: Prisma.StringNullableWithAggregatesFilter<"Notification"> | string | null
+  telegramDeliveryAttempts?: Prisma.IntWithAggregatesFilter<"Notification"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Notification"> | Date | string
 }
 
@@ -266,7 +362,12 @@ export type NotificationCreateInput = {
   title: string
   message: string
   isRead?: boolean
+  readAt?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  telegramDeliveryEligible?: boolean
+  telegramSentAt?: Date | string | null
+  telegramDeliveryError?: string | null
+  telegramDeliveryAttempts?: number
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutNotificationsInput
 }
@@ -278,7 +379,12 @@ export type NotificationUncheckedCreateInput = {
   title: string
   message: string
   isRead?: boolean
+  readAt?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  telegramDeliveryEligible?: boolean
+  telegramSentAt?: Date | string | null
+  telegramDeliveryError?: string | null
+  telegramDeliveryAttempts?: number
   createdAt?: Date | string
 }
 
@@ -288,7 +394,12 @@ export type NotificationUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
   isRead?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  telegramDeliveryEligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  telegramSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  telegramDeliveryError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  telegramDeliveryAttempts?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutNotificationsNestedInput
 }
@@ -300,7 +411,12 @@ export type NotificationUncheckedUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
   isRead?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  telegramDeliveryEligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  telegramSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  telegramDeliveryError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  telegramDeliveryAttempts?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -311,7 +427,12 @@ export type NotificationCreateManyInput = {
   title: string
   message: string
   isRead?: boolean
+  readAt?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  telegramDeliveryEligible?: boolean
+  telegramSentAt?: Date | string | null
+  telegramDeliveryError?: string | null
+  telegramDeliveryAttempts?: number
   createdAt?: Date | string
 }
 
@@ -321,7 +442,12 @@ export type NotificationUpdateManyMutationInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
   isRead?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  telegramDeliveryEligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  telegramSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  telegramDeliveryError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  telegramDeliveryAttempts?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -332,7 +458,12 @@ export type NotificationUncheckedUpdateManyInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
   isRead?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  telegramDeliveryEligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  telegramSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  telegramDeliveryError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  telegramDeliveryAttempts?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -353,8 +484,17 @@ export type NotificationCountOrderByAggregateInput = {
   title?: Prisma.SortOrder
   message?: Prisma.SortOrder
   isRead?: Prisma.SortOrder
+  readAt?: Prisma.SortOrder
   metadata?: Prisma.SortOrder
+  telegramDeliveryEligible?: Prisma.SortOrder
+  telegramSentAt?: Prisma.SortOrder
+  telegramDeliveryError?: Prisma.SortOrder
+  telegramDeliveryAttempts?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+}
+
+export type NotificationAvgOrderByAggregateInput = {
+  telegramDeliveryAttempts?: Prisma.SortOrder
 }
 
 export type NotificationMaxOrderByAggregateInput = {
@@ -364,6 +504,11 @@ export type NotificationMaxOrderByAggregateInput = {
   title?: Prisma.SortOrder
   message?: Prisma.SortOrder
   isRead?: Prisma.SortOrder
+  readAt?: Prisma.SortOrder
+  telegramDeliveryEligible?: Prisma.SortOrder
+  telegramSentAt?: Prisma.SortOrder
+  telegramDeliveryError?: Prisma.SortOrder
+  telegramDeliveryAttempts?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -374,7 +519,16 @@ export type NotificationMinOrderByAggregateInput = {
   title?: Prisma.SortOrder
   message?: Prisma.SortOrder
   isRead?: Prisma.SortOrder
+  readAt?: Prisma.SortOrder
+  telegramDeliveryEligible?: Prisma.SortOrder
+  telegramSentAt?: Prisma.SortOrder
+  telegramDeliveryError?: Prisma.SortOrder
+  telegramDeliveryAttempts?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+}
+
+export type NotificationSumOrderByAggregateInput = {
+  telegramDeliveryAttempts?: Prisma.SortOrder
 }
 
 export type NotificationCreateNestedManyWithoutUserInput = {
@@ -429,7 +583,12 @@ export type NotificationCreateWithoutUserInput = {
   title: string
   message: string
   isRead?: boolean
+  readAt?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  telegramDeliveryEligible?: boolean
+  telegramSentAt?: Date | string | null
+  telegramDeliveryError?: string | null
+  telegramDeliveryAttempts?: number
   createdAt?: Date | string
 }
 
@@ -439,7 +598,12 @@ export type NotificationUncheckedCreateWithoutUserInput = {
   title: string
   message: string
   isRead?: boolean
+  readAt?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  telegramDeliveryEligible?: boolean
+  telegramSentAt?: Date | string | null
+  telegramDeliveryError?: string | null
+  telegramDeliveryAttempts?: number
   createdAt?: Date | string
 }
 
@@ -479,7 +643,12 @@ export type NotificationScalarWhereInput = {
   title?: Prisma.StringFilter<"Notification"> | string
   message?: Prisma.StringFilter<"Notification"> | string
   isRead?: Prisma.BoolFilter<"Notification"> | boolean
+  readAt?: Prisma.DateTimeNullableFilter<"Notification"> | Date | string | null
   metadata?: Prisma.JsonNullableFilter<"Notification">
+  telegramDeliveryEligible?: Prisma.BoolFilter<"Notification"> | boolean
+  telegramSentAt?: Prisma.DateTimeNullableFilter<"Notification"> | Date | string | null
+  telegramDeliveryError?: Prisma.StringNullableFilter<"Notification"> | string | null
+  telegramDeliveryAttempts?: Prisma.IntFilter<"Notification"> | number
   createdAt?: Prisma.DateTimeFilter<"Notification"> | Date | string
 }
 
@@ -489,7 +658,12 @@ export type NotificationCreateManyUserInput = {
   title: string
   message: string
   isRead?: boolean
+  readAt?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  telegramDeliveryEligible?: boolean
+  telegramSentAt?: Date | string | null
+  telegramDeliveryError?: string | null
+  telegramDeliveryAttempts?: number
   createdAt?: Date | string
 }
 
@@ -499,7 +673,12 @@ export type NotificationUpdateWithoutUserInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
   isRead?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  telegramDeliveryEligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  telegramSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  telegramDeliveryError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  telegramDeliveryAttempts?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -509,7 +688,12 @@ export type NotificationUncheckedUpdateWithoutUserInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
   isRead?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  telegramDeliveryEligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  telegramSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  telegramDeliveryError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  telegramDeliveryAttempts?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -519,7 +703,12 @@ export type NotificationUncheckedUpdateManyWithoutUserInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
   isRead?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  telegramDeliveryEligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  telegramSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  telegramDeliveryError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  telegramDeliveryAttempts?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -532,7 +721,12 @@ export type NotificationSelect<ExtArgs extends runtime.Types.Extensions.Internal
   title?: boolean
   message?: boolean
   isRead?: boolean
+  readAt?: boolean
   metadata?: boolean
+  telegramDeliveryEligible?: boolean
+  telegramSentAt?: boolean
+  telegramDeliveryError?: boolean
+  telegramDeliveryAttempts?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["notification"]>
@@ -544,7 +738,12 @@ export type NotificationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   title?: boolean
   message?: boolean
   isRead?: boolean
+  readAt?: boolean
   metadata?: boolean
+  telegramDeliveryEligible?: boolean
+  telegramSentAt?: boolean
+  telegramDeliveryError?: boolean
+  telegramDeliveryAttempts?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["notification"]>
@@ -556,7 +755,12 @@ export type NotificationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   title?: boolean
   message?: boolean
   isRead?: boolean
+  readAt?: boolean
   metadata?: boolean
+  telegramDeliveryEligible?: boolean
+  telegramSentAt?: boolean
+  telegramDeliveryError?: boolean
+  telegramDeliveryAttempts?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["notification"]>
@@ -568,11 +772,16 @@ export type NotificationSelectScalar = {
   title?: boolean
   message?: boolean
   isRead?: boolean
+  readAt?: boolean
   metadata?: boolean
+  telegramDeliveryEligible?: boolean
+  telegramSentAt?: boolean
+  telegramDeliveryError?: boolean
+  telegramDeliveryAttempts?: boolean
   createdAt?: boolean
 }
 
-export type NotificationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "type" | "title" | "message" | "isRead" | "metadata" | "createdAt", ExtArgs["result"]["notification"]>
+export type NotificationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "type" | "title" | "message" | "isRead" | "readAt" | "metadata" | "telegramDeliveryEligible" | "telegramSentAt" | "telegramDeliveryError" | "telegramDeliveryAttempts" | "createdAt", ExtArgs["result"]["notification"]>
 export type NotificationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -595,7 +804,12 @@ export type $NotificationPayload<ExtArgs extends runtime.Types.Extensions.Intern
     title: string
     message: string
     isRead: boolean
+    readAt: Date | null
     metadata: runtime.JsonValue | null
+    telegramDeliveryEligible: boolean
+    telegramSentAt: Date | null
+    telegramDeliveryError: string | null
+    telegramDeliveryAttempts: number
     createdAt: Date
   }, ExtArgs["result"]["notification"]>
   composites: {}
@@ -1027,7 +1241,12 @@ export interface NotificationFieldRefs {
   readonly title: Prisma.FieldRef<"Notification", 'String'>
   readonly message: Prisma.FieldRef<"Notification", 'String'>
   readonly isRead: Prisma.FieldRef<"Notification", 'Boolean'>
+  readonly readAt: Prisma.FieldRef<"Notification", 'DateTime'>
   readonly metadata: Prisma.FieldRef<"Notification", 'Json'>
+  readonly telegramDeliveryEligible: Prisma.FieldRef<"Notification", 'Boolean'>
+  readonly telegramSentAt: Prisma.FieldRef<"Notification", 'DateTime'>
+  readonly telegramDeliveryError: Prisma.FieldRef<"Notification", 'String'>
+  readonly telegramDeliveryAttempts: Prisma.FieldRef<"Notification", 'Int'>
   readonly createdAt: Prisma.FieldRef<"Notification", 'DateTime'>
 }
     

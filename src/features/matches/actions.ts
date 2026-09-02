@@ -11,6 +11,7 @@ import { addXpToUser, checkAndAwardAchievements } from "@/features/profile/xp";
 import { areMatchSidesOpposing, canSubmitMatchResult, hasBothMatchParticipants, isAwaitingOpponentConfirmation, nextBracketSlotForWinner } from "@/lib/matches/flow";
 import { generateSingleEliminationBracketInTransaction } from "@/lib/tournaments/bracket";
 import { completeTournamentIfReady } from "@/lib/tournaments/lifecycle";
+import { dispatchTelegramNotificationsCreatedSince } from "@/lib/notifications/delivery";
 
 const idSchema = z.string().uuid();
 const resultSchema = z.object({
@@ -219,6 +220,7 @@ async function createPendingResult(
           title: "Match result awaiting confirmation",
           message: "Your opponent submitted a match result for review.",
           metadata: { matchId: match.id, resultId: result.id },
+          telegramDeliveryEligible: true,
         })),
       });
     }
@@ -290,8 +292,10 @@ export async function submitMatchResult(input: unknown) {
   if (!parsed.success) return { success: false, error: "Enter valid scores and a winner." };
 
   try {
+    const notificationSince = new Date();
     const user = await requireCurrentUser();
     await createPendingResult(user.id, parsed.data);
+    await dispatchTelegramNotificationsCreatedSince(notificationSince);
     revalidatePath(`/matches/${parsed.data.matchId}`);
     revalidatePath("/matches");
     return { success: true };
@@ -315,6 +319,7 @@ export async function submitMatchResultWithEvidence(formData: FormData) {
   if (!parsed.success) return { success: false, error: "Enter valid scores and a winner." };
 
   try {
+    const notificationSince = new Date();
     const user = await requireCurrentUser();
     const evidence = file && validateEvidenceFile(file)
       ? await uploadMatchEvidence(parsed.data.matchId, user.id, file)
@@ -322,6 +327,7 @@ export async function submitMatchResultWithEvidence(formData: FormData) {
     if (file && !evidence) throw new Error("INVALID_EVIDENCE_FILE");
 
     await createPendingResult(user.id, parsed.data, evidence);
+    await dispatchTelegramNotificationsCreatedSince(notificationSince);
     revalidatePath(`/matches/${parsed.data.matchId}`);
     revalidatePath("/matches");
     return { success: true };
@@ -338,6 +344,7 @@ export async function confirmMatchResult(matchId: unknown) {
   if (!parsedMatchId.success) return { success: false, error: "Invalid match." };
 
   try {
+    const notificationSince = new Date();
     const user = await requireCurrentUser();
     const outcome = await prisma.$transaction(async (tx) => {
       const match = await tx.match.findUnique({ where: { id: parsedMatchId.data } });
@@ -375,6 +382,7 @@ export async function confirmMatchResult(matchId: unknown) {
           title: "Match result confirmed",
           message: "Your match result has been confirmed and recorded.",
           metadata: { matchId: match.id, resultId: result.id },
+          telegramDeliveryEligible: true,
         })),
       });
 
@@ -387,6 +395,7 @@ export async function confirmMatchResult(matchId: unknown) {
     ]);
     await Promise.all([...outcome.winnerIds, ...outcome.loserIds].map((userId) => checkAndAwardAchievements(userId)));
     await completeTournamentIfReady(outcome.tournamentId);
+    await dispatchTelegramNotificationsCreatedSince(notificationSince);
     revalidatePath(`/matches/${parsedMatchId.data}`);
     revalidatePath("/matches");
     revalidatePath("/leaderboard");
@@ -405,6 +414,7 @@ export async function rejectMatchResult(matchId: unknown) {
   if (!parsedMatchId.success) return { success: false, error: "Invalid match." };
 
   try {
+    const notificationSince = new Date();
     const user = await requireCurrentUser();
     await prisma.$transaction(async (tx) => {
       const match = await tx.match.findUnique({ where: { id: parsedMatchId.data } });
@@ -424,9 +434,11 @@ export async function rejectMatchResult(matchId: unknown) {
           title: "Match result rejected",
           message: "Your opponent rejected the submitted result. You can open a dispute for moderator review.",
           metadata: { matchId: match.id, resultId: result.id },
+          telegramDeliveryEligible: true,
         },
       });
     }, { isolationLevel: "Serializable", maxWait: 5_000, timeout: 10_000 });
+    await dispatchTelegramNotificationsCreatedSince(notificationSince);
     revalidatePath(`/matches/${parsedMatchId.data}`);
     revalidatePath("/matches");
     return { success: true };
@@ -471,6 +483,7 @@ export async function resolveDispute(input: unknown) {
   if (!parsed.success) return { success: false, error: "Enter a resolution note and valid optional score." };
 
   try {
+    const notificationSince = new Date();
     const moderator = await requireRole(["SUPER_ADMIN", "ADMIN", "TOURNAMENT_MANAGER", "MODERATOR"]);
     const outcome = await prisma.$transaction(async (tx) => {
       const dispute = await tx.dispute.findUnique({ where: { id: parsed.data.disputeId }, include: { match: true } });
@@ -520,6 +533,7 @@ export async function resolveDispute(input: unknown) {
             title: "Dispute resolved",
             message: "A moderator resolved your match dispute and updated the result.",
             metadata: { disputeId: dispute.id, matchId: match.id },
+            telegramDeliveryEligible: true,
           })),
         });
         await tx.auditLog.create({
@@ -546,6 +560,7 @@ export async function resolveDispute(input: unknown) {
     ]);
     await Promise.all([...outcome.winnerIds, ...outcome.loserIds].map((userId) => checkAndAwardAchievements(userId)));
     await completeTournamentIfReady(outcome.tournamentId);
+    await dispatchTelegramNotificationsCreatedSince(notificationSince);
     revalidatePath(`/matches/${outcome.matchId}`);
     revalidatePath("/matches");
     revalidatePath("/leaderboard");

@@ -8,6 +8,7 @@ import { createLedgerTransactionInTransaction } from "@/features/wallet/services
 import { canAcceptTournamentRegistration, invoicePayloadSchema, isVerifiedStarsPaymentEvent, paymentIdFromInvoicePayload } from "@/lib/payments/validation";
 import { TournamentParticipantType } from "@/lib/generated/prisma/client";
 import { validateTeamEntry } from "@/lib/tournaments/team-registration";
+import { dispatchTelegramNotificationsCreatedSince } from "@/lib/notifications/delivery";
 
 export const runtime = "nodejs";
 
@@ -122,6 +123,7 @@ async function processSuccessfulPayment(
   messageFromId: number,
   successfulPayment: z.infer<typeof successfulPaymentSchema>,
 ) {
+  const notificationSince = new Date();
   const paymentId = paymentIdFromInvoicePayload(successfulPayment.invoice_payload);
   if (!paymentId) throw new Error("INVALID_PAYMENT_EVENT");
   const outcome = await prisma.$transaction(async (tx) => {
@@ -196,6 +198,7 @@ async function processSuccessfulPayment(
             title: "Team entry requires a refund",
             message: "Your selected team roster changed before payment verification. VELOX is returning the entry fee.",
             metadata: { tournamentId: payment.tournamentId, paymentId: payment.id },
+            telegramDeliveryEligible: true,
           },
         });
         return {
@@ -250,6 +253,7 @@ async function processSuccessfulPayment(
           title: "Tournament entry confirmed",
           message: `Your entry for ${payment.tournament.title} is confirmed.`,
           metadata: { tournamentId: payment.tournamentId, paymentId: payment.id },
+          telegramDeliveryEligible: true,
         },
       });
       return { kind: "COMPLETED" as const, tournamentSlug: payment.tournament.slug };
@@ -283,6 +287,7 @@ async function processSuccessfulPayment(
   if (outcome.kind === "REFUND_REQUIRED") {
     await finalizeCapacityRefund(outcome.payment);
   }
+  await dispatchTelegramNotificationsCreatedSince(notificationSince);
 
   return outcome;
 }

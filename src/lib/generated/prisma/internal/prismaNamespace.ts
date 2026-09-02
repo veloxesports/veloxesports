@@ -2898,7 +2898,12 @@ export const NotificationScalarFieldEnum = {
   title: 'title',
   message: 'message',
   isRead: 'isRead',
+  readAt: 'readAt',
   metadata: 'metadata',
+  telegramDeliveryEligible: 'telegramDeliveryEligible',
+  telegramSentAt: 'telegramSentAt',
+  telegramDeliveryError: 'telegramDeliveryError',
+  telegramDeliveryAttempts: 'telegramDeliveryAttempts',
   createdAt: 'createdAt'
 } as const
 
@@ -3206,14 +3211,14 @@ export type ListEnumTournamentFormatFieldRefInput<$PrismaModel> = FieldRefInputT
  * Reference to a field of type 'TournamentParticipantType'
  */
 export type EnumTournamentParticipantTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TournamentParticipantType'>
-
+    
 
 
 /**
  * Reference to a field of type 'TournamentParticipantType[]'
  */
 export type ListEnumTournamentParticipantTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TournamentParticipantType[]'>
-
+    
 
 
 /**
@@ -3582,3 +3587,4 @@ export type PrismaAction =
  * `PrismaClient` proxy available in interactive transactions.
  */
 export type TransactionClient = Omit<DefaultPrismaClient, runtime.ITXClientDenyList>
+
