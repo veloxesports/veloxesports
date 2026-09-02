@@ -4,13 +4,13 @@ const seriesColors = ["#c5f94d", "#84d8ff", "#f0cf78", "#ff997d", "#af93ff", "#9
 
 export function AdminAnalytics({ data }: { data: AnalyticsData }) {
   return (
-    <section className="mt-7" aria-labelledby="analytics-title">
+    <section className="mt-6" aria-labelledby="analytics-title">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div><p className="velox-eyebrow">Platform intelligence</p><h2 id="analytics-title" className="mt-1 text-xl font-black text-white">Analytics</h2></div>
         <p className="text-xs font-bold uppercase tracking-[0.08em] text-[#8e998f]">Last 14 days</p>
       </div>
 
-      <div className="mt-3 grid gap-4 xl:grid-cols-2">
+      <div className="mt-3 grid gap-3 xl:grid-cols-2 2xl:gap-4">
         <ChartCard title="Player growth & entries" detail="New player accounts and tournament registrations by day."><TrendChart data={data.trend} /></ChartCard>
         <ChartCard title="Stars flow" detail="Completed payments, refunds, and prize rewards by day."><StarsChart data={data.trend} /></ChartCard>
         <ChartCard title="Tournament lifecycle" detail="Every event, grouped by its current operating status."><DonutChart data={data.tournamentStatuses} emptyLabel="No tournaments" /></ChartCard>
@@ -21,7 +21,7 @@ export function AdminAnalytics({ data }: { data: AnalyticsData }) {
 }
 
 function ChartCard({ title, detail, children }: { title: string; detail: string; children: React.ReactNode }) {
-  return <article className="velox-card overflow-hidden"><div className="border-b border-[#29342a] px-5 py-4"><h3 className="text-base font-black text-white">{title}</h3><p className="mt-1 text-xs leading-relaxed text-[#8e998f]">{detail}</p></div><div className="p-4 sm:p-5">{children}</div></article>;
+  return <article className="velox-card overflow-hidden"><div className="border-b border-[#29342a] px-4 py-3.5"><h3 className="text-sm font-black text-white">{title}</h3><p className="mt-1 text-[11px] leading-relaxed text-[#8e998f]">{detail}</p></div><div className="p-3.5 sm:p-4">{children}</div></article>;
 }
 
 function TrendChart({ data }: { data: AnalyticsData["trend"] }) {

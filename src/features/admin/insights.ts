@@ -47,6 +47,11 @@ export type AdminAnalytics = {
   playerStatuses: Array<{ label: string; value: number }>;
 };
 
+export type AdminSearchResults = {
+  players: Array<{ id: string; name: string; detail: string; imageUrl: string | null }>;
+  tournaments: Array<{ id: string; title: string; detail: string; status: string; startDate: Date }>;
+};
+
 const playerAccountFilter = { NOT: { telegramId: { startsWith: "web-admin:" } } };
 const listLimit = 250;
 
@@ -103,6 +108,38 @@ export async function getAdminAnalytics(): Promise<{ success: true; data: AdminA
     }
     console.error("Admin analytics fetch failed", error);
     return { success: false, error: "Analytics are unavailable right now." };
+  }
+}
+
+export async function getAdminSearchResults(rawQuery: string): Promise<{ success: true; data: AdminSearchResults } | { success: false; error: string }> {
+  const query = rawQuery.trim().slice(0, 80);
+  if (query.length < 2) return { success: true, data: { players: [], tournaments: [] } };
+
+  try {
+    await requireRole([...webAdminRoles]);
+    const contains = { contains: query, mode: "insensitive" as const };
+    const [players, tournaments] = await Promise.all([
+      prisma.user.findMany({
+        where: { AND: [playerAccountFilter, { OR: [{ username: contains }, { firstName: contains }, { profile: { is: { veloxUsername: contains } } }] }] },
+        orderBy: { createdAt: "desc" },
+        take: 8,
+        select: { id: true, username: true, firstName: true, profileImage: true, profile: { select: { veloxUsername: true, rank: true, level: true } } },
+      }),
+      prisma.tournament.findMany({
+        where: { OR: [{ title: contains }, { game: { is: { name: contains } } }] },
+        orderBy: { startDate: "desc" },
+        take: 8,
+        select: { id: true, title: true, status: true, startDate: true, game: { select: { name: true } } },
+      }),
+    ]);
+    return { success: true, data: {
+      players: players.map((player) => ({ id: player.id, name: playerName(player), detail: player.profile ? `${labelFor(player.profile.rank)} · Level ${player.profile.level}` : "Player profile", imageUrl: player.profileImage })),
+      tournaments: tournaments.map((tournament) => ({ id: tournament.id, title: tournament.title, detail: tournament.game.name, status: tournament.status, startDate: tournament.startDate })),
+    } };
+  } catch (error) {
+    if (error instanceof Error && ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.message)) return { success: false, error: "You do not have permission to search platform records." };
+    console.error("Admin search failed", error);
+    return { success: false, error: "Search is unavailable right now." };
   }
 }
 

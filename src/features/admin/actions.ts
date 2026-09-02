@@ -184,6 +184,7 @@ export async function getAdminStats() {
       recentRegistrations,
       recentActivity,
       tournamentStatusCounts,
+      liveMatches,
     ] = await Promise.all([
       prisma.user.count({ where: playerAccounts }),
       prisma.user.count({ where: { ...playerAccounts, status: "ACTIVE", lastLogin: { gte: activeSince } } }),
@@ -275,7 +276,35 @@ export async function getAdminStats() {
         by: ["status"],
         _count: { _all: true },
       }),
+      prisma.match.findMany({
+        where: { status: { in: ["LIVE", "AWAITING_RESULT", "UNDER_REVIEW", "DISPUTED"] } },
+        select: {
+          id: true,
+          round: true,
+          status: true,
+          score1: true,
+          score2: true,
+          scheduledTime: true,
+          player1Id: true,
+          player2Id: true,
+          team1Id: true,
+          team2Id: true,
+          tournament: { select: { id: true, title: true, game: { select: { name: true } } } },
+        },
+        orderBy: [{ scheduledTime: "asc" }, { updatedAt: "desc" }],
+        take: 5,
+      }),
     ]);
+
+    const playerIds = [...new Set(liveMatches.flatMap((match) => [match.player1Id, match.player2Id]).filter((id): id is string => Boolean(id)))];
+    const teamIds = [...new Set(liveMatches.flatMap((match) => [match.team1Id, match.team2Id]).filter((id): id is string => Boolean(id)))];
+    const [matchPlayers, matchTeams] = await Promise.all([
+      prisma.user.findMany({ where: { id: { in: playerIds } }, select: { id: true, username: true, firstName: true, profile: { select: { veloxUsername: true } } } }),
+      prisma.team.findMany({ where: { id: { in: teamIds } }, select: { id: true, name: true } }),
+    ]);
+    const playerNames = new Map(matchPlayers.map((player) => [player.id, player.profile?.veloxUsername ?? player.username ?? player.firstName ?? "Player"]));
+    const teamNames = new Map(matchTeams.map((team) => [team.id, team.name]));
+    const participantName = (playerId: string | null, teamId: string | null) => playerId ? playerNames.get(playerId) ?? "Player" : teamId ? teamNames.get(teamId) ?? "Team" : "TBD";
 
     return {
       success: true,
@@ -298,6 +327,19 @@ export async function getAdminStats() {
         recentRegistrations,
         recentActivity,
         tournamentStatusCounts,
+        liveMatches: liveMatches.map((match) => ({
+          id: match.id,
+          tournamentId: match.tournament.id,
+          tournament: match.tournament.title,
+          game: match.tournament.game.name,
+          round: match.round,
+          status: match.status,
+          scheduledTime: match.scheduledTime,
+          score1: match.score1,
+          score2: match.score2,
+          player1: participantName(match.player1Id, match.team1Id),
+          player2: participantName(match.player2Id, match.team2Id),
+        })),
       },
     };
   } catch (error) {

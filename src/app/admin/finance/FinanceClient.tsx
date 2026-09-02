@@ -70,7 +70,7 @@ export function FinanceClient({ initialData }: { initialData: FinanceData }) {
 
       <section className="mt-7">
         <div className="flex items-end justify-between gap-3"><div><p className="velox-eyebrow">Ledger</p><h2 className="mt-1 text-xl font-black text-white">Payment activity</h2></div><p className="text-xs font-bold uppercase tracking-[0.08em] text-[#8e998f]">{payments.length} record{payments.length === 1 ? "" : "s"}</p></div>
-        <div className="mt-3 grid gap-3">
+        <div className="mt-3 grid gap-3 2xl:grid-cols-2">
           {payments.length === 0 ? <div className="velox-card"><Empty /></div> : payments.map((payment) => {
             const player = payment.user.username ?? payment.user.firstName ?? `Telegram ${payment.user.telegramId}`;
             return (

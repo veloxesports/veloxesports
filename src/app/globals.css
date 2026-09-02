@@ -153,4 +153,63 @@
   .velox-muted-button {
     @apply inline-flex items-center justify-center rounded-2xl border border-[#2a352b] bg-[#131b14] px-4 py-3 text-sm font-bold text-[#dce3d6] transition hover:border-[#48613b] hover:bg-[#1a2519];
   }
+
+  .admin-shell { @apply min-h-[100dvh] bg-[#080d09] text-[#f5f8ef]; display: grid; grid-template-columns: 250px minmax(0, 1fr); }
+  .admin-sidebar { @apply sticky top-0 flex h-[100dvh] flex-col border-r border-[#263226] bg-[#0b100c] px-3 py-4; transition: width 180ms ease, transform 180ms ease; }
+  .admin-sidebar__brand { @apply flex min-h-11 items-center justify-between gap-2 px-2; }
+  .admin-sidebar__section { @apply mt-8 px-3 text-[9px] font-black uppercase tracking-[0.2em] text-[#728070]; }
+  .admin-sidebar__nav { @apply mt-3 grid gap-1; }
+  .admin-nav-link { @apply flex h-10 items-center gap-3 rounded-xl px-3 text-xs font-bold text-[#92a08f] transition hover:bg-[#151f16] hover:text-white; }
+  .admin-nav-link--active { @apply bg-[#20331b] text-[#d5ff70] shadow-[inset_3px_0_0_#c5f94d]; }
+  .admin-nav-link__badge { @apply ml-auto grid min-w-5 place-items-center rounded-full bg-[#35251f] px-1.5 py-0.5 text-[9px] font-black text-[#ffb39f]; }
+  .admin-nav-link--active .admin-nav-link__badge { @apply bg-[#c5f94d] text-[#0c110c]; }
+  .admin-nav-link__external { @apply ml-auto text-[#6e7b6e]; }
+  .admin-sidebar__footer { @apply mt-auto grid gap-3 px-1 pt-4; }
+  .admin-player-link { @apply flex items-center gap-2 rounded-xl border border-[#2a3d2a] bg-[#131b14] px-3 py-2.5 text-xs font-black text-[#c5f94d] transition hover:border-[#63884d] hover:bg-[#192419]; }
+  .admin-user-card { @apply flex items-center gap-2 rounded-xl border border-[#222e23] bg-[#0e140f] p-2.5; }
+  .admin-collapse-button { @apply grid h-8 w-8 place-items-center rounded-lg border border-[#263226] text-[#92a08f] transition hover:border-[#5b7650] hover:text-white; }
+  .admin-mobile-close, .admin-mobile-menu { @apply hidden; }
+  .admin-content { @apply min-w-0; }
+  .admin-topbar { @apply sticky top-0 z-30 flex h-[68px] items-center justify-between gap-3 border-b border-[#202b21] bg-[#090e0a]/95 px-5 backdrop-blur-xl lg:px-7; }
+  .admin-search { @apply flex min-w-0 max-w-[560px] flex-1 items-center gap-2 rounded-xl border border-[#29372a] bg-[#101711] px-3 text-[#829080] transition focus-within:border-[#63884d]; }
+  .admin-search input { @apply h-9 min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-[#657265]; }
+  .admin-search kbd { @apply hidden rounded-md border border-[#344235] bg-[#171f18] px-1.5 py-0.5 text-[10px] font-bold text-[#829080] sm:block; }
+  .admin-topbar__actions { @apply flex shrink-0 items-center gap-2; }
+  .admin-create-button { @apply inline-flex h-9 items-center justify-center rounded-lg bg-[#c5f94d] px-3 text-xs font-black text-[#0a0e0a] transition hover:bg-[#d5ff70]; }
+  .admin-icon-button { @apply grid h-9 w-9 place-items-center rounded-lg border border-[#2a352b] bg-[#121912] text-[#aab4a6] transition hover:border-[#62814e] hover:text-[#d5ff70]; }
+  .admin-avatar { @apply grid h-9 w-9 place-items-center rounded-lg bg-[#2b2038] text-xs font-black text-[#d2a6ff] transition hover:bg-[#3b2a4e]; }
+  .admin-search-results { @apply fixed left-[250px] top-[68px] z-40 rounded-br-xl border-b border-r border-[#2a372b] bg-[#101711] px-5 py-2 text-xs text-[#aeb9aa] shadow-xl; }
+  .admin-content__body { @apply px-5 pb-10 pt-5 lg:px-7 lg:pt-6; }
+  .admin-shell .velox-page { @apply m-0 min-h-0 max-w-none px-0 pb-0 pt-0; }
+  .admin-shell .velox-card { @apply rounded-2xl shadow-[0_12px_32px_rgba(0,0,0,0.16)]; }
+  .admin-shell--collapsed { grid-template-columns: 74px minmax(0, 1fr); }
+  .admin-shell--collapsed .admin-sidebar { @apply px-2; }
+  .admin-shell--collapsed .admin-sidebar__wordmark, .admin-shell--collapsed .admin-sidebar__section, .admin-shell--collapsed .admin-nav-link__label, .admin-shell--collapsed .admin-player-link span, .admin-shell--collapsed .admin-sidebar__user, .admin-shell--collapsed .admin-nav-link__external { @apply hidden; }
+  .admin-shell--collapsed .admin-sidebar__brand { @apply justify-center px-0; }
+  .admin-shell--collapsed .admin-sidebar__brand > a { @apply hidden; }
+  .admin-shell--collapsed .admin-nav-link { @apply justify-center px-0; }
+  .admin-shell--collapsed .admin-nav-link__badge { @apply absolute ml-7 -mt-6; }
+  .admin-shell--collapsed .admin-player-link { @apply justify-center px-0; }
+  .admin-shell--collapsed .admin-user-card { @apply justify-center p-1.5; }
+  .admin-shell--collapsed .admin-search-results { left: 74px; }
+
+  @media (max-width: 900px) {
+    .admin-shell { display: block; }
+    .admin-sidebar { @apply fixed left-0 top-0 z-50 w-[260px] -translate-x-full shadow-2xl; }
+    .admin-sidebar--open { @apply translate-x-0; }
+    .admin-drawer-scrim { @apply fixed inset-0 z-40 bg-black/65 backdrop-blur-[2px]; }
+    .admin-mobile-menu { @apply fixed left-4 top-4 z-30 grid h-9 w-9 place-items-center rounded-lg border border-[#2a352b] bg-[#101711] text-[#d5ff70] shadow-lg; }
+    .admin-mobile-close { @apply grid h-8 w-8 place-items-center rounded-lg border border-[#2a352b] text-[#aeb8ad]; }
+    .admin-collapse-button { @apply hidden; }
+    .admin-topbar { @apply pl-16; }
+    .admin-search-results { @apply left-0 top-[68px]; }
+    .admin-shell--collapsed { display: block; }
+    .admin-shell--collapsed .admin-sidebar { @apply px-3; }
+    .admin-shell--collapsed .admin-sidebar__brand > a, .admin-shell--collapsed .admin-sidebar__wordmark, .admin-shell--collapsed .admin-sidebar__section, .admin-shell--collapsed .admin-nav-link__label, .admin-shell--collapsed .admin-player-link span, .admin-shell--collapsed .admin-sidebar__user, .admin-shell--collapsed .admin-nav-link__external { display: initial; }
+    .admin-shell--collapsed .admin-sidebar__brand { @apply justify-between px-2; }
+    .admin-shell--collapsed .admin-nav-link { @apply justify-start px-3; }
+    .admin-shell--collapsed .admin-nav-link__badge { @apply static ml-auto mt-0; }
+    .admin-shell--collapsed .admin-player-link { @apply justify-start px-3; }
+    .admin-shell--collapsed .admin-user-card { @apply justify-start p-2.5; }
+  }
 }

@@ -51,7 +51,7 @@ export function DisputesClient({ disputes }: { disputes: Dispute[] }) {
 
       <section className="mt-7">
         <div><p className="velox-eyebrow">Review queue</p><h2 className="mt-1 text-xl font-black text-white">Open cases</h2></div>
-        <div className="mt-3 grid gap-4">
+        <div className="mt-3 grid gap-4 2xl:grid-cols-2">
           {disputes.length === 0 ? <div className="velox-card"><Empty /></div> : disputes.map((dispute) => {
             const participants = dispute.match.participants;
             return (

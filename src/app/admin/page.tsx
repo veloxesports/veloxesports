@@ -1,4 +1,4 @@
-import { Activity, ArrowUpRight, Calendar, ChevronRight, CreditCard, Gamepad2, LogOut, ShieldAlert, Swords, Trophy, Users } from "lucide-react";
+import { Activity, ArrowUpRight, Calendar, ChevronRight, CreditCard, Gamepad2, ShieldAlert, Swords, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 import { getAdminStats } from "@/features/admin/actions";
 import { getAdminAnalytics } from "@/features/admin/insights";
@@ -22,41 +22,36 @@ export default async function AdminDashboard() {
 
   return (
     <main className="velox-page">
-      <header className="flex items-start justify-between gap-4">
+      <header className="flex items-end justify-between gap-4">
         <div>
           <p className="velox-eyebrow">VELOX / Operations</p>
-          <h1 className="mt-2 text-3xl font-black tracking-[-0.05em] text-white sm:text-4xl">Command Center</h1>
-          <p className="mt-2 max-w-md text-sm leading-relaxed text-[#8e998f]">Monitor the competitive platform and act on the work that needs your team.</p>
+          <h1 className="mt-1 text-2xl font-black tracking-[-0.05em] text-white sm:text-3xl">Command Center</h1>
+          <p className="mt-1 max-w-xl text-sm leading-relaxed text-[#8e998f]">Live platform operations, competition health, finance, and moderation—at a glance.</p>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Link href="/" className="velox-muted-button px-3 py-2.5 text-xs" aria-label="Open the player experience">
-            Player app <ArrowUpRight className="ml-1.5 h-3.5 w-3.5" aria-hidden />
-          </Link>
-          <form action="/api/admin/auth/logout" method="post">
-            <button type="submit" className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#2a352b] bg-[#131b14] text-[#aeb8ad] transition hover:border-[#6c7d5a] hover:text-white" aria-label="Sign out of the Command Center">
-              <LogOut className="h-4 w-4" aria-hidden />
-            </button>
-          </form>
-        </div>
+        <Link href="/" className="hidden shrink-0 items-center text-xs font-black uppercase tracking-[0.1em] text-[#c5f94d] hover:text-[#d5ff70] sm:inline-flex" aria-label="Open the player experience">Player app <ArrowUpRight className="ml-1.5 h-3.5 w-3.5" aria-hidden /></Link>
       </header>
 
-      <section className="relative mt-7 overflow-hidden rounded-[28px] border border-[#415d32] bg-[#182714] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.22)] sm:p-7">
+      <section className="relative mt-5 overflow-hidden rounded-2xl border border-[#415d32] bg-[#182714] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.22)] lg:p-6">
         <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full border-[36px] border-[#355124] opacity-70" aria-hidden />
         <div className="absolute bottom-0 right-10 h-px w-40 bg-[#c5f94d]/45" aria-hidden />
-        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="relative grid gap-5 xl:grid-cols-[minmax(260px,1fr)_minmax(550px,1.25fr)] xl:items-end">
           <div>
             <p className="inline-flex items-center gap-2 rounded-lg bg-[#263b1b] px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-[#c5f94d]"><Activity className="h-3.5 w-3.5" aria-hidden /> Platform pulse</p>
-            <p className="mt-5 text-2xl font-black uppercase tracking-[-0.04em] text-white sm:text-3xl">Ready for match day.</p>
-            <p className="mt-2 max-w-md text-sm leading-relaxed text-[#b6c5ac]">A single view of player growth, active events, financial review, and moderation workload.</p>
+            <p className="mt-4 text-2xl font-black uppercase tracking-[-0.04em] text-white sm:text-3xl">Ready for match day.</p>
+            <p className="mt-2 max-w-md text-sm leading-relaxed text-[#b6c5ac]">Prioritize live competition and clear the work queues before your next event window.</p>
           </div>
-          <div className="grid grid-cols-2 gap-2 sm:min-w-64">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <Pulse value={stats.liveTournaments} label="Live tournaments" />
             <Pulse value={stats.matchesNeedingAttention} label="Match desk" />
+            <Pulse value={stats.activeUsers} label="Active players" />
             <Pulse value={stats.pendingDisputes} label="Open disputes" priority={stats.pendingDisputes > 0} />
+            <Pulse value={stats.pendingPayments + stats.pendingTransactions} label="Finance queue" priority={stats.pendingPayments + stats.pendingTransactions > 0} />
+            <Pulse value={stats.registrations} label="Confirmed entries" />
           </div>
         </div>
       </section>
 
-      <section className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Platform metrics">
+      <section className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4 2xl:grid-cols-8" aria-label="Platform metrics">
         <Kpi href="/admin/insights/players" icon={<Users className="h-5 w-5" aria-hidden />} label="Players" value={stats.totalUsers} detail="Platform accounts" />
         <Kpi href="/admin/insights/active-players" icon={<Activity className="h-5 w-5" aria-hidden />} label="Active players" value={stats.activeUsers} detail="Seen in the last 30 days" />
         <Kpi href="/admin/insights/tournaments" icon={<Trophy className="h-5 w-5" aria-hidden />} label="Tournaments" value={stats.totalTournaments} detail={`${stats.activeTournaments} in the operating queue`} />
@@ -69,7 +64,7 @@ export default async function AdminDashboard() {
 
       {analyticsResult.success ? <AdminAnalytics data={analyticsResult.data} /> : <section className="velox-card mt-7 p-5"><p className="velox-eyebrow">Platform intelligence</p><p className="mt-2 font-black text-white">Analytics temporarily unavailable</p><p className="mt-1 text-sm text-[#8e998f]">{analyticsResult.error}</p></section>}
 
-      <section className="mt-7 grid gap-5 lg:grid-cols-[1.28fr_0.72fr]">
+      <section className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.8fr)]">
         <div className="velox-card overflow-hidden">
           <div className="flex items-center justify-between gap-3 border-b border-[#29342a] px-5 py-4">
             <div>
@@ -105,6 +100,7 @@ export default async function AdminDashboard() {
         </div>
 
         <aside className="grid gap-3">
+          <LiveMatches matches={stats.liveMatches} />
           <PriorityCard
             href="/admin/disputes"
             icon={<ShieldAlert className="h-5 w-5" aria-hidden />}
@@ -125,7 +121,7 @@ export default async function AdminDashboard() {
         </aside>
       </section>
 
-      <section className="mt-7">
+      <section id="activity" className="mt-6">
         <div className="flex items-end justify-between gap-3">
           <div>
             <p className="velox-eyebrow">Latest activity</p>
@@ -160,7 +156,7 @@ export default async function AdminDashboard() {
         </div>
       </section>
 
-      <section className="mt-7 grid gap-5 lg:grid-cols-2">
+      <section className="mt-6 grid gap-4 xl:grid-cols-2">
         <ActivityList
           eyebrow="Player movement"
           title="Recent registrations"
@@ -187,7 +183,7 @@ export default async function AdminDashboard() {
         />
       </section>
 
-      <section className="mt-7 grid gap-3 sm:grid-cols-3" aria-label="Administrative tools">
+      <section className="mt-6 grid gap-3 sm:grid-cols-3" aria-label="Administrative tools">
         <AdminLink href="/admin/tournaments" icon={<Trophy className="h-5 w-5" aria-hidden />} title="Tournaments" description="Games, brackets, events, and safe cancellations." />
         <AdminLink href="/admin/finance" icon={<CreditCard className="h-5 w-5" aria-hidden />} title="Finance" description="Telegram Stars payments, refunds, and reconciliation." />
         <AdminLink href="/admin/disputes" icon={<Swords className="h-5 w-5" aria-hidden />} title="Disputes" description="Evidence-led moderation and outcome resolution." />
@@ -209,6 +205,20 @@ function Kpi({ href, icon, label, value, detail, warning = false, amount = false
 
 function Pulse({ value, label, priority = false }: { value: number; label: string; priority?: boolean }) {
   return <div className={`rounded-2xl border px-3 py-3 ${priority ? "border-[#a4503f]/70 bg-[#32211c]" : "border-[#4a633b] bg-[#172216]/90"}`}><p className={`text-xl font-black ${priority ? "text-[#ffad97]" : "text-[#c5f94d]"}`}>{value.toLocaleString()}</p><p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.09em] text-[#a6b49c]">{label}</p></div>;
+}
+
+function LiveMatches({ matches }: { matches: Array<{ id: string; tournamentId: string; tournament: string; game: string; round: number; status: string; score1: number | null; score2: number | null; player1: string; player2: string }> }) {
+  return (
+    <section id="live-matches" className="velox-card overflow-hidden">
+      <div className="flex items-center justify-between gap-3 border-b border-[#29342a] px-4 py-3.5"><div><p className="velox-eyebrow">Competition now</p><h2 className="mt-1 text-base font-black text-white">Live matches</h2></div><Link href="/admin/matches" className="text-[10px] font-black uppercase tracking-[0.1em] text-[#c5f94d] hover:text-[#d5ff70]">Match desk</Link></div>
+      {matches.length === 0 ? <div className="px-4 py-6 text-center"><Swords className="mx-auto h-6 w-6 text-[#526052]" aria-hidden /><p className="mt-2 text-sm font-bold text-white">No match actions waiting</p><p className="mt-1 text-xs text-[#8e998f]">Live and reported fixtures appear here.</p></div> : <div className="divide-y divide-[#29342a]">{matches.map((match) => <Link key={match.id} href={`/admin/tournaments/${match.tournamentId}`} className="block px-4 py-3 transition hover:bg-[#172117]"><div className="flex items-center justify-between gap-3"><span className="truncate text-[10px] font-black uppercase tracking-[0.09em] text-[#8e998f]">{match.game} · Round {match.round}</span><StatusChip value={match.status} /></div><div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 text-sm font-black text-white"><span className="truncate">{match.player1}</span><span className="text-[#c5f94d]">{match.score1 ?? "–"} : {match.score2 ?? "–"}</span><span className="truncate text-right">{match.player2}</span></div><p className="mt-1 truncate text-[10px] text-[#718071]">{match.tournament}</p></Link>)}</div>}
+    </section>
+  );
+}
+
+function StatusChip({ value }: { value: string }) {
+  const styles: Record<string, string> = { LIVE: "bg-[#20331b] text-[#c5f94d]", AWAITING_RESULT: "bg-[#2a2d21] text-[#f0cf78]", UNDER_REVIEW: "bg-[#1d3033] text-[#8ee7ec]", DISPUTED: "bg-[#3b211e] text-[#ffad9a]" };
+  return <span className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-[0.08em] ${styles[value] ?? "bg-[#242b25] text-[#a4aea3]"}`}>{labelFor(value)}</span>;
 }
 
 function PriorityCard({ href, icon, eyebrow, title, description, critical = false }: { href: string; icon: React.ReactNode; eyebrow: string; title: string; description: string; critical?: boolean }) {
