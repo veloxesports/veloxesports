@@ -103,7 +103,10 @@ export function VeloxGuide() {
   }
 
   return (
-    <div className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-3 z-50 sm:bottom-7 sm:right-6">
+    <div
+      id="velox-guide-container"
+      className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-3 z-50 sm:bottom-7 sm:right-6 transition-all duration-200"
+    >
       {isOpen && (
         <section
           id="velox-guide"

@@ -213,3 +213,10 @@
     .admin-shell--collapsed .admin-user-card { @apply justify-start p-2.5; }
   }
 }
+
+body[data-modal-open="true"] #velox-guide-container {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: scale(0.85);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
