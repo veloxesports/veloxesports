@@ -32,7 +32,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-[#080d09] text-gray-100 antialiased">
         <TelegramInit />
         <Providers>
-          <div className="flex-1 pb-20 has-[.admin-shell]:pb-0">
+          <div className="flex-1 pb-24 sm:pb-28 has-[.admin-shell]:pb-0">
             {children}
           </div>
           <BottomNav />

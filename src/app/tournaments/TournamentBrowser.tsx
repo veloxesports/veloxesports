@@ -1,7 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Calendar, ChevronDown, ChevronRight, Gamepad2, Search, Trophy, Users } from "lucide-react";
+import {
+  Calendar,
+  ChevronDown,
+  ChevronRight,
+  Gamepad2,
+  RotateCcw,
+  Search,
+  Trophy,
+  Users,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 
 type Game = { id: string; name: string };
@@ -24,127 +34,375 @@ type Tournament = {
 };
 
 const categories = [
-  { id: "all", label: "All" },
-  { id: "live", label: "Live" },
+  { id: "all", label: "All Events" },
+  { id: "live", label: "🔴 Live Now" },
   { id: "upcoming", label: "Upcoming" },
-  { id: "free", label: "Free" },
-  { id: "paid", label: "Paid" },
-  { id: "solo", label: "Solo" },
-  { id: "team", label: "Team" },
+  { id: "free", label: "Free Entry" },
+  { id: "paid", label: "High Stakes ⭐" },
+  { id: "solo", label: "Solo (1v1)" },
+  { id: "team", label: "Squads" },
 ] as const;
 
 function formatLabel(value: string) {
   return value.replaceAll("_", " ");
 }
 
-export function TournamentBrowser({ tournaments, games }: { tournaments: Tournament[]; games: Game[] }) {
+export function TournamentBrowser({
+  tournaments,
+  games,
+}: {
+  tournaments: Tournament[];
+  games: Game[];
+}) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<(typeof categories)[number]["id"]>("all");
   const [gameId, setGameId] = useState<string>("all");
   const [format, setFormat] = useState("all");
   const [region, setRegion] = useState("all");
-  const sectionTitle = category === "all" ? "Available tournaments" : category === "live" ? "Live now" : category === "upcoming" ? "Upcoming tournaments" : "Tournaments";
 
-  const formats = useMemo(() => [...new Set(tournaments.map((tournament) => tournament.format))], [tournaments]);
-  const regions = useMemo(() => [...new Set(tournaments.map((tournament) => tournament.region).filter((value): value is string => Boolean(value)))], [tournaments]);
+  const formats = useMemo(
+    () => [...new Set(tournaments.map((tournament) => tournament.format))],
+    [tournaments]
+  );
+  const regions = useMemo(
+    () => [
+      ...new Set(
+        tournaments
+          .map((tournament) => tournament.region)
+          .filter((value): value is string => Boolean(value))
+      ),
+    ],
+    [tournaments]
+  );
+
   const filtered = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
     return tournaments.filter((tournament) => {
-      const matchesCategory = category === "all"
-        || (category === "live" && tournament.status === "LIVE")
-        || (category === "upcoming" && ["REGISTRATION_OPEN", "REGISTRATION_CLOSED", "UPCOMING", "CHECK_IN"].includes(tournament.status))
-        || (category === "free" && !tournament.isPaid)
-        || (category === "paid" && tournament.isPaid)
-        || (category === "solo" && tournament.participantType === "INDIVIDUAL")
-        || (category === "team" && tournament.participantType === "TEAM");
-      return matchesCategory
-        && (gameId === "all" || tournament.game.id === gameId)
-        && (format === "all" || tournament.format === format)
-        && (region === "all" || tournament.region === region)
-        && (!needle || `${tournament.title} ${tournament.game.name} ${tournament.region ?? ""}`.toLocaleLowerCase().includes(needle));
+      const matchesCategory =
+        category === "all" ||
+        (category === "live" && tournament.status === "LIVE") ||
+        (category === "upcoming" &&
+          ["REGISTRATION_OPEN", "REGISTRATION_CLOSED", "UPCOMING", "CHECK_IN"].includes(
+            tournament.status
+          )) ||
+        (category === "free" && !tournament.isPaid) ||
+        (category === "paid" && tournament.isPaid) ||
+        (category === "solo" && tournament.participantType === "INDIVIDUAL") ||
+        (category === "team" && tournament.participantType === "TEAM");
+
+      return (
+        matchesCategory &&
+        (gameId === "all" || tournament.game.id === gameId) &&
+        (format === "all" || tournament.format === format) &&
+        (region === "all" || tournament.region === region) &&
+        (!needle ||
+          `${tournament.title} ${tournament.game.name} ${tournament.region ?? ""}`
+            .toLocaleLowerCase()
+            .includes(needle))
+      );
     });
   }, [category, format, gameId, query, region, tournaments]);
 
+  const resetFilters = () => {
+    setQuery("");
+    setCategory("all");
+    setGameId("all");
+    setFormat("all");
+    setRegion("all");
+  };
+
   return (
     <main className="velox-page">
+      {/* Header */}
       <header>
-        <p className="velox-eyebrow">Compete</p>
-        <h1 className="mt-2 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">Tournaments</h1>
-        <p className="mt-2 text-sm text-[#8e998f]">Find the next lobby, build your run.</p>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#c5f94d]">
+            Battle Arena
+          </span>
+          <span className="text-[10px] text-[#425443]">·</span>
+          <span className="rounded-full bg-[#172318] px-2 py-0.5 text-[10px] font-black uppercase text-[#d4ff76]">
+            {tournaments.length} Active Events
+          </span>
+        </div>
+        <h1 className="mt-1 text-3xl font-black tracking-[-0.04em] text-white sm:text-4xl">
+          Tournaments
+        </h1>
+        <p className="mt-1 text-xs text-[#809081]">
+          Discover daily cups, register solo or with squad, and climb the brackets.
+        </p>
       </header>
 
-      <label className="relative mt-7 block">
-        <span className="sr-only">Search tournaments</span>
-        <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#8e998f]" aria-hidden />
-        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tournaments" className="h-16 w-full rounded-[22px] border border-[#2a352b] bg-[#111811] py-3 pl-12 pr-4 text-base text-white outline-none placeholder:text-[#7f897f] focus:border-[#c5f94d]" />
-      </label>
-
-      <div className="mt-5 flex w-full gap-2 overflow-x-auto pb-2" aria-label="Tournament categories">
-        {categories.map((item) => <button key={item.id} onClick={() => setCategory(item.id)} className={`h-12 shrink-0 rounded-xl px-5 text-sm font-black transition ${category === item.id ? "bg-[#c5f94d] text-[#090d09]" : "border border-[#2a352b] bg-[#111811] text-[#aeb8ad] hover:border-[#51644c] hover:text-white"}`}>{item.label}</button>)}
+      {/* Search Input */}
+      <div className="relative mt-5">
+        <Search
+          className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#768777]"
+          aria-hidden
+        />
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search by game, tournament title, or region…"
+          className="h-13 w-full rounded-2xl border border-[#233124] bg-[#0d140e] py-3 pl-11 pr-10 text-sm text-white outline-none placeholder:text-[#6a7a6b] transition focus:border-[#c5f94d] focus:ring-2 focus:ring-[#c5f94d]/15 shadow-[0_4px_16px_rgba(0,0,0,0.3)]"
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            className="absolute right-3 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full bg-[#1e2a1f] text-[#a9b9a9] hover:text-white"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
 
-      <div className="mt-2 grid grid-cols-3 gap-1.5 sm:gap-2">
-        <FilterSelect ariaLabel="Game" value={gameId} onChange={setGameId} options={[{ value: "all", label: "All games" }, ...games.map((game) => ({ value: game.id, label: game.name }))]} />
-        <FilterSelect ariaLabel="Format" value={format} onChange={setFormat} options={[{ value: "all", label: "All formats" }, ...formats.map((value) => ({ value, label: formatLabel(value) }))]} />
-        <FilterSelect ariaLabel="Region" value={region} onChange={setRegion} options={[{ value: "all", label: "All regions" }, ...regions.map((value) => ({ value, label: value }))]} />
+      {/* Category Pills */}
+      <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide" aria-label="Categories">
+        {categories.map((item) => {
+          const isActive = category === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setCategory(item.id)}
+              className={`h-10 shrink-0 rounded-xl px-3.5 text-xs font-black transition ${
+                isActive
+                  ? "bg-[#c5f94d] text-[#090d09] shadow-[0_0_12px_rgba(197,249,77,0.35)]"
+                  : "border border-[#223023] bg-[#0e1610] text-[#869687] hover:border-[#384c39] hover:text-white"
+              }`}
+            >
+              {item.label}
+            </button>
+          );
+        })}
       </div>
 
-      <div className="mt-8 flex items-baseline justify-between gap-3">
-        <h2 className="text-lg font-black uppercase tracking-[0.07em] text-white">{sectionTitle}</h2>
-        <p className="text-xs font-black uppercase tracking-[0.1em] text-[#8e998f]">{filtered.length} {filtered.length === 1 ? "event" : "events"}</p>
+      {/* Select Filter Dropdowns */}
+      <div className="mt-2.5 grid grid-cols-3 gap-2">
+        <FilterSelect
+          ariaLabel="Game"
+          value={gameId}
+          onChange={setGameId}
+          options={[
+            { value: "all", label: "All Games" },
+            ...games.map((game) => ({ value: game.id, label: game.name })),
+          ]}
+        />
+        <FilterSelect
+          ariaLabel="Format"
+          value={format}
+          onChange={setFormat}
+          options={[
+            { value: "all", label: "All Formats" },
+            ...formats.map((value) => ({ value, label: formatLabel(value) })),
+          ]}
+        />
+        <FilterSelect
+          ariaLabel="Region"
+          value={region}
+          onChange={setRegion}
+          options={[
+            { value: "all", label: "All Regions" },
+            ...regions.map((value) => ({ value, label: value })),
+          ]}
+        />
       </div>
-      <section className="mt-4 grid gap-4 sm:grid-cols-2">
-        {filtered.length === 0 ? <EmptyState /> : filtered.map((tournament) => <TournamentCard key={tournament.id} tournament={tournament} />)}
+
+      {/* Section Counter & Results */}
+      <div className="mt-6 flex items-baseline justify-between gap-3">
+        <h2 className="text-xs font-black uppercase tracking-[0.14em] text-[#8e9f8f]">
+          {filtered.length} {filtered.length === 1 ? "Tournament" : "Tournaments"} Available
+        </h2>
+        {(category !== "all" || gameId !== "all" || format !== "all" || region !== "all" || query) && (
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="inline-flex items-center gap-1 text-[11px] font-bold text-[#c5f94d] hover:text-[#d5ff70]"
+          >
+            <RotateCcw className="h-3 w-3" /> Reset
+          </button>
+        )}
+      </div>
+
+      {/* Grid of Cards */}
+      <section className="mt-3 grid gap-3 sm:grid-cols-2">
+        {filtered.length === 0 ? (
+          <EmptyState onReset={resetFilters} />
+        ) : (
+          filtered.map((tournament) => (
+            <TournamentCard key={tournament.id} tournament={tournament} />
+          ))
+        )}
       </section>
     </main>
   );
 }
 
 function TournamentCard({ tournament }: { tournament: Tournament }) {
-  const date = new Date(tournament.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const date = new Date(tournament.startDate).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
   const isOpen = tournament.status === "REGISTRATION_OPEN";
+  const isLive = tournament.status === "LIVE";
+  const isCheckIn = tournament.status === "CHECK_IN";
+
+  // Participant progress
+  const participantPercent = Math.min(
+    100,
+    Math.round((tournament.currentParticipants / tournament.maxParticipants) * 100)
+  );
+
+  const badgeStyles = isLive
+    ? "bg-red-500/15 text-red-300 border-red-500/25"
+    : isCheckIn
+    ? "bg-amber-400/15 text-amber-300 border-amber-400/25"
+    : isOpen
+    ? "bg-[#253d1d] text-[#c5f94d] border-[#38592c]"
+    : "bg-[#182219] text-[#7d8d7e] border-[#253326]";
+
+  const dotStyles = isLive
+    ? "bg-red-400 animate-pulse"
+    : isCheckIn
+    ? "bg-amber-400"
+    : isOpen
+    ? "bg-[#c5f94d]"
+    : "bg-[#7d8d7e]";
 
   return (
-    <Link href={`/tournaments/${tournament.slug}`} className="group block min-w-0 rounded-[24px] border border-[#2a352b] bg-[#111811] p-4 transition hover:-translate-y-0.5 hover:border-[#577246] hover:bg-[#151e15] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c5f94d]">
-      <article className="flex h-full min-w-0 gap-4">
-        <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl border border-[#3b5035] bg-[#1c3216] text-[#c5f94d]">
-          <Gamepad2 className="h-7 w-7" aria-hidden />
+    <Link
+      href={`/tournaments/${tournament.slug}`}
+      className="group flex flex-col justify-between rounded-2xl border border-[#233124] bg-[#0e1610] p-4 transition duration-150 hover:-translate-y-0.5 hover:border-[#3e5934] hover:bg-[#121c13] shadow-[0_6px_24px_rgba(0,0,0,0.35)] focus-visible:outline-2 focus-visible:outline-[#c5f94d]"
+    >
+      <div>
+        {/* Top Badges */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex items-center gap-1 rounded-lg bg-[#18251a] px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#d4ff76]">
+              <Gamepad2 className="h-3 w-3" aria-hidden />
+              {tournament.game.name}
+            </span>
+            <span className="rounded-lg bg-[#141d15] px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-[#829283]">
+              {tournament.participantType === "INDIVIDUAL" ? "1v1" : "Squad"}
+            </span>
+          </div>
+
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${badgeStyles}`}
+          >
+            <span className={`h-1.5 w-1.5 rounded-full ${dotStyles}`} />
+            {isLive
+              ? "Live"
+              : isCheckIn
+              ? "Check-In"
+              : isOpen
+              ? "Open"
+              : formatLabel(tournament.status)}
+          </span>
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.13em] text-[#aeb8ad]">{tournament.game.name}</span>
-              <span className={`rounded-md px-2 py-1 text-[9px] font-black uppercase tracking-wide ${isOpen ? "bg-[#263c1c] text-[#d4ff76]" : "bg-[#202820] text-[#b7c0b5]"}`}>{isOpen ? "Registration open" : formatLabel(tournament.status)}</span>
-            </div>
-            <ChevronRight className="h-5 w-5 shrink-0 text-[#8e998f] transition group-hover:text-[#c5f94d]" aria-hidden />
+
+        {/* Title */}
+        <h3 className="mt-3 truncate text-base font-black tracking-tight text-white group-hover:text-[#c5f94d] transition-colors">
+          {tournament.title}
+        </h3>
+
+        {/* Prize Pool Spotlight */}
+        <div className="mt-2.5 flex items-baseline justify-between">
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-wider text-[#798a7a]">Prize Pool</p>
+            <p className="text-xl font-black text-[#c5f94d]">
+              ⭐ {tournament.prizePool.toLocaleString()}
+            </p>
           </div>
-          <h3 className="mt-2 truncate text-xl font-black tracking-[-0.03em] text-white">{tournament.title}</h3>
-          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-bold text-[#aeb8ad]">
-            <span className="text-[#c5f94d]">⭐ {tournament.prizePool} pool</span>
-            <span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" aria-hidden /> {tournament.currentParticipants} / {tournament.maxParticipants}</span>
-            <span className="inline-flex items-center gap-1"><Calendar className="h-3.5 w-3.5" aria-hidden /> {date}</span>
-          </div>
-          <div className="mt-4 flex min-w-0 items-center justify-between gap-3 border-t border-[#29342a] pt-3 text-[10px] font-black uppercase tracking-[0.1em] text-[#7f897f]">
-            <span className="min-w-0 truncate">{formatLabel(tournament.format)} · {tournament.region ?? "Global"}</span>
-            <span className="text-[#dce3d6]">{tournament.isPaid ? `⭐ ${tournament.entryFee}` : "Free"}</span>
+          <div className="text-right">
+            <p className="text-[9px] font-black uppercase tracking-wider text-[#798a7a]">Entry Fee</p>
+            <p className="text-xs font-black text-white">
+              {tournament.isPaid ? `⭐ ${tournament.entryFee.toLocaleString()}` : "Free"}
+            </p>
           </div>
         </div>
-      </article>
+
+        {/* Participant Progress Bar */}
+        <div className="mt-3">
+          <div className="flex items-center justify-between text-[10px] font-bold text-[#809081]">
+            <span className="flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              {tournament.currentParticipants} / {tournament.maxParticipants} registered
+            </span>
+            <span>{participantPercent}% full</span>
+          </div>
+          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[#182319]">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-[#7bb92a] to-[#c5f94d]"
+              style={{ width: `${participantPercent}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Footer Info */}
+      <div className="mt-4 flex items-center justify-between border-t border-[#1e2a20] pt-2.5 text-[10px] font-bold text-[#7d8d7e]">
+        <span className="flex items-center gap-1 truncate">
+          <Calendar className="h-3 w-3" />
+          {date}
+        </span>
+        <span className="inline-flex items-center gap-1 text-[11px] font-black text-[#c5f94d] group-hover:translate-x-0.5 transition-transform">
+          View <ChevronRight className="h-3.5 w-3.5" />
+        </span>
+      </div>
     </Link>
   );
 }
 
-function EmptyState() {
-  return <div className="velox-card col-span-full p-9 text-center"><Trophy className="mx-auto h-11 w-11 text-[#536053]" aria-hidden /><h2 className="mt-3 text-lg font-black text-white">No tournaments found</h2><p className="mx-auto mt-1 max-w-sm text-sm leading-relaxed text-[#8e998f]">Try a different search or filter. New competitions are added regularly.</p></div>;
-}
-
-function FilterSelect({ ariaLabel, value, onChange, options }: { ariaLabel: string; value: string; onChange: (value: string) => void; options: Array<{ value: string; label: string }> }) {
+function EmptyState({ onReset }: { onReset: () => void }) {
   return (
-    <div className="relative min-w-0">
-      <select aria-label={ariaLabel} value={value} onChange={(event) => onChange(event.target.value)} className="h-11 w-full min-w-0 appearance-none truncate rounded-xl border border-[#2a352b] bg-[#111811] px-2 pr-7 text-[10px] font-bold tracking-[-0.02em] text-[#c8d0c5] outline-none transition focus:border-[#c5f94d] focus:ring-2 focus:ring-[#c5f94d]/15 min-[360px]:px-2.5 min-[360px]:pr-8 min-[360px]:text-xs sm:px-3 sm:pr-9 sm:text-sm">
-        {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-      </select>
-      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#aeb8ad] sm:right-3 sm:h-4 sm:w-4" aria-hidden />
+    <div className="velox-card col-span-full p-8 text-center">
+      <Trophy className="mx-auto h-10 w-10 text-[#4c5c4d]" aria-hidden />
+      <h2 className="mt-3 text-base font-black text-white">No tournaments found</h2>
+      <p className="mx-auto mt-1 max-w-xs text-xs text-[#7e8e7f]">
+        No events match your current search or filter criteria.
+      </p>
+      <button
+        type="button"
+        onClick={onReset}
+        className="velox-action mt-4 text-xs font-black"
+      >
+        Reset all filters
+      </button>
     </div>
   );
 }
+
+function FilterSelect({
+  ariaLabel,
+  value,
+  onChange,
+  options,
+}: {
+  ariaLabel: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ value: string; label: string }>;
+}) {
+  return (
+    <div className="relative min-w-0">
+      <select
+        aria-label={ariaLabel}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-10 w-full min-w-0 appearance-none truncate rounded-xl border border-[#233124] bg-[#0d140e] px-2.5 pr-7 text-[11px] font-bold text-[#c8d4c6] outline-none transition focus:border-[#c5f94d] focus:ring-1 focus:ring-[#c5f94d]/20"
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value} className="bg-[#0e1610] text-white">
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown
+        className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#798a7a]"
+        aria-hidden
+      />
+    </div>
+  );
+}
+

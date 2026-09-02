@@ -18,24 +18,80 @@ export function BottomNav() {
   const pathname = usePathname();
   if (pathname.startsWith("/admin") || pathname === "/admin-login") return null;
 
+  const triggerHaptic = () => {
+    try {
+      if (typeof window !== "undefined" && window.Telegram?.WebApp?.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.selectionChanged();
+      }
+    } catch {
+      // Haptics not supported in browser desktop view
+    }
+  };
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#253026] bg-[#090d09]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
-      <div className="mx-auto flex h-[76px] max-w-3xl items-center justify-around px-2">
+    <nav
+      aria-label="Main navigation"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#1f2c20]/90 bg-[#090e0a]/92 pb-[max(10px,env(safe-area-inset-bottom))] pt-1 backdrop-blur-2xl shadow-[0_-12px_36px_rgba(0,0,0,0.7)]"
+    >
+      {/* Subtle top ambient glow */}
+      <div
+        className="pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-[#c5f94d]/25 to-transparent"
+        aria-hidden
+      />
+
+      <div className="mx-auto flex h-[66px] max-w-lg items-center justify-around px-1.5">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`) && item.href !== "/";
-          
+          const isActive =
+            pathname === item.href ||
+            (item.href !== "/" && pathname.startsWith(`${item.href}/`));
+
           return (
             <Link
               key={item.name}
               href={item.href}
+              onClick={triggerHaptic}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
-                "flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-1.5 whitespace-nowrap text-[9px] font-bold transition-colors sm:text-[10px]",
-                isActive ? "text-[#c5f94d]" : "text-[#8e998f] hover:text-[#dce3d6]"
+                "group relative flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-1.5 transition-all duration-150 active:scale-95 focus-visible:outline-2 focus-visible:outline-[#c5f94d]",
+                isActive
+                  ? "text-[#c5f94d]"
+                  : "text-[#738273] hover:text-[#c4d2c2]"
               )}
             >
-              <Icon className="h-6 w-6" strokeWidth={isActive ? 2.5 : 2} />
-              <span>{item.name}</span>
+              {/* Active top neon indicator pill */}
+              {isActive && (
+                <span
+                  className="absolute top-0.5 h-1 w-6 rounded-full bg-[#c5f94d] shadow-[0_0_12px_rgba(197,249,77,0.85)] animate-in fade-in zoom-in duration-200"
+                  aria-hidden
+                />
+              )}
+
+              <div
+                className={cn(
+                  "grid h-7 w-7 place-items-center rounded-xl transition-transform duration-200",
+                  isActive
+                    ? "scale-105 drop-shadow-[0_0_8px_rgba(197,249,77,0.35)]"
+                    : "group-hover:scale-105"
+                )}
+              >
+                <Icon
+                  className="h-5 w-5 transition-colors"
+                  strokeWidth={isActive ? 2.5 : 2}
+                  aria-hidden
+                />
+              </div>
+
+              <span
+                className={cn(
+                  "truncate text-[10px] tracking-tight transition-colors",
+                  isActive
+                    ? "font-black text-[#c5f94d]"
+                    : "font-semibold text-[#808f81] group-hover:text-[#c4d2c2]"
+                )}
+              >
+                {item.name}
+              </span>
             </Link>
           );
         })}
