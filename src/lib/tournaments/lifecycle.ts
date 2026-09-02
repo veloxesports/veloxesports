@@ -295,6 +295,17 @@ export async function runTournamentLifecycle(now = new Date()): Promise<Lifecycl
     const started = await prisma.$transaction(async (tx) => {
       const updated = await tx.tournament.updateMany({ where: { id: candidate.id, status: "UPCOMING" }, data: { status: "LIVE" } });
       if (updated.count !== 1) return 0;
+      await tx.match.updateMany({
+        where: {
+          tournamentId: candidate.id,
+          status: "SCHEDULED",
+          OR: [
+            { player1Id: { not: null }, player2Id: { not: null } },
+            { team1Id: { not: null }, team2Id: { not: null } },
+          ],
+        },
+        data: { status: "LIVE" },
+      });
       const entries = await tx.tournamentRegistration.findMany({ where: { tournamentId: candidate.id, status: "CONFIRMED", checkedIn: true }, select: { userId: true, teamId: true } });
       const recipients = await recipientIdsForEntries(tx, entries);
       if (recipients.length) {

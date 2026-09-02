@@ -1,6 +1,6 @@
 import type { Prisma } from "@/lib/generated/prisma/client";
 import { TournamentParticipantType } from "@/lib/generated/prisma/client";
-import { nextBracketSlotForWinner } from "@/lib/matches/flow";
+import { hasBothMatchParticipants, nextBracketSlotForWinner } from "@/lib/matches/flow";
 
 type MatchForAdvancement = {
   id: string;
@@ -31,9 +31,18 @@ async function advanceSingleEliminationWinner(tx: Prisma.TransactionClient, matc
   if (existingParticipant && existingParticipant !== winnerId) throw new Error("BRACKET_CONFLICT");
   if (existingParticipant === winnerId) return;
 
+  const tournament = await tx.tournament.findUnique({ where: { id: match.tournamentId }, select: { status: true } });
+  const nextParticipants = { ...nextMatch, [slot]: winnerId };
   await tx.match.update({
     where: { id: nextMatch.id },
-    data: { [slot]: winnerId, status: nextMatch.status === "CANCELLED" ? "CANCELLED" : "SCHEDULED" },
+    data: {
+      [slot]: winnerId,
+      status: nextMatch.status === "CANCELLED"
+        ? "CANCELLED"
+        : tournament?.status === "LIVE" && hasBothMatchParticipants(nextParticipants)
+          ? "LIVE"
+          : "SCHEDULED",
+    },
   });
 }
 

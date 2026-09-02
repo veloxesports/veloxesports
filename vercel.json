@@ -1,10 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "sh scripts/vercel-build.sh",
-  "crons": [
-    {
-      "path": "/api/cron/tournament-lifecycle",
-      "schedule": "*/5 * * * *"
-    }
-  ]
+  "buildCommand": "sh scripts/vercel-build.sh"
 }

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { ChevronRight, MapPin, Swords } from "lucide-react";
 import Link from "next/link";
-import { matchCenterScoreLabel } from "@/lib/matches/flow";
+import { isMatchInCenterTab, matchCenterScoreLabel, type MatchCenterTab } from "@/lib/matches/flow";
 
 type Match = {
   id: string;
@@ -19,11 +19,11 @@ type Match = {
 };
 
 const tabs = ["Upcoming", "Live", "Completed"] as const;
-type Tab = (typeof tabs)[number];
+type Tab = MatchCenterTab;
 
 export function MatchCenter({ matches }: { matches: Match[] }) {
   const [tab, setTab] = useState<Tab>("Upcoming");
-  const filtered = useMemo(() => matches.filter((match) => tab === "Upcoming" ? !["LIVE", "COMPLETED"].includes(match.status) : tab === "Live" ? match.status === "LIVE" : match.status === "COMPLETED"), [matches, tab]);
+  const filtered = useMemo(() => matches.filter((match) => isMatchInCenterTab(match.status, tab)), [matches, tab]);
 
   return (
     <main className="velox-page">
@@ -42,10 +42,11 @@ function MatchCard({ match }: { match: Match }) {
   const isLive = match.status === "LIVE";
   const isCompleted = match.status === "COMPLETED";
   const date = match.scheduledTime ? new Date(match.scheduledTime).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "Schedule pending";
-  const statusLabel = isLive ? "Live now" : isCompleted ? "Final" : match.status.replaceAll("_", " ");
+  const statusLabel = isLive ? "Live now" : isCompleted ? "Final" : match.status === "AWAITING_RESULT" ? "Result pending" : match.status === "UNDER_REVIEW" ? "Under review" : match.status === "DISPUTED" ? "Disputed" : match.status.replaceAll("_", " ");
 
-  const badgeClass = isLive ? "bg-red-500/15 text-red-300" : isCompleted ? "bg-[#202920] text-[#b5c0b3]" : "bg-[#263c1c] text-[#d4ff76]";
-  const dotClass = isLive ? "animate-pulse bg-red-400" : isCompleted ? "bg-[#7f897f]" : "bg-[#c5f94d]";
+  const needsReview = ["AWAITING_RESULT", "UNDER_REVIEW", "DISPUTED"].includes(match.status);
+  const badgeClass = isLive ? "bg-red-500/15 text-red-300" : needsReview ? "bg-amber-400/15 text-amber-200" : isCompleted ? "bg-[#202920] text-[#b5c0b3]" : "bg-[#263c1c] text-[#d4ff76]";
+  const dotClass = isLive ? "animate-pulse bg-red-400" : needsReview ? "bg-amber-300" : isCompleted ? "bg-[#7f897f]" : "bg-[#c5f94d]";
 
   return (
     <Link href={`/matches/${match.id}`} className="group block rounded-[26px] border border-[#2a352b] bg-[#111811] p-5 transition hover:-translate-y-0.5 hover:border-[#577246] hover:bg-[#151e15] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c5f94d]">
@@ -68,6 +69,6 @@ function Participant({ participant, score, align }: { participant: Match["player
 }
 
 function EmptyMatches({ tab }: { tab: Tab }) {
-  const copy = tab === "Upcoming" ? "Join a tournament to unlock your next match." : tab === "Live" ? "No live matches are assigned to you right now." : "Completed matches will appear here after your results are confirmed.";
+  const copy = tab === "Upcoming" ? "Join a tournament to unlock your next match." : tab === "Live" ? "No live or result-review matches are assigned to you right now." : "Completed matches will appear here after your results are confirmed.";
   return <div className="velox-card p-9 text-center"><Swords className="mx-auto h-11 w-11 text-[#536053]" aria-hidden /><h2 className="mt-4 text-lg font-black text-white">No {tab.toLowerCase()} matches</h2><p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-[#8e998f]">{copy}</p>{tab === "Upcoming" && <Link href="/tournaments" className="velox-action mt-5">Explore tournaments</Link>}</div>;
 }

@@ -5,9 +5,10 @@ import { z } from "zod";
 import { prisma } from "@/lib/database/prisma";
 import { Prisma, Role } from "@/lib/generated/prisma/client";
 import { requireCurrentUser, requireRole } from "@/lib/auth/current-user";
+import { getCurrentWebAdmin, type WebAdminRole } from "@/lib/auth/web-admin";
 import { createEvidenceSignedUrl, uploadMatchEvidence, validateEvidenceFile } from "@/lib/database/supabase";
 import { addXpToUser, checkAndAwardAchievements } from "@/features/profile/xp";
-import { canConfirmPendingMatchResult, canSubmitMatchResult, isAwaitingOpponentConfirmation, nextBracketSlotForWinner } from "@/lib/matches/flow";
+import { areMatchSidesOpposing, canSubmitMatchResult, hasBothMatchParticipants, isAwaitingOpponentConfirmation, nextBracketSlotForWinner } from "@/lib/matches/flow";
 import { generateSingleEliminationBracketInTransaction } from "@/lib/tournaments/bracket";
 import { completeTournamentIfReady } from "@/lib/tournaments/lifecycle";
 
@@ -60,6 +61,47 @@ async function userCanActInMatch(
   }));
 }
 
+type MatchSide = 1 | 2;
+
+async function matchSidesForUser(
+  tx: Pick<Prisma.TransactionClient, "teamMember">,
+  userId: string,
+  match: MatchParticipants,
+): Promise<MatchSide[]> {
+  const sides = new Set<MatchSide>();
+  if (match.player1Id === userId) sides.add(1);
+  if (match.player2Id === userId) sides.add(2);
+
+  const teamIds = [match.team1Id, match.team2Id].filter((id): id is string => Boolean(id));
+  if (teamIds.length) {
+    const memberships = await tx.teamMember.findMany({
+      where: { userId, teamId: { in: teamIds } },
+      select: { teamId: true },
+    });
+    for (const membership of memberships) {
+      if (membership.teamId === match.team1Id) sides.add(1);
+      if (membership.teamId === match.team2Id) sides.add(2);
+    }
+  }
+
+  return [...sides];
+}
+
+/** A result must be verified by an opposing side, not a teammate of its submitter. */
+async function canRespondToOpponentResult(
+  tx: Pick<Prisma.TransactionClient, "teamMember">,
+  actorId: string,
+  submitterId: string,
+  match: MatchParticipants,
+) {
+  if (actorId === submitterId) return false;
+  const [actorSides, submitterSides] = await Promise.all([
+    matchSidesForUser(tx, actorId, match),
+    matchSidesForUser(tx, submitterId, match),
+  ]);
+  return areMatchSidesOpposing(actorSides, submitterSides);
+}
+
 async function participantUserIds(tx: Prisma.TransactionClient, match: MatchParticipants, side: 1 | 2) {
   const directPlayerId = side === 1 ? match.player1Id : match.player2Id;
   if (directPlayerId) return [directPlayerId];
@@ -84,7 +126,7 @@ async function advanceSingleEliminationWinner(
 
   const tournament = await tx.tournament.findUnique({
     where: { id: match.tournamentId },
-    select: { format: true },
+    select: { format: true, status: true },
   });
   if (tournament?.format !== "SINGLE_ELIMINATION") return;
 
@@ -103,11 +145,16 @@ async function advanceSingleEliminationWinner(
   }
   if (existingParticipant === winnerId) return;
 
+  const nextParticipants = { ...nextMatch, [slot]: winnerId };
   await tx.match.update({
     where: { id: nextMatch.id },
     data: {
       [slot]: winnerId,
-      status: nextMatch.status === "CANCELLED" ? "CANCELLED" : "SCHEDULED",
+      status: nextMatch.status === "CANCELLED"
+        ? "CANCELLED"
+        : tournament.status === "LIVE" && hasBothMatchParticipants(nextParticipants)
+          ? "LIVE"
+          : "SCHEDULED",
     },
   });
 }
@@ -124,10 +171,11 @@ async function createPendingResult(
   evidence?: { storagePath: string; fileType: string; fileSize: number },
 ) {
   return prisma.$transaction(async (tx) => {
-    const match = await tx.match.findUnique({ where: { id: input.matchId } });
+    const match = await tx.match.findUnique({ where: { id: input.matchId }, include: { tournament: { select: { status: true } } } });
     if (!match) throw new Error("MATCH_NOT_FOUND");
     if (!await userCanActInMatch(tx, userId, match)) throw new Error("NOT_PARTICIPANT");
     if (!canSubmitMatchResult(match.status)) throw new Error("MATCH_NOT_ACTIVE");
+    if (match.tournament.status !== "LIVE") throw new Error("MATCH_NOT_LIVE");
 
     const participants = [match.player1Id, match.player2Id, match.team1Id, match.team2Id];
     if (!participants.includes(input.winnerId)) throw new Error("INVALID_WINNER");
@@ -188,12 +236,13 @@ function knownMatchError(error: unknown) {
     MATCH_NOT_FOUND: "Match not found.",
     NOT_PARTICIPANT: "Only match participants may perform this action.",
     MATCH_NOT_ACTIVE: "This match is not accepting results.",
+    MATCH_NOT_LIVE: "This fixture is not live yet. Wait for the tournament to start before submitting a result.",
     INVALID_WINNER: "The selected winner is not a participant in this match.",
     TIED_RESULT: "A match result must have a winner.",
     SCORE_WINNER_MISMATCH: "The selected winner must match the submitted score.",
     RESULT_PENDING: "A result is already awaiting opponent confirmation.",
     RESULT_NOT_FOUND: "The pending result no longer exists.",
-    RESULT_SUBMITTER: "The submitting player cannot confirm their own result.",
+    RESULT_SAME_SIDE: "Only an opposing player or team member can confirm or reject this result.",
     DISPUTE_NOT_AVAILABLE: "This match is not currently eligible for a dispute.",
     DISPUTE_EXISTS: "There is already an open dispute for this match.",
     DISPUTE_NOT_FOUND: "Dispute not found.",
@@ -301,7 +350,7 @@ export async function confirmMatchResult(matchId: unknown) {
         orderBy: { createdAt: "desc" },
       });
       if (!result) throw new Error("RESULT_NOT_FOUND");
-      if (result.submitterId === user.id) throw new Error("RESULT_SUBMITTER");
+      if (!await canRespondToOpponentResult(tx, user.id, result.submitterId, match)) throw new Error("RESULT_SAME_SIDE");
 
       await tx.matchResult.update({ where: { id: result.id }, data: { status: "CONFIRMED" } });
       await tx.match.update({
@@ -364,7 +413,7 @@ export async function rejectMatchResult(matchId: unknown) {
       if (!isAwaitingOpponentConfirmation(match.status)) throw new Error("MATCH_NOT_ACTIVE");
       const result = await tx.matchResult.findFirst({ where: { matchId: match.id, status: "PENDING_CONFIRMATION" } });
       if (!result) throw new Error("RESULT_NOT_FOUND");
-      if (result.submitterId === user.id) throw new Error("RESULT_SUBMITTER");
+      if (!await canRespondToOpponentResult(tx, user.id, result.submitterId, match)) throw new Error("RESULT_SAME_SIDE");
 
       await tx.matchResult.update({ where: { id: result.id }, data: { status: "REJECTED" } });
       await tx.match.update({ where: { id: match.id }, data: { status: "UNDER_REVIEW" } });
@@ -515,11 +564,12 @@ export async function getMatchDetails(matchId: unknown) {
   if (!parsedMatchId.success) return { success: false, error: "Invalid match." };
 
   try {
-    const user = await requireCurrentUser();
+    const webAdmin = await getCurrentWebAdmin();
+    const user = webAdmin ?? await requireCurrentUser();
     const match = await prisma.match.findUnique({
       where: { id: parsedMatchId.data },
       include: {
-        tournament: { select: { title: true, format: true } },
+        tournament: { select: { title: true, format: true, status: true } },
         results: { orderBy: { createdAt: "desc" }, take: 1 },
         evidence: { orderBy: { createdAt: "desc" } },
         disputes: { where: { status: "OPEN" }, select: { id: true, status: true } },
@@ -528,7 +578,7 @@ export async function getMatchDetails(matchId: unknown) {
     if (!match) return { success: false, error: "Match not found." };
 
     const canAct = await userCanActInMatch(prisma, user.id, match);
-    const moderatorRoles: Role[] = [Role.SUPER_ADMIN, Role.ADMIN, Role.TOURNAMENT_MANAGER, Role.MODERATOR];
+    const moderatorRoles: Array<Role | WebAdminRole> = [Role.SUPER_ADMIN, Role.ADMIN, Role.TOURNAMENT_MANAGER, Role.MODERATOR];
     const isModerator = moderatorRoles.includes(user.role);
     const participantIds = [match.player1Id, match.player2Id].filter((id): id is string => Boolean(id));
     const teamIds = [match.team1Id, match.team2Id].filter((id): id is string => Boolean(id));
@@ -551,6 +601,13 @@ export async function getMatchDetails(matchId: unknown) {
       : [];
 
     const pendingResult = match.results[0]?.status === "PENDING_CONFIRMATION" ? match.results[0] : null;
+    const canConfirm = Boolean(
+      pendingResult
+      && canAct
+      && !webAdmin
+      && isAwaitingOpponentConfirmation(match.status)
+      && await canRespondToOpponentResult(prisma, user.id, pendingResult.submitterId, match),
+    );
     return {
       success: true,
       data: {
@@ -571,9 +628,9 @@ export async function getMatchDetails(matchId: unknown) {
           winnerId: pendingResult.winnerId,
           comment: pendingResult.comment,
         },
-        canSubmit: canAct && canSubmitMatchResult(match.status),
-        canConfirm: canAct && canConfirmPendingMatchResult(match.status, pendingResult?.submitterId, user.id),
-        canDispute: canAct && ["AWAITING_RESULT", "UNDER_REVIEW", "DISPUTED"].includes(match.status),
+        canSubmit: !webAdmin && canAct && match.tournament.status === "LIVE" && canSubmitMatchResult(match.status),
+        canConfirm,
+        canDispute: !webAdmin && canAct && ["AWAITING_RESULT", "UNDER_REVIEW", "DISPUTED"].includes(match.status),
         hasOpenDispute: match.disputes.length > 0,
         evidence,
       },

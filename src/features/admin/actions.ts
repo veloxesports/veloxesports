@@ -8,6 +8,7 @@ import { Prisma, TournamentFormat, TournamentParticipantType, TournamentStatus }
 import { getTournamentRulesTemplate } from "@/lib/tournaments/rule-templates";
 import { getCheckInWindow } from "@/lib/tournaments/check-in";
 import { generateSingleEliminationBracketInTransaction } from "@/lib/tournaments/bracket";
+import { runTournamentLifecycle } from "@/lib/tournaments/lifecycle";
 import { refundStarsPayment } from "@/features/payments/actions";
 
 const administratorRoles = ["SUPER_ADMIN", "ADMIN"] as const;
@@ -757,6 +758,41 @@ export async function finalizeTournamentCheckIn(tournamentId: unknown) {
   }
 }
 
+export async function runTournamentLifecycleManually() {
+  try {
+    const admin = await requireRole([...tournamentManagerRoles]);
+    const summary = await runTournamentLifecycle();
+    const processed = summary.registrationsClosed + summary.checkInOpened + summary.noShowsLocked + summary.bracketsGenerated + summary.tournamentsStarted + summary.tournamentsCompleted + summary.prizeRewards;
+    const description = processed
+      ? `Closed ${summary.registrationsClosed} registration(s), opened ${summary.checkInOpened} check-in window(s), locked ${summary.noShowsLocked} no-show entry(ies), generated ${summary.bracketsGenerated} bracket(s), started ${summary.tournamentsStarted} event(s), completed ${summary.tournamentsCompleted} event(s), and issued ${summary.prizeRewards} prize reward(s).`
+      : "No tournaments are due for a lifecycle step right now.";
+
+    await prisma.auditLog.create({
+      data: {
+        adminId: admin.id,
+        action: "TOURNAMENT_LIFECYCLE_RUN_MANUALLY",
+        entity: "System",
+        entityId: "tournament-lifecycle",
+        newValue: toAuditJson(summary),
+      },
+    });
+
+    revalidatePath("/", "layout");
+    revalidatePath("/admin", "layout");
+    return {
+      success: true,
+      data: summary,
+      warning: summary.warnings.length ? `${description} ${summary.warnings.join(" ")}` : description,
+    };
+  } catch (error) {
+    if (error instanceof Error && ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.message)) {
+      return { success: false, error: "Only tournament managers can run the lifecycle manually." };
+    }
+    console.error("Manual tournament lifecycle run failed", error);
+    return { success: false, error: "The lifecycle run did not finish. Review the tournament queue before trying again." };
+  }
+}
+
 function revalidateTournamentCheckIn(tournament: { id: string; slug: string }) {
   revalidatePath("/tournaments");
   revalidatePath(`/tournaments/${tournament.slug}`);
@@ -818,7 +854,34 @@ export async function getAdminFinance() {
 export async function getOpenDisputes() {
   try {
     await requireRole([...moderatorRoles]);
-    return { success: true, data: await prisma.dispute.findMany({ where: { status: "OPEN" }, include: { match: { include: { tournament: { select: { title: true } } } } }, orderBy: { createdAt: "asc" }, take: 100 }) };
+    const disputes = await prisma.dispute.findMany({
+      where: { status: "OPEN" },
+      include: { match: { include: { tournament: { select: { title: true } } } } },
+      orderBy: { createdAt: "asc" },
+      take: 100,
+    });
+    const playerIds = [...new Set(disputes.flatMap((dispute) => [dispute.match.player1Id, dispute.match.player2Id]).filter((id): id is string => Boolean(id)))];
+    const teamIds = [...new Set(disputes.flatMap((dispute) => [dispute.match.team1Id, dispute.match.team2Id]).filter((id): id is string => Boolean(id)))];
+    const [players, teams] = await Promise.all([
+      prisma.user.findMany({ where: { id: { in: playerIds } }, select: { id: true, username: true, firstName: true } }),
+      prisma.team.findMany({ where: { id: { in: teamIds } }, select: { id: true, name: true } }),
+    ]);
+    const playerNames = new Map(players.map((player) => [player.id, player.username ?? player.firstName ?? "Player"]));
+    const teamNames = new Map(teams.map((team) => [team.id, team.name]));
+
+    return {
+      success: true,
+      data: disputes.map((dispute) => ({
+        ...dispute,
+        match: {
+          ...dispute.match,
+          participants: [
+            dispute.match.player1Id ?? dispute.match.team1Id,
+            dispute.match.player2Id ?? dispute.match.team2Id,
+          ].filter((id): id is string => Boolean(id)).map((id) => ({ id, name: playerNames.get(id) ?? teamNames.get(id) ?? "Participant" })),
+        },
+      })),
+    };
   } catch (error) {
     if (error instanceof Error && ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.message)) return { success: false, error: "You do not have permission to review disputes." };
     console.error("Dispute fetch failed", error);

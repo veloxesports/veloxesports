@@ -81,6 +81,7 @@ async function main() {
   const match = await prisma.match.findFirstOrThrow({ where: { tournamentId: tournament.id } });
   assert.equal(match.team1Id, teamOne.id);
   assert.equal(match.team2Id, teamTwo.id);
+  assert.equal(match.status, "LIVE");
   assert.equal((await prisma.tournament.findUniqueOrThrow({ where: { id: tournament.id } })).status, "LIVE");
 
   // Rehearse the state produced when a moderator resolves a disputed final.

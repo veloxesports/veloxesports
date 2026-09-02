@@ -7,9 +7,29 @@ export type BracketMatchParticipants = {
 };
 
 export type NextBracketSlot = "player1Id" | "player2Id" | "team1Id" | "team2Id";
+export type MatchCenterTab = "Upcoming" | "Live" | "Completed";
+
+/** True only when both sides of a fixture are known and can play. */
+export function hasBothMatchParticipants(match: Omit<BracketMatchParticipants, "bracketPosition">) {
+  return Boolean(match.player1Id ?? match.team1Id) && Boolean(match.player2Id ?? match.team2Id);
+}
+
+/** A result response is safe only when every actor side differs from every submitter side. */
+export function areMatchSidesOpposing(actorSides: number[], submitterSides: number[]) {
+  return actorSides.length > 0
+    && submitterSides.length > 0
+    && actorSides.every((actorSide) => submitterSides.every((submitterSide) => actorSide !== submitterSide));
+}
 
 export function canSubmitMatchResult(status: string) {
   return ["SCHEDULED", "READY", "LIVE"].includes(status);
+}
+
+/** Keeps the Match Center tabs aligned with the complete match workflow. */
+export function isMatchInCenterTab(status: string, tab: MatchCenterTab) {
+  if (tab === "Upcoming") return ["SCHEDULED", "READY"].includes(status);
+  if (tab === "Live") return ["LIVE", "AWAITING_RESULT", "UNDER_REVIEW", "DISPUTED"].includes(status);
+  return ["COMPLETED", "CANCELLED"].includes(status);
 }
 
 export function isAwaitingOpponentConfirmation(status: string) {
@@ -37,5 +57,5 @@ export function nextBracketSlotForWinner(match: BracketMatchParticipants, winner
 
 export function matchCenterScoreLabel(status: string, score1: number | null, score2: number | null) {
   if (score1 !== null && score2 !== null) return `${score1} – ${score2}`;
-  return status === "COMPLETED" ? "—" : "VS";
+  return ["COMPLETED", "CANCELLED"].includes(status) ? "—" : "VS";
 }

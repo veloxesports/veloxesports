@@ -4,7 +4,7 @@ import { useState, type FormEvent, type InputHTMLAttributes } from "react";
 import { CalendarDays, ChevronLeft, CircleAlert, Gamepad2, Pencil, Plus, RefreshCw, Swords, Trash2, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { cancelTournamentAndRefund, createGame, createTournament, deleteTournament, openTournamentCheckIn, setGameActive, setTournamentStatus } from "@/features/admin/actions";
+import { cancelTournamentAndRefund, createGame, createTournament, deleteTournament, openTournamentCheckIn, runTournamentLifecycleManually, setGameActive, setTournamentStatus } from "@/features/admin/actions";
 import { generateSingleEliminationBracket } from "@/features/matches/actions";
 import { getTournamentRulesTemplate } from "@/lib/tournaments/rule-templates";
 import { TournamentEditor } from "./TournamentEditor";
@@ -39,17 +39,22 @@ export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; 
   async function execute(action: () => Promise<{ success: boolean; error?: string; warning?: string }>, successMessage: string) {
     setPending(true);
     setError(null);
-    const result = await action();
-    setPending(false);
+    try {
+      const result = await action();
+      if (!result.success) {
+        setError(result.error ?? "Operation failed.");
+        return false;
+      }
 
-    if (!result.success) {
-      setError(result.error ?? "Operation failed.");
+      setMessage(result.warning ? `${successMessage} ${result.warning}` : successMessage);
+      router.refresh();
+      return true;
+    } catch {
+      setError("The request could not be completed. Check your connection and try again.");
       return false;
+    } finally {
+      setPending(false);
     }
-
-    setMessage(result.warning ? `${successMessage} ${result.warning}` : successMessage);
-    router.refresh();
-    return true;
   }
 
   async function handleGame(event: FormEvent<HTMLFormElement>) {
@@ -106,14 +111,16 @@ export function AdminTournamentsClient({ games, tournaments }: { games: Game[]; 
         <div>
           <p className="velox-eyebrow">Event operations</p>
           <h1 className="mt-1 text-2xl font-black tracking-[-0.04em] text-white sm:text-3xl">Tournament control</h1>
-          <p className="mt-1 text-sm leading-relaxed text-[#8e998f]">Create events, manage the game roster, brackets, and safe lifecycle changes.</p>
+          <p className="mt-1 text-sm leading-relaxed text-[#8e998f]">Create events, manage the game roster, brackets, and safe manual lifecycle changes.</p>
         </div>
       </header>
 
-      <section className="mt-6 grid gap-3 sm:grid-cols-2">
+      <section className="mt-6 grid gap-3 sm:grid-cols-3">
         <button type="button" onClick={() => setShowCreate((value) => !value)} className="velox-action min-h-12"><Plus className="mr-2 h-4 w-4" aria-hidden />{showCreate ? "Close tournament form" : "Create tournament"}</button>
         <button type="button" onClick={() => setShowGame((value) => !value)} className="velox-muted-button min-h-12"><Gamepad2 className="mr-2 h-4 w-4 text-[#c5f94d]" aria-hidden />{showGame ? "Close game form" : "Add a game"}</button>
+        <button type="button" onClick={() => { if (window.confirm("Run the tournament lifecycle now? This applies every due step, including player notifications, brackets, live matches, completed events, and eligible prize rewards.")) void execute(runTournamentLifecycleManually, "Manual lifecycle run finished."); }} disabled={pending} className="velox-muted-button min-h-12"><RefreshCw className="mr-2 h-4 w-4 text-[#c5f94d]" aria-hidden />{pending ? "Running…" : "Run lifecycle now"}</button>
       </section>
+      <p className="mt-3 text-xs leading-relaxed text-[#748173]">VELOX does not run tournament automation on a schedule. Use this control whenever you are ready to advance all events that are currently due. Individual check-in controls remain available on each tournament.</p>
 
       {error && <Notice tone="error" message={error} />}
       {message && <Notice tone="success" message={message} />}

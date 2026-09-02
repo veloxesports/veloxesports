@@ -46,14 +46,19 @@ export function MatchDetailsClient({ match }: { match: MatchDetails }) {
   async function refreshAfter(action: () => Promise<{ success: boolean; error?: string }>, successMessage: string) {
     setIsResolving(true);
     setError(null);
-    const response = await action();
-    setIsResolving(false);
-    if (!response.success) {
-      setError(response.error ?? "Something went wrong. Please try again.");
-      return;
+    try {
+      const response = await action();
+      if (!response.success) {
+        setError(response.error ?? "Something went wrong. Please try again.");
+        return;
+      }
+      setMessage(successMessage);
+      router.refresh();
+    } catch {
+      setError("We couldn't complete that action. Check your connection and try again.");
+    } finally {
+      setIsResolving(false);
     }
-    setMessage(successMessage);
-    router.refresh();
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -89,14 +94,19 @@ export function MatchDetailsClient({ match }: { match: MatchDetails }) {
     if (evidence) formData.set("evidence", evidence);
 
     setIsSubmitting(true);
-    const response = await submitMatchResultWithEvidence(formData);
-    setIsSubmitting(false);
-    if (!response.success) {
-      setError(response.error ?? "We couldn't submit this result. Please try again.");
-      return;
+    try {
+      const response = await submitMatchResultWithEvidence(formData);
+      if (!response.success) {
+        setError(response.error ?? "We couldn't submit this result. Please try again.");
+        return;
+      }
+      setMessage("Result submitted. Your opponent can now confirm or reject it.");
+      router.refresh();
+    } catch {
+      setError("We couldn't submit this result. Check your connection and try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-    setMessage("Result submitted. Your opponent can now confirm or reject it.");
-    router.refresh();
   }
 
   async function handleDispute(event: FormEvent<HTMLFormElement>) {
