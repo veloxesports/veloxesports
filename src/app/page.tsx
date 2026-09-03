@@ -19,6 +19,7 @@ import { getUnreadNotificationCount } from "@/features/notifications/actions";
 import { getMatchCenter } from "@/features/matches/services";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { isMatchInCenterTab } from "@/lib/matches/flow";
+import { OnboardingGuard } from "@/components/auth/OnboardingGuard";
 
 /* eslint-disable @next/next/no-img-element -- Profile and Telegram avatar preview */
 
@@ -63,6 +64,7 @@ export default async function Home() {
 
   return (
     <main className="velox-page">
+      <OnboardingGuard />
       {/* Top Bar / Player Header */}
       <header className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">

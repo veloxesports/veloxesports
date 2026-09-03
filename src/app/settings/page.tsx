@@ -7,9 +7,11 @@ import {
   ChevronLeft,
   Gamepad2,
   Globe,
+  HelpCircle,
   Loader2,
   LogOut,
   ShieldAlert,
+  Sparkles,
   Unlink,
   User,
   X,
@@ -268,8 +270,38 @@ export default function SettingsPage() {
           </div>
         </section>
 
+        {/* Help & Guide: How Velox Works */}
+        <section className="flex flex-col gap-4">
+          <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+            <HelpCircle className="w-4 h-4" /> Help & Platform Guide
+          </h2>
+
+          <div className="velox-card p-4 flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-[#3b5438] bg-[#162317] text-[#c5f94d]">
+                  <Sparkles className="h-5 w-5" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <h3 className="text-sm font-bold text-white truncate">How Velox Works</h3>
+                  <p className="text-xs text-gray-400 line-clamp-2">
+                    Tournaments, squads, Discord sync, check-ins, and brackets.
+                  </p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                onClick={() => router.push("/onboarding?replay=true")}
+                className="bg-[#c5f94d] text-black font-black hover:bg-[#b2e83d] text-xs px-3.5 shrink-0"
+              >
+                Replay Guide →
+              </Button>
+            </div>
+          </div>
+        </section>
+
         {/* Danger Zone */}
-        <section className="flex flex-col gap-4 mt-4">
+        <section className="flex flex-col gap-4 mt-2">
           <Button
             onClick={handleLogout}
             variant="outline"

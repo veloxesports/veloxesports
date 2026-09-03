@@ -16,7 +16,7 @@ const NAV_ITEMS = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  if (pathname.startsWith("/admin") || pathname === "/admin-login") return null;
+  if (pathname.startsWith("/admin") || pathname === "/admin-login" || pathname === "/onboarding") return null;
 
   const triggerHaptic = () => {
     try {

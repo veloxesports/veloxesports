@@ -271,3 +271,34 @@ export async function disconnectDiscord() {
   }
 }
 
+export async function markOnboardingCompleted() {
+  try {
+    const user = await requireCurrentUser();
+    const profile = await prisma.userProfile.findUnique({
+      where: { userId: user.id },
+      select: { id: true, gamerIds: true },
+    });
+    if (profile) {
+      const existingGamerIds =
+        typeof profile.gamerIds === "object" && profile.gamerIds !== null
+          ? (profile.gamerIds as Record<string, unknown>)
+          : {};
+      await prisma.userProfile.update({
+        where: { userId: user.id },
+        data: {
+          gamerIds: {
+            ...existingGamerIds,
+            onboarded: true,
+            onboardedAt: new Date().toISOString(),
+          },
+        },
+      });
+    }
+    return { success: true };
+  } catch {
+    // Gracefully handle unauthenticated or visitor status without error
+    return { success: false };
+  }
+}
+
+
