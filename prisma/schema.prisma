@@ -49,11 +49,14 @@ model UserProfile {
   tournamentWins    Int       @default(0)
   favoriteGames     String[]
   gamerIds          Json?     // e.g. { "FC26": "PlayerOne", "PUBG": "Player123" }
-  discordId         String?   @unique
-  discordUsername   String?
-  discordAvatarUrl  String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  discordId          String?   @unique
+  discordUsername    String?
+  discordDisplayName String?
+  discordAvatarUrl   String?
+  discordConnected   Boolean   @default(false)
+  discordConnectedAt DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
 
 model Game {

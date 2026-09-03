@@ -4,6 +4,7 @@ import {
   verifySignedDiscordState,
   isDiscordOAuthConfigured,
   appBaseUrl,
+  getDiscordAvatarUrl,
 } from "../src/lib/discord/oauth";
 
 describe("Discord OAuth & State Cryptography", () => {
@@ -56,5 +57,23 @@ describe("Discord OAuth & State Cryptography", () => {
   it("resolves appBaseUrl without crashing", () => {
     const url = appBaseUrl();
     expect(url.startsWith("http")).toBe(true);
+  });
+
+  it("generates correct Discord avatar CDN URLs", () => {
+    const userWithAvatar = {
+      id: "80351110224678912",
+      avatar: "8342729096ea368616304b57f424c63b",
+    };
+    const avatarUrl = getDiscordAvatarUrl(userWithAvatar);
+    expect(avatarUrl).toBe(
+      "https://cdn.discordapp.com/avatars/80351110224678912/8342729096ea368616304b57f424c63b.png?size=128"
+    );
+
+    const userWithoutAvatar = {
+      id: "80351110224678912",
+      avatar: null,
+    };
+    const defaultAvatarUrl = getDiscordAvatarUrl(userWithoutAvatar);
+    expect(defaultAvatarUrl.startsWith("https://cdn.discordapp.com/embed/avatars/")).toBe(true);
   });
 });

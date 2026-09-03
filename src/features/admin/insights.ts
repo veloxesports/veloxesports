@@ -28,6 +28,14 @@ export type AdminInsightItem = {
   amount?: number;
   imageUrl?: string | null;
   href?: string;
+  discord?: {
+    connected: boolean;
+    id: string | null;
+    username: string | null;
+    displayName: string | null;
+    avatarUrl: string | null;
+    connectedAt: Date | null;
+  } | null;
 };
 
 export type AdminInsight = {
@@ -120,10 +128,37 @@ export async function getAdminSearchResults(rawQuery: string): Promise<{ success
     const contains = { contains: query, mode: "insensitive" as const };
     const [players, tournaments] = await Promise.all([
       prisma.user.findMany({
-        where: { AND: [playerAccountFilter, { OR: [{ username: contains }, { firstName: contains }, { profile: { is: { veloxUsername: contains } } }] }] },
+        where: {
+          AND: [
+            playerAccountFilter,
+            {
+              OR: [
+                { username: contains },
+                { firstName: contains },
+                { profile: { is: { veloxUsername: contains } } },
+                { profile: { is: { discordUsername: contains } } },
+                { profile: { is: { discordDisplayName: contains } } },
+              ],
+            },
+          ],
+        },
         orderBy: { createdAt: "desc" },
         take: 8,
-        select: { id: true, username: true, firstName: true, profileImage: true, profile: { select: { veloxUsername: true, rank: true, level: true } } },
+        select: {
+          id: true,
+          username: true,
+          firstName: true,
+          profileImage: true,
+          profile: {
+            select: {
+              veloxUsername: true,
+              rank: true,
+              level: true,
+              discordUsername: true,
+              discordDisplayName: true,
+            },
+          },
+        },
       }),
       prisma.tournament.findMany({
         where: { OR: [{ title: contains }, { game: { is: { name: contains } } }] },
@@ -133,7 +168,16 @@ export async function getAdminSearchResults(rawQuery: string): Promise<{ success
       }),
     ]);
     return { success: true, data: {
-      players: players.map((player) => ({ id: player.id, name: playerName(player), detail: player.profile ? `${labelFor(player.profile.rank)} · Level ${player.profile.level}` : "Player profile", imageUrl: player.profileImage })),
+      players: players.map((player) => ({
+        id: player.id,
+        name: playerName(player),
+        detail: player.profile
+          ? `${labelFor(player.profile.rank)} · Level ${player.profile.level}${
+              player.profile.discordUsername ? ` · Discord: @${player.profile.discordUsername}` : ""
+            }`
+          : "Player profile",
+        imageUrl: player.profileImage,
+      })),
       tournaments: tournaments.map((tournament) => ({ id: tournament.id, title: tournament.title, detail: tournament.game.name, status: tournament.status, startDate: tournament.startDate })),
     } };
   } catch (error) {
@@ -228,7 +272,19 @@ export async function getAdminTournamentDetail(tournamentId: string) {
                 username: true,
                 firstName: true,
                 profileImage: true,
-                profile: { select: { veloxUsername: true, rank: true, level: true } },
+                profile: {
+                  select: {
+                    veloxUsername: true,
+                    rank: true,
+                    level: true,
+                    discordId: true,
+                    discordUsername: true,
+                    discordDisplayName: true,
+                    discordAvatarUrl: true,
+                    discordConnected: true,
+                    discordConnectedAt: true,
+                  },
+                },
               },
             },
             team: { select: { name: true, logoUrl: true } },
@@ -256,7 +312,19 @@ const playerSelect = {
   status: true,
   createdAt: true,
   lastLogin: true,
-  profile: { select: { veloxUsername: true, rank: true, level: true } },
+  profile: {
+    select: {
+      veloxUsername: true,
+      rank: true,
+      level: true,
+      discordId: true,
+      discordUsername: true,
+      discordDisplayName: true,
+      discordAvatarUrl: true,
+      discordConnected: true,
+      discordConnectedAt: true,
+    },
+  },
   _count: { select: { registrations: true } },
 } as const;
 
@@ -466,23 +534,71 @@ async function paymentInsight(kind: "payments" | "refunds" | "rewards"): Promise
   };
 }
 
-function playerInsight({ total, players, activeOnly }: { total: number; players: Array<{ id: string; username: string | null; firstName: string | null; profileImage: string | null; status: string; createdAt: Date; lastLogin: Date | null; profile: { veloxUsername: string | null; rank: string; level: number } | null; _count: { registrations: number } }>; activeOnly: boolean }): AdminInsight {
+function playerInsight({
+  total,
+  players,
+  activeOnly,
+}: {
+  total: number;
+  players: Array<{
+    id: string;
+    username: string | null;
+    firstName: string | null;
+    profileImage: string | null;
+    status: string;
+    createdAt: Date;
+    lastLogin: Date | null;
+    profile: {
+      veloxUsername: string | null;
+      rank: string;
+      level: number;
+      discordId?: string | null;
+      discordUsername?: string | null;
+      discordDisplayName?: string | null;
+      discordAvatarUrl?: string | null;
+      discordConnected?: boolean;
+      discordConnectedAt?: Date | null;
+    } | null;
+    _count: { registrations: number };
+  }>;
+  activeOnly: boolean;
+}): AdminInsight {
   return {
     eyebrow: activeOnly ? "Last 30 days" : "Platform accounts",
     title: activeOnly ? "Active players" : "All players",
-    description: activeOnly ? "Active player accounts with a recorded VELOX or Telegram sign-in during the last 30 days." : "Every player account in VELOX, excluding administrative service accounts.",
+    description: activeOnly
+      ? "Active player accounts with a recorded VELOX or Telegram sign-in during the last 30 days."
+      : "Every player account in VELOX, excluding administrative service accounts.",
     itemLabel: "player",
     total,
-    items: players.map((player) => ({
-      id: player.id,
-      title: playerName(player),
-      detail: player.profile ? `${labelFor(player.profile.rank)} · Level ${player.profile.level}` : "Player profile incomplete",
-      status: player.status,
-      date: activeOnly ? player.lastLogin : player.createdAt,
-      dateLabel: activeOnly ? "Last active" : "Joined",
-      meta: `${player._count.registrations} tournament registration${player._count.registrations === 1 ? "" : "s"}`,
-      imageUrl: player.profileImage,
-    })),
+    items: players.map((player) => {
+      const isDiscordConnected = Boolean(
+        player.profile?.discordConnected || player.profile?.discordUsername
+      );
+      return {
+        id: player.id,
+        title: playerName(player),
+        detail: player.profile
+          ? `${labelFor(player.profile.rank)} · Level ${player.profile.level}`
+          : "Player profile incomplete",
+        status: player.status,
+        date: activeOnly ? player.lastLogin : player.createdAt,
+        dateLabel: activeOnly ? "Last active" : "Joined",
+        meta: `${player._count.registrations} tournament registration${
+          player._count.registrations === 1 ? "" : "s"
+        }`,
+        imageUrl: player.profileImage,
+        discord: {
+          connected: isDiscordConnected,
+          id: player.profile?.discordId ?? null,
+          username: player.profile?.discordUsername ?? null,
+          displayName:
+            player.profile?.discordDisplayName || player.profile?.discordUsername || null,
+          avatarUrl: player.profile?.discordAvatarUrl ?? null,
+          connectedAt: player.profile?.discordConnectedAt ?? null,
+        },
+      };
+    }),
   };
 }
 

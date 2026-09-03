@@ -140,8 +140,12 @@ export default async function ProfilePage() {
 
             {/* Discord Connection Card */}
             <DiscordConnectCard
+              initialDiscordId={profile.discordId}
               initialDiscordUsername={profile.discordUsername}
+              initialDiscordDisplayName={profile.discordDisplayName}
               initialDiscordAvatarUrl={profile.discordAvatarUrl}
+              initialDiscordConnected={profile.discordConnected || Boolean(profile.discordUsername)}
+              initialDiscordConnectedAt={profile.discordConnectedAt}
             />
           </div>
         </section>

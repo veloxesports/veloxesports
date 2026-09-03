@@ -5,6 +5,7 @@ import {
   appBaseUrl,
   exchangeDiscordCode,
   fetchDiscordUserProfile,
+  getDiscordAvatarUrl,
   verifySignedDiscordState,
 } from "@/lib/discord/oauth";
 
@@ -66,10 +67,10 @@ export async function GET(request: NextRequest) {
       return statusRedirect("already_connected", returnTo);
     }
 
-    const avatarUrl = discordUser.avatar
-      ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png?size=128`
-      : null;
-    const discordUsername = discordUser.global_name || discordUser.username;
+    const avatarUrl = getDiscordAvatarUrl(discordUser);
+    const discordUsername = discordUser.username;
+    const discordDisplayName = discordUser.global_name || discordUser.username;
+    const connectedAt = new Date();
 
     // 4. Save Discord link in database
     await prisma.userProfile.upsert({
@@ -77,13 +78,19 @@ export async function GET(request: NextRequest) {
       update: {
         discordId: discordUser.id,
         discordUsername,
+        discordDisplayName,
         discordAvatarUrl: avatarUrl,
+        discordConnected: true,
+        discordConnectedAt: connectedAt,
       },
       create: {
         userId: statePayload.userId,
         discordId: discordUser.id,
         discordUsername,
+        discordDisplayName,
         discordAvatarUrl: avatarUrl,
+        discordConnected: true,
+        discordConnectedAt: connectedAt,
         favoriteGames: [],
       },
     });
@@ -100,8 +107,11 @@ export async function GET(request: NextRequest) {
 
     // 6. Redirect to connected success screen
     const successUrl = new URL("/discord/connected", appBaseUrl());
+    successUrl.searchParams.set("id", discordUser.id);
     successUrl.searchParams.set("username", discordUsername);
+    if (discordDisplayName) successUrl.searchParams.set("displayName", discordDisplayName);
     if (avatarUrl) successUrl.searchParams.set("avatar", avatarUrl);
+    successUrl.searchParams.set("connectedAt", connectedAt.toISOString());
     successUrl.searchParams.set("returnTo", returnTo);
 
     const response = NextResponse.redirect(successUrl);

@@ -131,7 +131,10 @@ export const UserProfileScalarFieldEnum = {
   gamerIds: 'gamerIds',
   discordId: 'discordId',
   discordUsername: 'discordUsername',
+  discordDisplayName: 'discordDisplayName',
   discordAvatarUrl: 'discordAvatarUrl',
+  discordConnected: 'discordConnected',
+  discordConnectedAt: 'discordConnectedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

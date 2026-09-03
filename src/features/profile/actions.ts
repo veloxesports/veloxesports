@@ -164,19 +164,33 @@ export async function connectDiscordDirect(tag: string) {
     // Deterministic Discord avatar selection (colors 0-5)
     const avatarIndex = Math.abs(cleaned.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0)) % 5;
     const avatarUrl = `https://cdn.discordapp.com/embed/avatars/${avatarIndex}.png`;
+    const now = new Date();
 
     await prisma.userProfile.update({
       where: { userId: user.id },
       data: {
         discordId: `direct_${user.id}`,
         discordUsername: cleaned,
+        discordDisplayName: cleaned,
         discordAvatarUrl: avatarUrl,
+        discordConnected: true,
+        discordConnectedAt: now,
       },
     });
 
     revalidatePath("/profile");
     revalidatePath("/settings");
-    return { success: true, data: { discordUsername: cleaned, discordAvatarUrl: avatarUrl } };
+    return {
+      success: true,
+      data: {
+        discordId: `direct_${user.id}`,
+        discordUsername: cleaned,
+        discordDisplayName: cleaned,
+        discordAvatarUrl: avatarUrl,
+        discordConnected: true,
+        discordConnectedAt: now,
+      },
+    };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHENTICATED") {
       return { success: false, error: "Sign in with Telegram before connecting Discord." };
@@ -186,12 +200,64 @@ export async function connectDiscordDirect(tag: string) {
   }
 }
 
+export async function checkDiscordConnectionStatus() {
+  try {
+    const user = await requireCurrentUser();
+    const profile = await prisma.userProfile.findUnique({
+      where: { userId: user.id },
+      select: {
+        discordId: true,
+        discordUsername: true,
+        discordDisplayName: true,
+        discordAvatarUrl: true,
+        discordConnected: true,
+        discordConnectedAt: true,
+      },
+    });
+
+    if (!profile || !profile.discordConnected || !profile.discordUsername) {
+      return {
+        success: true,
+        data: {
+          connected: false,
+          discordId: null,
+          discordUsername: null,
+          discordDisplayName: null,
+          discordAvatarUrl: null,
+          discordConnectedAt: null,
+        },
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        connected: true,
+        discordId: profile.discordId,
+        discordUsername: profile.discordUsername,
+        discordDisplayName: profile.discordDisplayName || profile.discordUsername,
+        discordAvatarUrl: profile.discordAvatarUrl,
+        discordConnectedAt: profile.discordConnectedAt,
+      },
+    };
+  } catch {
+    return { success: false, data: null };
+  }
+}
+
 export async function disconnectDiscord() {
   try {
     const user = await requireCurrentUser();
     await prisma.userProfile.update({
       where: { userId: user.id },
-      data: { discordId: null, discordUsername: null, discordAvatarUrl: null },
+      data: {
+        discordId: null,
+        discordUsername: null,
+        discordDisplayName: null,
+        discordAvatarUrl: null,
+        discordConnected: false,
+        discordConnectedAt: null,
+      },
     });
     revalidatePath("/profile");
     revalidatePath("/settings");

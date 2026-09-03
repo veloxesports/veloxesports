@@ -29,6 +29,21 @@ const discordUserSchema = z.object({
 
 export type DiscordUserProfile = z.infer<typeof discordUserSchema>;
 
+/**
+ * Returns the CDN avatar URL for a Discord user, or a deterministic fallback avatar.
+ */
+export function getDiscordAvatarUrl(user: { id: string; avatar?: string | null }): string {
+  if (user.avatar) {
+    return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`;
+  }
+  try {
+    const defaultIndex = Math.abs(Number(BigInt(user.id) >> BigInt(22)) % 6);
+    return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
+  } catch {
+    return "https://cdn.discordapp.com/embed/avatars/0.png";
+  }
+}
+
 function getSecretKey(): string {
   const secret = process.env.SESSION_SECRET;
   if (!secret || secret.length < 32) {
