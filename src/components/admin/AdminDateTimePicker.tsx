@@ -78,6 +78,9 @@ export function AdminDateTimePicker({
   const [uncontrolledDate, setUncontrolledDate] = useState<Date | null>(() => parseInitialDate(defaultValue));
   const selectedDate = isControlled ? parseInitialDate(controlledValue) : uncontrolledDate;
 
+  // Snapshot before opening for Cancel action
+  const initialOnOpenRef = useRef<Date | null>(null);
+
   const updateSelectedDate = useCallback(
     (newDate: Date | null) => {
       if (!isControlled) {
@@ -91,8 +94,10 @@ export function AdminDateTimePicker({
   );
 
   // Calendar display state
-  const [viewYear, setViewYear] = useState(() => (initial ? initial.getFullYear() : new Date().getFullYear()));
-  const [viewMonth, setViewMonth] = useState(() => (initial ? initial.getMonth() : new Date().getMonth()));
+  const now = new Date();
+  const [viewYear, setViewYear] = useState(() => (initial ? initial.getFullYear() : now.getFullYear()));
+  const [viewMonth, setViewMonth] = useState(() => (initial ? initial.getMonth() : now.getMonth()));
+  const [workingDay, setWorkingDay] = useState<number>(() => (initial ? initial.getDate() : now.getDate()));
 
   // Time picker state
   const [hour12, setHour12] = useState<number>(() => {
@@ -157,7 +162,7 @@ export function AdminDateTimePicker({
     }
   }, [isOpen, updatePosition]);
 
-  // Click outside to close
+  // Click outside to close (commits whatever was picked)
   useEffect(() => {
     if (!isOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
@@ -186,25 +191,29 @@ export function AdminDateTimePicker({
     };
   }, [isOpen]);
 
+  // Construct final Date from year, month, day, hour12, minute, period
+  function constructDate(year: number, month: number, day: number, h12: number, min: number, ampm: "AM" | "PM"): Date {
+    let hours = h12 % 12;
+    if (ampm === "PM") hours += 12;
+    return new Date(year, month, day, hours, min, 0, 0);
+  }
+
   // Sync internal view when popover opens
   function handleOpen() {
     if (disabled) return;
-    if (selectedDate) {
-      setViewYear(selectedDate.getFullYear());
-      setViewMonth(selectedDate.getMonth());
-      const h = selectedDate.getHours() % 12;
-      setHour12(h === 0 ? 12 : h);
-      setMinute(selectedDate.getMinutes());
-      setPeriod(selectedDate.getHours() >= 12 ? "PM" : "AM");
-    } else {
-      const now = new Date();
-      setViewYear(now.getFullYear());
-      setViewMonth(now.getMonth());
-      const h = now.getHours() % 12;
-      setHour12(h === 0 ? 12 : h);
-      setMinute(Math.ceil(now.getMinutes() / 5) * 5 % 60);
-      setPeriod(now.getHours() >= 12 ? "PM" : "AM");
-    }
+    initialOnOpenRef.current = selectedDate;
+    const currentNow = new Date();
+    const base = selectedDate ?? currentNow;
+
+    setViewYear(base.getFullYear());
+    setViewMonth(base.getMonth());
+    setWorkingDay(base.getDate());
+
+    const h = base.getHours() % 12;
+    setHour12(h === 0 ? 12 : h);
+    setMinute(base.getMinutes());
+    setPeriod(base.getHours() >= 12 ? "PM" : "AM");
+
     setIsOpen(true);
   }
 
@@ -227,14 +236,8 @@ export function AdminDateTimePicker({
     }
   }
 
-  // Construct final Date from year, month, day, hour12, minute, period
-  function constructDate(year: number, month: number, day: number, h12: number, min: number, ampm: "AM" | "PM"): Date {
-    let hours = h12 % 12;
-    if (ampm === "PM") hours += 12;
-    return new Date(year, month, day, hours, min, 0, 0);
-  }
-
   function handleSelectDay(day: number) {
+    setWorkingDay(day);
     const updated = constructDate(viewYear, viewMonth, day, hour12, minute, period);
     updateSelectedDate(updated);
   }
@@ -244,50 +247,59 @@ export function AdminDateTimePicker({
     setMinute(newMin);
     setPeriod(newPeriod);
 
-    if (selectedDate) {
-      const updated = constructDate(
-        selectedDate.getFullYear(),
-        selectedDate.getMonth(),
-        selectedDate.getDate(),
-        newHour,
-        newMin,
-        newPeriod
-      );
-      updateSelectedDate(updated);
-    }
+    const day = workingDay || (selectedDate ? selectedDate.getDate() : new Date().getDate());
+    const updated = constructDate(viewYear, viewMonth, day, newHour, newMin, newPeriod);
+    updateSelectedDate(updated);
   }
 
   // Presets
   function applyPreset(presetType: "now" | "plus1h" | "tomorrow" | "plus1w") {
-    const now = new Date();
+    const currentNow = new Date();
     let target = new Date();
 
     if (presetType === "now") {
       target = new Date();
     } else if (presetType === "plus1h") {
-      target = new Date(now.getTime() + 60 * 60 * 1000);
+      target = new Date(currentNow.getTime() + 60 * 60 * 1000);
     } else if (presetType === "tomorrow") {
-      target = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 18, 0, 0);
+      target = new Date(currentNow.getFullYear(), currentNow.getMonth(), currentNow.getDate() + 1, 18, 0, 0);
     } else if (presetType === "plus1w") {
-      target = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7, 18, 0, 0);
+      target = new Date(currentNow.getFullYear(), currentNow.getMonth(), currentNow.getDate() + 7, 18, 0, 0);
     }
 
     setViewYear(target.getFullYear());
     setViewMonth(target.getMonth());
+    setWorkingDay(target.getDate());
+
     const h = target.getHours() % 12;
     setHour12(h === 0 ? 12 : h);
     setMinute(target.getMinutes());
     setPeriod(target.getHours() >= 12 ? "PM" : "AM");
+
     updateSelectedDate(target);
+  }
+
+  function handleApply() {
+    const day = workingDay || (selectedDate ? selectedDate.getDate() : new Date().getDate());
+    const finalDate = selectedDate ?? constructDate(viewYear, viewMonth, day, hour12, minute, period);
+    updateSelectedDate(finalDate);
+    setIsOpen(false);
+  }
+
+  function handleCancel() {
+    updateSelectedDate(initialOnOpenRef.current);
+    setIsOpen(false);
   }
 
   function handleClear(e?: ReactMouseEvent) {
     e?.stopPropagation();
     updateSelectedDate(null);
+    setIsOpen(false);
   }
 
-  function handleClose() {
-    setIsOpen(false);
+  function handleInlineClear(e?: { stopPropagation: () => void }) {
+    e?.stopPropagation();
+    updateSelectedDate(null);
   }
 
   // Calendar Day Grid Calculation
@@ -299,9 +311,7 @@ export function AdminDateTimePicker({
   const isCurrentMonthToday = today.getFullYear() === viewYear && today.getMonth() === viewMonth;
 
   // Render trigger display text
-  const formattedDisplay = selectedDate
-    ? formatDateTimeDisplay(selectedDate)
-    : "";
+  const formattedDisplay = selectedDate ? formatDateTimeDisplay(selectedDate) : "";
 
   // Hidden input value for form submission
   const formValue = selectedDate ? toLocalIso(selectedDate) : "";
@@ -328,6 +338,7 @@ export function AdminDateTimePicker({
       {/* Custom Input Trigger */}
       <button
         ref={triggerRef}
+        id={`field-${name}`}
         type="button"
         onClick={handleOpen}
         disabled={disabled}
@@ -360,9 +371,13 @@ export function AdminDateTimePicker({
             <span
               role="button"
               tabIndex={0}
-              onClick={handleClear}
+              onClick={(e) => handleInlineClear(e)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") handleClear();
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleInlineClear();
+                }
               }}
               className="rounded-lg p-1 text-[#788877] transition hover:bg-[#1a251b] hover:text-white"
               title="Clear date"
@@ -392,7 +407,7 @@ export function AdminDateTimePicker({
           {isMobile ? (
             <div
               className="fixed inset-0 z-[99] bg-[#020503]/85 backdrop-blur-[6px]"
-              onClick={handleClose}
+              onClick={handleApply}
               aria-hidden
             />
           ) : null}
@@ -572,10 +587,14 @@ export function AdminDateTimePicker({
                   {/* Days in current month */}
                   {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
                     const isSelected =
-                      selectedDate &&
-                      selectedDate.getFullYear() === viewYear &&
-                      selectedDate.getMonth() === viewMonth &&
-                      selectedDate.getDate() === day;
+                      (selectedDate &&
+                        selectedDate.getFullYear() === viewYear &&
+                        selectedDate.getMonth() === viewMonth &&
+                        selectedDate.getDate() === day) ||
+                      (workingDay === day &&
+                        (selectedDate
+                          ? selectedDate.getMonth() === viewMonth && selectedDate.getFullYear() === viewYear
+                          : true));
 
                     const isToday = isCurrentMonthToday && today.getDate() === day;
 
@@ -756,14 +775,14 @@ export function AdminDateTimePicker({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={handleClose}
+                  onClick={handleCancel}
                   className="rounded-xl border border-[#273628] bg-transparent px-3.5 py-2 font-bold text-[#b6c7b3] transition hover:bg-[#1a251a] hover:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
-                  onClick={handleClose}
+                  onClick={handleApply}
                   className="inline-flex items-center gap-1.5 rounded-xl bg-[#c5f94d] px-4 py-2 font-black text-[#0a0e0a] shadow-[0_6px_16px_rgba(197,249,77,0.25)] transition hover:bg-[#d5ff70]"
                 >
                   <Check className="h-3.5 w-3.5" />
@@ -780,6 +799,7 @@ export function AdminDateTimePicker({
 }
 
 function formatDateTimeDisplay(date: Date): string {
+  if (!date || Number.isNaN(date.getTime())) return "";
   const dateStr = date.toLocaleDateString("en-US", {
     weekday: "short",
     month: "short",
