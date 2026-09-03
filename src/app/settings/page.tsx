@@ -9,6 +9,7 @@ import {
   Globe,
   HelpCircle,
   Loader2,
+  Lock,
   LogOut,
   ShieldAlert,
   Sparkles,
@@ -24,6 +25,8 @@ import {
   getPlayerProfile,
   updateCurrentProfile,
 } from "@/features/profile/actions";
+import { getPlayerPrivacy, updatePlayerPrivacy } from "@/features/players/actions";
+import type { PlayerPrivacySettings } from "@/features/players/types";
 import { logout } from "@/features/auth/actions";
 import { TelegramBottomSheet } from "@/components/ui/TelegramBottomSheet";
 
@@ -46,7 +49,19 @@ export default function SettingsPage() {
   const [isDisconnectModalOpen, setIsDisconnectModalOpen] = useState(false);
   const [disconnectingDiscord, setDisconnectingDiscord] = useState(false);
 
+  // Privacy Settings State
+  const [privacy, setPrivacy] = useState<PlayerPrivacySettings>({
+    showHistory: true,
+    showStats: true,
+    showDiscord: true,
+    showTeam: true,
+  });
+
   useEffect(() => {
+    void getPlayerPrivacy().then((p) => {
+      setPrivacy(p);
+    });
+
     void getPlayerProfile().then((result) => {
       if (result.success && result.data) {
         setSignedIn(true);
@@ -73,6 +88,12 @@ export default function SettingsPage() {
       setLoading(false);
     });
   }, []);
+
+  const handleTogglePrivacy = async (key: keyof PlayerPrivacySettings) => {
+    const updated = { ...privacy, [key]: !privacy[key] };
+    setPrivacy(updated);
+    await updatePlayerPrivacy(updated);
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -267,6 +288,115 @@ export default function SettingsPage() {
                 )}
               </div>
             )}
+          </div>
+        </section>
+
+        {/* Profile Privacy & Visibility */}
+        <section className="flex flex-col gap-4">
+          <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+            <Lock className="w-4 h-4" /> Profile Privacy & Visibility
+          </h2>
+
+          <div className="velox-card p-4 flex flex-col gap-3.5 divide-y divide-[#1e2a1f]">
+            {/* Match History Toggle */}
+            <div className="flex items-center justify-between gap-3 pt-1 first:pt-0">
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-bold text-white">Public Match History</span>
+                <span className="text-xs text-gray-400">
+                  Allow other players to view your recent tournament matches, placements, and scores.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => void handleTogglePrivacy("showHistory")}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  privacy.showHistory ? "bg-[#c5f94d]" : "bg-[#253326]"
+                }`}
+                role="switch"
+                aria-checked={privacy.showHistory}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-[#0a0e0a] shadow ring-0 transition duration-200 ease-in-out ${
+                    privacy.showHistory ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Career Stats Toggle */}
+            <div className="flex items-center justify-between gap-3 pt-3">
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-bold text-white">Public Career Statistics</span>
+                <span className="text-xs text-gray-400">
+                  Show your win rate, championships won, total fixtures, and active win streak.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => void handleTogglePrivacy("showStats")}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  privacy.showStats ? "bg-[#c5f94d]" : "bg-[#253326]"
+                }`}
+                role="switch"
+                aria-checked={privacy.showStats}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-[#0a0e0a] shadow ring-0 transition duration-200 ease-in-out ${
+                    privacy.showStats ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Discord Tag Toggle */}
+            <div className="flex items-center justify-between gap-3 pt-3">
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-bold text-white">Show Discord Connection</span>
+                <span className="text-xs text-gray-400">
+                  Display your linked Discord username on your public profile badge.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => void handleTogglePrivacy("showDiscord")}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  privacy.showDiscord ? "bg-[#c5f94d]" : "bg-[#253326]"
+                }`}
+                role="switch"
+                aria-checked={privacy.showDiscord}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-[#0a0e0a] shadow ring-0 transition duration-200 ease-in-out ${
+                    privacy.showDiscord ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Team Membership Toggle */}
+            <div className="flex items-center justify-between gap-3 pt-3">
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-bold text-white">Show Squad & Team</span>
+                <span className="text-xs text-gray-400">
+                  Allow other players to view your active competitive squad and teammates.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => void handleTogglePrivacy("showTeam")}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  privacy.showTeam ? "bg-[#c5f94d]" : "bg-[#253326]"
+                }`}
+                role="switch"
+                aria-checked={privacy.showTeam}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-[#0a0e0a] shadow ring-0 transition duration-200 ease-in-out ${
+                    privacy.showTeam ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
           </div>
         </section>
 

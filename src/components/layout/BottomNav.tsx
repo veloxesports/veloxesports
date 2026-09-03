@@ -44,7 +44,8 @@ export function BottomNav() {
           const Icon = item.icon;
           const isActive =
             pathname === item.href ||
-            (item.href !== "/" && pathname.startsWith(`${item.href}/`));
+            (item.href !== "/" && pathname.startsWith(`${item.href}/`)) ||
+            (item.href === "/leaderboard" && pathname.startsWith("/players"));
 
           return (
             <Link

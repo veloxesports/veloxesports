@@ -1,4 +1,5 @@
-import { ArrowDown, ArrowUp, Crown, Minus, Trophy } from "lucide-react";
+import { ArrowDown, ArrowUp, Crown, Minus, Search, Trophy } from "lucide-react";
+import Link from "next/link";
 import { getGlobalLeaderboard } from "@/features/leaderboard/actions";
 import { getCurrentUser } from "@/lib/auth/current-user";
 
@@ -41,22 +42,32 @@ export default async function LeaderboardPage() {
   return (
     <main className="velox-page">
       {/* Header */}
-      <header>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#c5f94d]">
-            Season 04
-          </span>
-          <span className="text-[10px] text-[#425443]">·</span>
-          <span className="rounded-full bg-[#172318] px-2 py-0.5 text-[10px] font-black uppercase text-[#d4ff76]">
-            Global Leaderboard
-          </span>
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#c5f94d]">
+              Season 04
+            </span>
+            <span className="text-[10px] text-[#425443]">·</span>
+            <span className="rounded-full bg-[#172318] px-2 py-0.5 text-[10px] font-black uppercase text-[#d4ff76]">
+              Global Leaderboard
+            </span>
+          </div>
+          <h1 className="mt-1 text-3xl font-black tracking-[-0.04em] text-white sm:text-4xl">
+            Competitive Rankings
+          </h1>
+          <p className="mt-1 text-xs text-[#809081]">
+            Climb the divisions by winning tournament fixtures and ladder battles.
+          </p>
         </div>
-        <h1 className="mt-1 text-3xl font-black tracking-[-0.04em] text-white sm:text-4xl">
-          Competitive Rankings
-        </h1>
-        <p className="mt-1 text-xs text-[#809081]">
-          Climb the divisions by winning tournament fixtures and ladder battles.
-        </p>
+
+        <Link
+          href="/players"
+          className="inline-flex items-center gap-2 rounded-xl border border-[#2d402b] bg-[#121c13] px-3.5 py-2 text-xs font-black text-[#c5f94d] shadow hover:bg-[#182619] transition self-start sm:self-auto"
+        >
+          <Search className="h-3.5 w-3.5" />
+          <span>Find Players</span>
+        </Link>
       </header>
 
       {/* Top 3 Podium */}
@@ -161,9 +172,9 @@ function PodiumPlayer({
   const losses = player?.losses ?? 0;
   const winRate = wins + losses > 0 ? Math.round((wins / (wins + losses)) * 100) : 0;
 
-  return (
+  const Content = (
     <div
-      className={`flex min-w-0 flex-col items-center text-center ${
+      className={`flex min-w-0 flex-col items-center text-center transition hover:opacity-95 active:scale-[0.98] ${
         isWinner ? "order-2" : isSecond ? "order-1" : "order-3"
       }`}
     >
@@ -214,6 +225,16 @@ function PodiumPlayer({
       </div>
     </div>
   );
+
+  if (player?.userId) {
+    return (
+      <Link href={`/players/${player.userId}`} className="contents">
+        {Content}
+      </Link>
+    );
+  }
+
+  return Content;
 }
 
 function PlayerRow({
@@ -233,7 +254,7 @@ function PlayerRow({
   // Movement indicator: stable pseudo indicator based on position
   const movement = position % 3 === 0 ? "up" : position % 4 === 0 ? "down" : "neutral";
 
-  return (
+  const Row = (
     <article
       className={`flex items-center justify-between gap-3 p-3 transition ${
         isCurrent ? "bg-[#182618] border-l-4 border-l-[#c5f94d]" : "hover:bg-[#131b14]"
@@ -287,6 +308,16 @@ function PlayerRow({
       </div>
     </article>
   );
+
+  if (player.userId) {
+    return (
+      <Link href={`/players/${player.userId}`} className="block">
+        {Row}
+      </Link>
+    );
+  }
+
+  return Row;
 }
 
 function playerName(player: LeaderboardPlayer) {

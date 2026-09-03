@@ -3,6 +3,7 @@ import {
   ChevronRight,
   Clock,
   Gamepad2,
+  Search,
   Shield,
   Swords,
   Trophy,
@@ -101,6 +102,14 @@ export default async function Home() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Link
+            href="/players"
+            className="grid h-10 w-10 place-items-center rounded-2xl border border-[#2a3c2b] bg-[#111912] text-[#869985] hover:border-[#4d694b] hover:text-[#c5f94d] transition active:scale-95"
+            aria-label="Search players"
+            title="Search players"
+          >
+            <Search className="h-4 w-4" />
+          </Link>
           <NotificationBell
             initialUnreadCount={
               unreadNotificationsResult.success ? unreadNotificationsResult.data ?? 0 : 0

@@ -3,6 +3,7 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Check, Copy, Crown, Plus, Shield, Trash2, Trophy, UserMinus, Users, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   createTeam,
@@ -214,9 +215,9 @@ export function TeamsClient({ initialTeams }: { initialTeams: Team[] }) {
                 <div className="mt-3 divide-y divide-[#222c23] rounded-xl border border-[#2a352b] bg-black/30">
                   {team.roster.map((member) => (
                     <div key={member.id} className="flex items-center justify-between gap-3 p-3">
-                      <div className="min-w-0 flex-1">
+                      <Link href={`/players/${member.userId}`} className="min-w-0 flex-1 group">
                         <div className="flex items-center gap-2">
-                          <p className="truncate text-sm font-bold text-white">{member.name}</p>
+                          <p className="truncate text-sm font-bold text-white group-hover:text-[#c5f94d] transition">{member.name}</p>
                           {member.role === "CAPTAIN" && (
                             <span className="inline-flex items-center gap-1 rounded bg-amber-400/15 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-amber-300">
                               <Crown className="h-2.5 w-2.5" aria-hidden /> Captain
@@ -224,7 +225,7 @@ export function TeamsClient({ initialTeams }: { initialTeams: Team[] }) {
                           )}
                         </div>
                         <p className="mt-0.5 text-[11px] text-[#8e998f]">{member.rank} · Level {member.level} · {member.wins}W / {member.losses}L</p>
-                      </div>
+                      </Link>
                       {isCaptain && member.role !== "CAPTAIN" && (
                         <div className="flex shrink-0 items-center gap-1.5">
                           <button
