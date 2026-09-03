@@ -23,6 +23,7 @@ async function loadAdminContext() {
         finance: (stats?.pendingPayments ?? 0) + (stats?.pendingTransactions ?? 0),
         matches: stats?.matchesNeedingAttention ?? 0,
         registrations: stats?.registrations ?? 0,
+        notifications: 0,
       },
     };
   } catch {

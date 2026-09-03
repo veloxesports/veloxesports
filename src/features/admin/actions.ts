@@ -4,18 +4,19 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/database/prisma";
 import { requireRole } from "@/lib/auth/current-user";
-import { Prisma, TournamentFormat, TournamentParticipantType, TournamentStatus } from "@/lib/generated/prisma/client";
+import { MatchStatus, NotificationType, PaymentStatus, Prisma, Rank, RegistrationStatus, Role, TeamRole, TournamentFormat, TournamentParticipantType, TournamentStatus, UserStatus } from "@/lib/generated/prisma/client";
 import { getTournamentRulesTemplate } from "@/lib/tournaments/rule-templates";
 import { getCheckInWindow } from "@/lib/tournaments/check-in";
 import { generateSingleEliminationBracketInTransaction } from "@/lib/tournaments/bracket";
 import { runTournamentLifecycle } from "@/lib/tournaments/lifecycle";
-import { dispatchTelegramNotificationsCreatedSince } from "@/lib/notifications/delivery";
+import { dispatchPendingTelegramNotifications, dispatchTelegramNotificationsCreatedSince } from "@/lib/notifications/delivery";
 import { refundStarsPayment } from "@/features/payments/actions";
 
 const administratorRoles = ["SUPER_ADMIN", "ADMIN"] as const;
 const tournamentManagerRoles = ["SUPER_ADMIN", "ADMIN", "TOURNAMENT_MANAGER"] as const;
 const financeRoles = ["SUPER_ADMIN", "ADMIN", "FINANCE_MANAGER"] as const;
 const moderatorRoles = ["SUPER_ADMIN", "ADMIN", "TOURNAMENT_MANAGER", "MODERATOR"] as const;
+const webAdminRoles = ["SUPER_ADMIN", "ADMIN", "TOURNAMENT_MANAGER", "FINANCE_MANAGER", "MODERATOR", "SUPPORT"] as const;
 const automatedTournamentFormat = TournamentFormat.SINGLE_ELIMINATION;
 const initialTournamentStatuses = new Set<TournamentStatus>([TournamentStatus.DRAFT, TournamentStatus.REGISTRATION_OPEN]);
 const manualStatusTransitions: Partial<Record<TournamentStatus, readonly TournamentStatus[]>> = {
@@ -1016,6 +1017,1496 @@ export async function updateSystemSetting(input: unknown) {
     }
     console.error("Admin setting update failed", error);
     return { success: false, error: "We couldn't update that setting." };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Comprehensive Admin Command Center Actions
+// ---------------------------------------------------------------------------
+
+export type AdminDashboardOverviewData = {
+  admin: { id: string; name: string; role: string };
+  counts: {
+    totalTournaments: number;
+    activeTournaments: number;
+    upcomingTournaments: number;
+    liveTournaments: number;
+    completedTournaments: number;
+    draftTournaments: number;
+
+    totalMatches: number;
+    matchesToday: number;
+    liveMatches: number;
+    completedMatches: number;
+    disputedMatches: number;
+    underReviewMatches: number;
+    awaitingResultMatches: number;
+    matchesNeedingAttention: number;
+
+    totalUsers: number;
+    activeUsers: number;
+    totalTeams: number;
+    connectedDiscordUsers: number;
+    discordConnectionRate: number;
+
+    pendingDisputes: number;
+    pendingRegistrations: number;
+    confirmedRegistrations: number;
+    pendingPayments: number;
+    pendingTransactions: number;
+    failedNotifications: number;
+
+    verifiedPaymentStars: number;
+    refundedStars: number;
+    prizeRewardStars: number;
+  };
+  attentionRequired: {
+    pendingDisputes: number;
+    pendingRegistrations: number;
+    matchesNeedingAttention: number;
+    failedNotifications: number;
+  };
+  activeTournaments: Array<{
+    id: string;
+    title: string;
+    slug: string;
+    status: TournamentStatus;
+    startDate: Date;
+    currentParticipants: number;
+    maxParticipants: number;
+    prizePool: number;
+    entryFee: number;
+    isPaid: boolean;
+    game: { id: string; name: string };
+    _count: { registrations: number; matches: number };
+  }>;
+  liveMatches: Array<{
+    id: string;
+    tournamentId: string;
+    tournamentTitle: string;
+    gameName: string;
+    round: number;
+    status: MatchStatus;
+    score1: number | null;
+    score2: number | null;
+    participant1: string;
+    participant2: string;
+    hasDispute: boolean;
+    disputeReason?: string;
+  }>;
+  openDisputes: Array<{
+    id: string;
+    reason: string;
+    match: {
+      id: string;
+      round: number;
+      tournament: { id: string; title: string };
+    };
+  }>;
+  recentRegistrations: Array<{
+    id: string;
+    status: RegistrationStatus;
+    createdAt: Date;
+    tournament: { id: string; title: string; game: { name: string } };
+    user: {
+      id: string;
+      username: string | null;
+      firstName: string | null;
+      profileImage: string | null;
+      profile: { veloxUsername: string | null; discordUsername: string | null } | null;
+    };
+    team: { id: string; name: string; logoUrl: string | null } | null;
+  }>;
+  recentMatches: Array<{
+    id: string;
+    tournamentId: string;
+    tournamentTitle: string;
+    gameName: string;
+    round: number;
+    status: MatchStatus;
+    score1: number | null;
+    score2: number | null;
+    updatedAt: Date;
+    participant1: string;
+    participant2: string;
+  }>;
+  recentDiscordConnections: Array<{
+    id: string;
+    veloxUsername: string | null;
+    discordUsername: string | null;
+    discordDisplayName: string | null;
+    discordAvatarUrl: string | null;
+    discordConnected: boolean;
+    discordConnectedAt: Date | null;
+    user: {
+      id: string;
+      username: string | null;
+      firstName: string | null;
+      profileImage: string | null;
+    };
+  }>;
+  recentAuditLogs: Array<{
+    id: string;
+    action: string;
+    entity: string;
+    entityId: string;
+    createdAt: Date;
+    admin: {
+      id: string;
+      username: string | null;
+      firstName: string | null;
+    };
+  }>;
+};
+
+export type AdminMatchItem = {
+  id: string;
+  tournamentId: string;
+  tournamentTitle: string;
+  tournamentStatus: TournamentStatus;
+  gameName: string;
+  format: TournamentFormat;
+  round: number;
+  bracketPosition: number | null;
+  status: MatchStatus;
+  score1: number | null;
+  score2: number | null;
+  winnerId: string | null;
+  player1Id: string | null;
+  player2Id: string | null;
+  team1Id: string | null;
+  team2Id: string | null;
+  scheduledTime: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  player1: {
+    id: string;
+    username: string | null;
+    firstName: string | null;
+    profileImage: string | null;
+    profile: {
+      veloxUsername: string | null;
+      discordUsername: string | null;
+      discordDisplayName: string | null;
+      discordAvatarUrl: string | null;
+      rank: Rank;
+      level: number;
+    } | null;
+  } | null;
+  player2: {
+    id: string;
+    username: string | null;
+    firstName: string | null;
+    profileImage: string | null;
+    profile: {
+      veloxUsername: string | null;
+      discordUsername: string | null;
+      discordDisplayName: string | null;
+      discordAvatarUrl: string | null;
+      rank: Rank;
+      level: number;
+    } | null;
+  } | null;
+  team1: { id: string; name: string; logoUrl: string | null } | null;
+  team2: { id: string; name: string; logoUrl: string | null } | null;
+  disputes: Array<{ id: string; reason: string; status: string; createdAt: Date }>;
+  resultsCount: number;
+  latestResult: unknown | null;
+};
+
+export type AdminPlayerItem = {
+  id: string;
+  telegramId: string;
+  username: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  profileImage: string | null;
+  status: UserStatus;
+  role: Role;
+  createdAt: Date;
+  lastLogin: Date | null;
+  profile: {
+    veloxUsername: string | null;
+    rank: Rank;
+    level: number;
+    xp: number;
+    country: string | null;
+    wins: number;
+    losses: number;
+    tournamentWins: number;
+    discordId: string | null;
+    discordUsername: string | null;
+    discordDisplayName: string | null;
+    discordAvatarUrl: string | null;
+    discordConnected: boolean;
+    discordConnectedAt: Date | null;
+  } | null;
+  _count: {
+    registrations: number;
+    payments: number;
+    teamMemberships: number;
+  };
+};
+
+export type AdminTeamItem = {
+  id: string;
+  name: string;
+  logoUrl: string | null;
+  captainId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  captain: {
+    id: string;
+    username: string | null;
+    firstName: string | null;
+    profileImage: string | null;
+    profile: { veloxUsername: string | null } | null;
+  } | null;
+  members: Array<{
+    id: string;
+    role: TeamRole;
+    user: {
+      id: string;
+      username: string | null;
+      firstName: string | null;
+      profileImage: string | null;
+      profile: {
+        veloxUsername: string | null;
+        rank: Rank;
+        level: number;
+        discordUsername: string | null;
+      } | null;
+    };
+  }>;
+  _count: {
+    registrations: number;
+    members: number;
+    payments: number;
+  };
+};
+
+export type AdminRegistrationItem = {
+  id: string;
+  tournamentId: string;
+  userId: string;
+  teamId: string | null;
+  status: RegistrationStatus;
+  checkedIn: boolean;
+  createdAt: Date;
+  tournament: {
+    id: string;
+    title: string;
+    status: TournamentStatus;
+    entryFee: number;
+    isPaid: boolean;
+    game: { name: string };
+  };
+  user: {
+    id: string;
+    username: string | null;
+    firstName: string | null;
+    profileImage: string | null;
+    profile: {
+      veloxUsername: string | null;
+      rank: Rank;
+      level: number;
+      discordUsername: string | null;
+      discordDisplayName: string | null;
+      discordConnected: boolean;
+    } | null;
+  };
+  team: {
+    id: string;
+    name: string;
+    logoUrl: string | null;
+  } | null;
+  payment: {
+    id: string;
+    amount: number;
+    status: PaymentStatus;
+  } | null;
+};
+
+export type AdminDiscordStatsData = {
+  totalUsers: number;
+  totalConnected: number;
+  recentConnected: number;
+  unconnected: number;
+  connectionRate: number;
+  profiles: Array<{
+    id: string;
+    userId: string;
+    telegramId: string;
+    playerName: string;
+    profileImage: string | null;
+    rank: Rank;
+    level: number;
+    discordConnected: boolean;
+    discordId: string | null;
+    discordUsername: string | null;
+    discordDisplayName: string | null;
+    discordAvatarUrl: string | null;
+    discordConnectedAt: Date | null;
+  }>;
+};
+
+export type AdminNotificationsData = {
+  totalCount: number;
+  failedCount: number;
+  notifications: Array<{
+    id: string;
+    title: string;
+    message: string;
+    type: NotificationType;
+    isRead: boolean;
+    telegramDeliveryEligible: boolean;
+    telegramSentAt: Date | null;
+    telegramDeliveryError: string | null;
+    telegramDeliveryAttempts: number;
+    createdAt: Date;
+    user: {
+      id: string;
+      telegramId: string;
+      name: string;
+    };
+  }>;
+};
+
+export async function getAdminDashboardOverview(): Promise<
+  { success: true; data: AdminDashboardOverviewData } | { success: false; error: string }
+> {
+  try {
+    const admin = await requireRole(["SUPER_ADMIN", "ADMIN", "TOURNAMENT_MANAGER", "FINANCE_MANAGER", "MODERATOR", "SUPPORT"]);
+    const playerAccounts = { NOT: { telegramId: { startsWith: "web-admin:" } } };
+    const now = new Date();
+    const activeSince = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfToday = new Date(startOfToday.getTime() + 24 * 60 * 60 * 1000);
+
+    const [
+      totalTournaments,
+      tournamentsByStatus,
+      totalMatches,
+      matchesByStatus,
+      matchesToday,
+      totalUsers,
+      activeUsers,
+      totalTeams,
+      connectedDiscordUsers,
+      pendingDisputes,
+      pendingRegistrations,
+      confirmedRegistrations,
+      pendingPayments,
+      pendingTransactions,
+      failedNotifications,
+      paymentTotals,
+      refundTotals,
+      rewardTotals,
+      activeTournaments,
+      liveMatches,
+      openDisputes,
+      recentRegistrations,
+      recentMatches,
+      recentDiscordConnections,
+      recentAuditLogs,
+    ] = await Promise.all([
+      prisma.tournament.count(),
+      prisma.tournament.groupBy({ by: ["status"], _count: { _all: true } }),
+      prisma.match.count(),
+      prisma.match.groupBy({ by: ["status"], _count: { _all: true } }),
+      prisma.match.count({
+        where: {
+          scheduledTime: { gte: startOfToday, lte: endOfToday },
+        },
+      }),
+      prisma.user.count({ where: playerAccounts }),
+      prisma.user.count({ where: { ...playerAccounts, status: "ACTIVE", lastLogin: { gte: activeSince } } }),
+      prisma.team.count(),
+      prisma.userProfile.count({ where: { discordConnected: true } }),
+      prisma.dispute.count({ where: { status: "OPEN" } }),
+      prisma.tournamentRegistration.count({ where: { status: "PENDING" } }),
+      prisma.tournamentRegistration.count({ where: { status: "CONFIRMED" } }),
+      prisma.telegramPayment.count({ where: { status: "PENDING" } }),
+      prisma.walletTransaction.count({ where: { status: { in: ["PENDING", "PROCESSING"] } } }),
+      prisma.notification.count({ where: { telegramDeliveryError: { not: null } } }),
+      prisma.telegramPayment.aggregate({ _sum: { amount: true }, where: { status: "COMPLETED" } }),
+      prisma.refund.aggregate({ _sum: { amount: true }, where: { status: "COMPLETED" } }),
+      prisma.walletTransaction.aggregate({ _sum: { amount: true }, where: { type: "PRIZE_REWARD", status: "COMPLETED" } }),
+      prisma.tournament.findMany({
+        where: { status: { in: ["REGISTRATION_OPEN", "UPCOMING", "CHECK_IN", "LIVE"] } },
+        orderBy: { startDate: "asc" },
+        take: 6,
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          status: true,
+          startDate: true,
+          currentParticipants: true,
+          maxParticipants: true,
+          prizePool: true,
+          entryFee: true,
+          isPaid: true,
+          game: { select: { id: true, name: true } },
+          _count: { select: { registrations: true, matches: true } },
+        },
+      }),
+      prisma.match.findMany({
+        where: { status: { in: ["LIVE", "AWAITING_RESULT", "UNDER_REVIEW", "DISPUTED"] } },
+        orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
+        take: 6,
+        include: {
+          tournament: { select: { id: true, title: true, game: { select: { name: true } } } },
+          disputes: { where: { status: "OPEN" }, select: { id: true, reason: true } },
+        },
+      }),
+      prisma.dispute.findMany({
+        where: { status: "OPEN" },
+        orderBy: { createdAt: "desc" },
+        take: 4,
+        include: {
+          match: {
+            select: {
+              id: true,
+              round: true,
+              tournament: { select: { id: true, title: true } },
+            },
+          },
+        },
+      }),
+      prisma.tournamentRegistration.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 6,
+        include: {
+          tournament: { select: { id: true, title: true, game: { select: { name: true } } } },
+          user: {
+            select: {
+              id: true,
+              username: true,
+              firstName: true,
+              profileImage: true,
+              profile: { select: { veloxUsername: true, discordUsername: true } },
+            },
+          },
+          team: { select: { id: true, name: true, logoUrl: true } },
+        },
+      }),
+      prisma.match.findMany({
+        where: { status: "COMPLETED" },
+        orderBy: { updatedAt: "desc" },
+        take: 6,
+        include: {
+          tournament: { select: { id: true, title: true, game: { select: { name: true } } } },
+        },
+      }),
+      prisma.userProfile.findMany({
+        where: { discordConnected: true, discordConnectedAt: { not: null } },
+        orderBy: { discordConnectedAt: "desc" },
+        take: 6,
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              firstName: true,
+              profileImage: true,
+            },
+          },
+        },
+      }),
+      prisma.auditLog.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 6,
+        include: {
+          admin: {
+            select: {
+              id: true,
+              username: true,
+              firstName: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    const participantIds = [
+      ...new Set(
+        [
+          ...liveMatches.flatMap((m) => [m.player1Id, m.player2Id, m.team1Id, m.team2Id]),
+          ...recentMatches.flatMap((m) => [m.player1Id, m.player2Id, m.team1Id, m.team2Id]),
+        ].filter(Boolean) as string[]
+      ),
+    ];
+
+    const [playersMap, teamsMap] = await Promise.all([
+      participantIds.length > 0
+        ? prisma.user.findMany({
+            where: { id: { in: participantIds } },
+            select: {
+              id: true,
+              username: true,
+              firstName: true,
+              profile: { select: { veloxUsername: true, discordUsername: true } },
+            },
+          }).then((users) => new Map(users.map((u) => [u.id, u.profile?.veloxUsername ?? u.username ?? u.firstName ?? "Player"])))
+        : new Map<string, string>(),
+      participantIds.length > 0
+        ? prisma.team.findMany({
+            where: { id: { in: participantIds } },
+            select: { id: true, name: true },
+          }).then((teams) => new Map(teams.map((t) => [t.id, t.name])))
+        : new Map<string, string>(),
+    ]);
+
+    const formattedLiveMatches = liveMatches.map((match) => ({
+      id: match.id,
+      tournamentId: match.tournament.id,
+      tournamentTitle: match.tournament.title,
+      gameName: match.tournament.game.name,
+      round: match.round,
+      status: match.status,
+      score1: match.score1,
+      score2: match.score2,
+      participant1: match.team1Id ? (teamsMap.get(match.team1Id) ?? "Team 1") : match.player1Id ? (playersMap.get(match.player1Id) ?? "Player 1") : "TBD",
+      participant2: match.team2Id ? (teamsMap.get(match.team2Id) ?? "Team 2") : match.player2Id ? (playersMap.get(match.player2Id) ?? "Player 2") : "TBD",
+      hasDispute: match.disputes.length > 0,
+      disputeReason: match.disputes[0]?.reason,
+    }));
+
+    const formattedRecentMatches = recentMatches.map((match) => ({
+      id: match.id,
+      tournamentId: match.tournament.id,
+      tournamentTitle: match.tournament.title,
+      gameName: match.tournament.game.name,
+      round: match.round,
+      status: match.status,
+      score1: match.score1,
+      score2: match.score2,
+      updatedAt: match.updatedAt,
+      participant1: match.team1Id ? (teamsMap.get(match.team1Id) ?? "Team 1") : match.player1Id ? (playersMap.get(match.player1Id) ?? "Player 1") : "TBD",
+      participant2: match.team2Id ? (teamsMap.get(match.team2Id) ?? "Team 2") : match.player2Id ? (playersMap.get(match.player2Id) ?? "Player 2") : "TBD",
+    }));
+
+    const statusMap = (entries: Array<{ status: string; _count: { _all: number } }>) =>
+      Object.fromEntries(entries.map((e) => [e.status, e._count._all]));
+
+    const tStatus = statusMap(tournamentsByStatus);
+    const mStatus = statusMap(matchesByStatus);
+
+    return {
+      success: true as const,
+      data: {
+        admin: { id: admin.id, name: admin.username ?? "Admin", role: admin.role },
+        counts: {
+          totalTournaments,
+          activeTournaments: (tStatus.REGISTRATION_OPEN ?? 0) + (tStatus.UPCOMING ?? 0) + (tStatus.CHECK_IN ?? 0) + (tStatus.LIVE ?? 0),
+          upcomingTournaments: tStatus.UPCOMING ?? 0,
+          liveTournaments: tStatus.LIVE ?? 0,
+          completedTournaments: tStatus.COMPLETED ?? 0,
+          draftTournaments: tStatus.DRAFT ?? 0,
+
+          totalMatches,
+          matchesToday,
+          liveMatches: mStatus.LIVE ?? 0,
+          completedMatches: mStatus.COMPLETED ?? 0,
+          disputedMatches: mStatus.DISPUTED ?? 0,
+          underReviewMatches: mStatus.UNDER_REVIEW ?? 0,
+          awaitingResultMatches: mStatus.AWAITING_RESULT ?? 0,
+          matchesNeedingAttention: (mStatus.LIVE ?? 0) + (mStatus.AWAITING_RESULT ?? 0) + (mStatus.UNDER_REVIEW ?? 0) + (mStatus.DISPUTED ?? 0),
+
+          totalUsers,
+          activeUsers,
+          totalTeams,
+          connectedDiscordUsers,
+          discordConnectionRate: totalUsers > 0 ? Math.round((connectedDiscordUsers / totalUsers) * 100) : 0,
+
+          pendingDisputes,
+          pendingRegistrations,
+          confirmedRegistrations,
+          pendingPayments,
+          pendingTransactions,
+          failedNotifications,
+
+          verifiedPaymentStars: paymentTotals._sum.amount ?? 0,
+          refundedStars: refundTotals._sum.amount ?? 0,
+          prizeRewardStars: rewardTotals._sum.amount ?? 0,
+        },
+        attentionRequired: {
+          pendingDisputes,
+          pendingRegistrations,
+          matchesNeedingAttention: (mStatus.LIVE ?? 0) + (mStatus.AWAITING_RESULT ?? 0) + (mStatus.UNDER_REVIEW ?? 0) + (mStatus.DISPUTED ?? 0),
+          failedNotifications,
+        },
+        activeTournaments,
+        liveMatches: formattedLiveMatches,
+        openDisputes,
+        recentRegistrations,
+        recentMatches: formattedRecentMatches,
+        recentDiscordConnections,
+        recentAuditLogs,
+      },
+    };
+  } catch (error) {
+    if (error instanceof Error && ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.message)) {
+      return { success: false as const, error: "Access denied." };
+    }
+    console.error("getAdminDashboardOverview error", error);
+    return { success: false as const, error: "Failed to load admin overview." };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Match Operations Desk
+// ---------------------------------------------------------------------------
+
+export async function getAdminMatches(filter?: {
+  tournamentId?: string;
+  gameId?: string;
+  status?: string;
+  search?: string;
+  limit?: number;
+}): Promise<{ success: true; data: AdminMatchItem[] } | { success: false; error: string }> {
+  try {
+    await requireRole([...tournamentManagerRoles, ...moderatorRoles]);
+    const where: Prisma.MatchWhereInput = {};
+
+    if (filter?.tournamentId) where.tournamentId = filter.tournamentId;
+    if (filter?.gameId) where.tournament = { gameId: filter.gameId };
+    if (filter?.status && filter.status !== "ALL") {
+      where.status = filter.status as MatchStatus;
+    }
+
+    const matches = await prisma.match.findMany({
+      where,
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+      take: Math.min(Math.max(filter?.limit ?? 50, 1), 100),
+      include: {
+        tournament: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            format: true,
+            participantType: true,
+            game: { select: { id: true, name: true, slug: true } },
+          },
+        },
+        disputes: {
+          select: {
+            id: true,
+            reason: true,
+            status: true,
+            createdAt: true,
+          },
+        },
+        results: {
+          orderBy: { createdAt: "desc" },
+          take: 3,
+        },
+      },
+    });
+
+    const userIds = [
+      ...new Set(
+        matches
+          .flatMap((m) => [m.player1Id, m.player2Id])
+          .filter(Boolean) as string[]
+      ),
+    ];
+    const teamIds = [
+      ...new Set(
+        matches
+          .flatMap((m) => [m.team1Id, m.team2Id])
+          .filter(Boolean) as string[]
+      ),
+    ];
+
+    const [players, teams] = await Promise.all([
+      userIds.length > 0
+        ? prisma.user.findMany({
+            where: { id: { in: userIds } },
+            select: {
+              id: true,
+              username: true,
+              firstName: true,
+              profileImage: true,
+              profile: {
+                select: {
+                  veloxUsername: true,
+                  discordUsername: true,
+                  discordDisplayName: true,
+                  discordAvatarUrl: true,
+                  rank: true,
+                  level: true,
+                },
+              },
+            },
+          })
+        : [],
+      teamIds.length > 0
+        ? prisma.team.findMany({
+            where: { id: { in: teamIds } },
+            select: { id: true, name: true, logoUrl: true },
+          })
+        : [],
+    ]);
+
+    const playerMap = new Map(players.map((p) => [p.id, p]));
+    const teamMap = new Map(teams.map((t) => [t.id, t]));
+
+    const formatted = matches.map((match) => ({
+      id: match.id,
+      tournamentId: match.tournamentId,
+      tournamentTitle: match.tournament.title,
+      tournamentStatus: match.tournament.status,
+      gameName: match.tournament.game.name,
+      format: match.tournament.format,
+      round: match.round,
+      bracketPosition: match.bracketPosition,
+      status: match.status,
+      score1: match.score1,
+      score2: match.score2,
+      winnerId: match.winnerId,
+      player1Id: match.player1Id,
+      player2Id: match.player2Id,
+      team1Id: match.team1Id,
+      team2Id: match.team2Id,
+      scheduledTime: match.scheduledTime,
+      createdAt: match.createdAt,
+      updatedAt: match.updatedAt,
+      player1: match.player1Id ? playerMap.get(match.player1Id) ?? null : null,
+      player2: match.player2Id ? playerMap.get(match.player2Id) ?? null : null,
+      team1: match.team1Id ? teamMap.get(match.team1Id) ?? null : null,
+      team2: match.team2Id ? teamMap.get(match.team2Id) ?? null : null,
+      disputes: match.disputes,
+      resultsCount: match.results.length,
+      latestResult: match.results[0] ?? null,
+    }));
+
+    return { success: true as const, data: formatted };
+  } catch (error) {
+    if (error instanceof Error && ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.message)) {
+      return { success: false as const, error: "You do not have permission to view matches." };
+    }
+    console.error("getAdminMatches error", error);
+    return { success: false as const, error: "Failed to load matches." };
+  }
+}
+
+const updateMatchSchema = z.object({
+  matchId: z.string().uuid(),
+  score1: z.coerce.number().int().min(0).max(999).optional().nullable(),
+  score2: z.coerce.number().int().min(0).max(999).optional().nullable(),
+  winnerId: z.string().uuid().optional().nullable(),
+  status: z.nativeEnum(MatchStatus).optional(),
+  scheduledTime: z.coerce.date().optional().nullable(),
+});
+
+export async function updateAdminMatch(input: unknown) {
+  const parsed = updateMatchSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid match data." };
+
+  try {
+    const admin = await requireRole([...tournamentManagerRoles, ...moderatorRoles]);
+    const { matchId, score1, score2, winnerId, status, scheduledTime } = parsed.data;
+
+    const currentMatch = await prisma.match.findUnique({
+      where: { id: matchId },
+      select: { id: true, tournamentId: true, status: true, score1: true, score2: true, winnerId: true },
+    });
+    if (!currentMatch) return { success: false, error: "Match not found." };
+
+    const updateData: Prisma.MatchUpdateInput = {};
+    if (score1 !== undefined) updateData.score1 = score1;
+    if (score2 !== undefined) updateData.score2 = score2;
+    if (winnerId !== undefined) updateData.winnerId = winnerId;
+    if (status !== undefined) updateData.status = status;
+    if (scheduledTime !== undefined) updateData.scheduledTime = scheduledTime;
+
+    const updated = await prisma.match.update({
+      where: { id: matchId },
+      data: updateData,
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        adminId: admin.id,
+        action: "MATCH_UPDATED_BY_ADMIN",
+        entity: "Match",
+        entityId: matchId,
+        oldValue: toAuditJson(currentMatch),
+        newValue: toAuditJson(updated),
+      },
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/matches");
+    revalidatePath(`/admin/tournaments/${currentMatch.tournamentId}`);
+    return { success: true, data: updated };
+  } catch (error) {
+    if (error instanceof Error && ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.message)) {
+      return { success: false, error: "Access denied." };
+    }
+    console.error("updateAdminMatch error", error);
+    return { success: false, error: "Failed to update match." };
+  }
+}
+
+const createMatchSchema = z.object({
+  tournamentId: z.string().uuid(),
+  round: z.coerce.number().int().min(1).default(1),
+  bracketPosition: z.coerce.number().int().min(1).optional().nullable(),
+  player1Id: z.string().uuid().optional().nullable(),
+  player2Id: z.string().uuid().optional().nullable(),
+  team1Id: z.string().uuid().optional().nullable(),
+  team2Id: z.string().uuid().optional().nullable(),
+  scheduledTime: z.coerce.date().optional().nullable(),
+  status: z.nativeEnum(MatchStatus).default(MatchStatus.SCHEDULED),
+});
+
+export async function createAdminMatch(input: unknown) {
+  const parsed = createMatchSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid match payload." };
+
+  try {
+    const admin = await requireRole([...tournamentManagerRoles]);
+    const { tournamentId, round, bracketPosition, player1Id, player2Id, team1Id, team2Id, scheduledTime, status } = parsed.data;
+
+    const tournament = await prisma.tournament.findUnique({
+      where: { id: tournamentId },
+      select: { id: true, title: true, status: true },
+    });
+    if (!tournament) return { success: false, error: "Tournament not found." };
+
+    const match = await prisma.match.create({
+      data: {
+        tournamentId,
+        round,
+        bracketPosition,
+        player1Id,
+        player2Id,
+        team1Id,
+        team2Id,
+        scheduledTime,
+        status,
+      },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        adminId: admin.id,
+        action: "MATCH_CREATED_BY_ADMIN",
+        entity: "Match",
+        entityId: match.id,
+        newValue: toAuditJson({ tournamentId, round, bracketPosition, player1Id, player2Id }),
+      },
+    });
+
+    revalidatePath("/admin/matches");
+    revalidatePath(`/admin/tournaments/${tournamentId}`);
+    return { success: true, data: match };
+  } catch (error) {
+    if (error instanceof Error && ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.message)) {
+      return { success: false, error: "Access denied." };
+    }
+    console.error("createAdminMatch error", error);
+    return { success: false, error: "Failed to create match." };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Player & Team Management Actions
+// ---------------------------------------------------------------------------
+
+export async function getAdminPlayers(filter?: {
+  search?: string;
+  status?: string;
+  rank?: string;
+  discordOnly?: boolean;
+  limit?: number;
+}): Promise<{ success: true; data: AdminPlayerItem[] } | { success: false; error: string }> {
+  try {
+    await requireRole([...webAdminRoles]);
+    const playerAccounts = { NOT: { telegramId: { startsWith: "web-admin:" } } };
+    const where: Prisma.UserWhereInput = { AND: [playerAccounts] };
+
+    if (filter?.search?.trim()) {
+      const q = filter.search.trim();
+      const contains = { contains: q, mode: "insensitive" as const };
+      (where.AND as Prisma.UserWhereInput[]).push({
+        OR: [
+          { username: contains },
+          { firstName: contains },
+          { lastName: contains },
+          { telegramId: contains },
+          { profile: { is: { veloxUsername: contains } } },
+          { profile: { is: { discordUsername: contains } } },
+          { profile: { is: { discordDisplayName: contains } } },
+          { profile: { is: { discordId: contains } } },
+        ],
+      });
+    }
+
+    if (filter?.status && filter.status !== "ALL") {
+      (where.AND as Prisma.UserWhereInput[]).push({ status: filter.status as UserStatus });
+    }
+
+    if (filter?.discordOnly) {
+      (where.AND as Prisma.UserWhereInput[]).push({ profile: { is: { discordConnected: true } } });
+    }
+
+    const players = await prisma.user.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: Math.min(Math.max(filter?.limit ?? 50, 1), 100),
+      select: {
+        id: true,
+        telegramId: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        profileImage: true,
+        status: true,
+        role: true,
+        createdAt: true,
+        lastLogin: true,
+        profile: {
+          select: {
+            veloxUsername: true,
+            rank: true,
+            level: true,
+            xp: true,
+            country: true,
+            wins: true,
+            losses: true,
+            tournamentWins: true,
+            discordId: true,
+            discordUsername: true,
+            discordDisplayName: true,
+            discordAvatarUrl: true,
+            discordConnected: true,
+            discordConnectedAt: true,
+          },
+        },
+        _count: {
+          select: {
+            registrations: true,
+            payments: true,
+            teamMemberships: true,
+          },
+        },
+      },
+    });
+
+    return { success: true as const, data: players };
+  } catch (error) {
+    if (error instanceof Error && ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.message)) {
+      return { success: false as const, error: "Access denied." };
+    }
+    console.error("getAdminPlayers error", error);
+    return { success: false as const, error: "Failed to load players." };
+  }
+}
+
+export async function getAdminTeams(filter?: {
+  search?: string;
+  limit?: number;
+}): Promise<{ success: true; data: AdminTeamItem[] } | { success: false; error: string }> {
+  try {
+    await requireRole([...webAdminRoles]);
+    const where: Prisma.TeamWhereInput = {};
+
+    if (filter?.search?.trim()) {
+      const q = filter.search.trim();
+      where.OR = [
+        { name: { contains: q, mode: "insensitive" } },
+      ];
+    }
+
+    const teams = await prisma.team.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: Math.min(Math.max(filter?.limit ?? 50, 1), 100),
+      include: {
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                firstName: true,
+                profileImage: true,
+                profile: { select: { veloxUsername: true, rank: true, level: true, discordUsername: true } },
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            registrations: true,
+            members: true,
+            payments: true,
+          },
+        },
+      },
+    });
+
+    const captainIds = [...new Set(teams.map((t) => t.captainId))];
+    const captains = await prisma.user.findMany({
+      where: { id: { in: captainIds } },
+      select: {
+        id: true,
+        username: true,
+        firstName: true,
+        profileImage: true,
+        profile: { select: { veloxUsername: true } },
+      },
+    });
+    const captainMap = new Map(captains.map((c) => [c.id, c]));
+
+    const formatted = teams.map((team) => ({
+      ...team,
+      captain: captainMap.get(team.captainId) ?? null,
+    }));
+
+    return { success: true as const, data: formatted };
+  } catch (error) {
+    if (error instanceof Error && ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.message)) {
+      return { success: false as const, error: "Access denied." };
+    }
+    console.error("getAdminTeams error", error);
+    return { success: false as const, error: "Failed to load teams." };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Registration Management Actions
+// ---------------------------------------------------------------------------
+
+export async function getAdminRegistrations(filter?: {
+  tournamentId?: string;
+  status?: string;
+  search?: string;
+  limit?: number;
+}): Promise<{ success: true; data: AdminRegistrationItem[] } | { success: false; error: string }> {
+  try {
+    await requireRole([...webAdminRoles]);
+    const where: Prisma.TournamentRegistrationWhereInput = {};
+
+    if (filter?.tournamentId) where.tournamentId = filter.tournamentId;
+    if (filter?.status && filter.status !== "ALL") {
+      where.status = filter.status as RegistrationStatus;
+    }
+
+    if (filter?.search?.trim()) {
+      const contains = { contains: filter.search.trim(), mode: "insensitive" as const };
+      where.OR = [
+        { user: { username: contains } },
+        { user: { firstName: contains } },
+        { user: { profile: { is: { veloxUsername: contains } } } },
+        { user: { profile: { is: { discordUsername: contains } } } },
+        { team: { is: { name: contains } } },
+        { tournament: { title: contains } },
+      ];
+    }
+
+    const registrations = await prisma.tournamentRegistration.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: Math.min(Math.max(filter?.limit ?? 50, 1), 100),
+      include: {
+        tournament: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            entryFee: true,
+            isPaid: true,
+            game: { select: { name: true } },
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            username: true,
+            firstName: true,
+            profileImage: true,
+            profile: {
+              select: {
+                veloxUsername: true,
+                rank: true,
+                level: true,
+                discordUsername: true,
+                discordDisplayName: true,
+                discordConnected: true,
+              },
+            },
+          },
+        },
+        team: {
+          select: {
+            id: true,
+            name: true,
+            logoUrl: true,
+          },
+        },
+        payment: {
+          select: {
+            id: true,
+            amount: true,
+            status: true,
+            currency: true,
+            completedAt: true,
+          },
+        },
+      },
+    });
+
+    return { success: true as const, data: registrations };
+  } catch (error) {
+    if (error instanceof Error && ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.message)) {
+      return { success: false as const, error: "Access denied." };
+    }
+    console.error("getAdminRegistrations error", error);
+    return { success: false as const, error: "Failed to load registrations." };
+  }
+}
+
+const updateRegistrationSchema = z.object({
+  registrationId: z.string().uuid(),
+  status: z.nativeEnum(RegistrationStatus).optional(),
+  checkedIn: z.boolean().optional(),
+});
+
+export async function updateRegistrationStatus(input: unknown) {
+  const parsed = updateRegistrationSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid request." };
+
+  try {
+    const admin = await requireRole([...tournamentManagerRoles]);
+    const { registrationId, status, checkedIn } = parsed.data;
+
+    const current = await prisma.tournamentRegistration.findUnique({
+      where: { id: registrationId },
+      select: { id: true, tournamentId: true, status: true, checkedIn: true, userId: true },
+    });
+    if (!current) return { success: false, error: "Registration not found." };
+
+    const updateData: Prisma.TournamentRegistrationUpdateInput = {};
+    if (status) updateData.status = status;
+    if (checkedIn !== undefined) updateData.checkedIn = checkedIn;
+
+    const updated = await prisma.tournamentRegistration.update({
+      where: { id: registrationId },
+      data: updateData,
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        adminId: admin.id,
+        action: "REGISTRATION_STATUS_UPDATED",
+        entity: "TournamentRegistration",
+        entityId: registrationId,
+        oldValue: toAuditJson({ status: current.status, checkedIn: current.checkedIn }),
+        newValue: toAuditJson({ status: updated.status, checkedIn: updated.checkedIn }),
+      },
+    });
+
+    revalidatePath("/admin/registrations");
+    revalidatePath(`/admin/tournaments/${current.tournamentId}`);
+    return { success: true, data: updated };
+  } catch (error) {
+    if (error instanceof Error && ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.message)) {
+      return { success: false, error: "Access denied." };
+    }
+    console.error("updateRegistrationStatus error", error);
+    return { success: false, error: "Failed to update registration." };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Discord Integration Hub Actions
+// ---------------------------------------------------------------------------
+
+export async function getAdminDiscordStats(filter?: {
+  search?: string;
+  limit?: number;
+}): Promise<{ success: true; data: AdminDiscordStatsData } | { success: false; error: string }> {
+  try {
+    await requireRole([...webAdminRoles]);
+    const playerAccounts = { NOT: { telegramId: { startsWith: "web-admin:" } } };
+    const [totalUsers, totalConnected, recentConnected] = await Promise.all([
+      prisma.user.count({ where: playerAccounts }),
+      prisma.userProfile.count({ where: { discordConnected: true } }),
+      prisma.userProfile.count({
+        where: {
+          discordConnected: true,
+          discordConnectedAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+        },
+      }),
+    ]);
+
+    const where: Prisma.UserProfileWhereInput = {};
+    if (filter?.search?.trim()) {
+      const q = filter.search.trim();
+      const contains = { contains: q, mode: "insensitive" as const };
+      where.OR = [
+        { discordUsername: contains },
+        { discordDisplayName: contains },
+        { discordId: contains },
+        { veloxUsername: contains },
+        { user: { username: contains } },
+        { user: { firstName: contains } },
+      ];
+    }
+
+    const profiles = await prisma.userProfile.findMany({
+      where,
+      orderBy: [{ discordConnected: "desc" }, { discordConnectedAt: "desc" }],
+      take: Math.min(Math.max(filter?.limit ?? 50, 1), 100),
+      include: {
+        user: {
+          select: {
+            id: true,
+            telegramId: true,
+            username: true,
+            firstName: true,
+            profileImage: true,
+            status: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+
+    return {
+      success: true as const,
+      data: {
+        totalUsers,
+        totalConnected,
+        unconnected: Math.max(0, totalUsers - totalConnected),
+        connectionRate: totalUsers > 0 ? Math.round((totalConnected / totalUsers) * 100) : 0,
+        recentConnected,
+        profiles: profiles.map((p) => ({
+          id: p.id,
+          userId: p.userId,
+          playerName: p.veloxUsername ?? p.user.username ?? p.user.firstName ?? "Player",
+          telegramId: p.user.telegramId,
+          profileImage: p.user.profileImage,
+          userStatus: p.user.status,
+          userCreatedAt: p.user.createdAt,
+          rank: p.rank,
+          level: p.level,
+          discordId: p.discordId,
+          discordUsername: p.discordUsername,
+          discordDisplayName: p.discordDisplayName,
+          discordAvatarUrl: p.discordAvatarUrl,
+          discordConnected: p.discordConnected,
+          discordConnectedAt: p.discordConnectedAt,
+        })),
+      },
+    };
+  } catch (error) {
+    if (error instanceof Error && ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.message)) {
+      return { success: false as const, error: "Access denied." };
+    }
+    console.error("getAdminDiscordStats error", error);
+    return { success: false as const, error: "Failed to load Discord integration data." };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Notification & Broadcast Operations Actions
+// ---------------------------------------------------------------------------
+
+export async function getAdminNotifications(filter?: {
+  status?: "all" | "sent" | "failed" | "pending";
+  limit?: number;
+}): Promise<{ success: true; data: AdminNotificationsData } | { success: false; error: string }> {
+  try {
+    await requireRole([...webAdminRoles]);
+    const where: Prisma.NotificationWhereInput = {};
+
+    if (filter?.status === "sent") {
+      where.telegramSentAt = { not: null };
+    } else if (filter?.status === "failed") {
+      where.telegramDeliveryError = { not: null };
+    } else if (filter?.status === "pending") {
+      where.telegramDeliveryEligible = true;
+      where.telegramSentAt = null;
+      where.telegramDeliveryError = null;
+    }
+
+    const [notifications, totalCount, failedCount] = await Promise.all([
+      prisma.notification.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        take: Math.min(Math.max(filter?.limit ?? 50, 1), 100),
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              firstName: true,
+              telegramId: true,
+              profile: { select: { veloxUsername: true } },
+            },
+          },
+        },
+      }),
+      prisma.notification.count(),
+      prisma.notification.count({ where: { telegramDeliveryError: { not: null } } }),
+    ]);
+
+    return {
+      success: true as const,
+      data: {
+        totalCount,
+        failedCount,
+        notifications: notifications.map((n) => ({
+          id: n.id,
+          title: n.title,
+          message: n.message,
+          type: n.type,
+          isRead: n.isRead,
+          telegramDeliveryEligible: n.telegramDeliveryEligible,
+          telegramSentAt: n.telegramSentAt,
+          telegramDeliveryError: n.telegramDeliveryError,
+          telegramDeliveryAttempts: n.telegramDeliveryAttempts,
+          createdAt: n.createdAt,
+          user: {
+            id: n.user.id,
+            name: n.user.profile?.veloxUsername ?? n.user.username ?? n.user.firstName ?? "Player",
+            telegramId: n.user.telegramId,
+          },
+        })),
+      },
+    };
+  } catch (error) {
+    if (error instanceof Error && ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.message)) {
+      return { success: false as const, error: "Access denied." };
+    }
+    console.error("getAdminNotifications error", error);
+    return { success: false as const, error: "Failed to load notifications." };
+  }
+}
+
+const broadcastSchema = z.object({
+  title: z.string().trim().min(3).max(120),
+  message: z.string().trim().min(5).max(1000),
+  target: z.enum(["ALL", "TOURNAMENT", "PLAYERS"]),
+  tournamentId: z.string().uuid().optional(),
+  sendTelegram: z.boolean().default(true),
+});
+
+export async function sendAdminBroadcastNotification(input: unknown) {
+  const parsed = broadcastSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid broadcast payload." };
+
+  try {
+    const admin = await requireRole(["SUPER_ADMIN", "ADMIN"]);
+    const { title, message, target, tournamentId, sendTelegram } = parsed.data;
+
+    let targetUserIds: string[] = [];
+
+    if (target === "TOURNAMENT" && tournamentId) {
+      const registrations = await prisma.tournamentRegistration.findMany({
+        where: { tournamentId },
+        select: { userId: true },
+      });
+      targetUserIds = registrations.map((r) => r.userId);
+    } else {
+      const playerAccounts = { NOT: { telegramId: { startsWith: "web-admin:" } } };
+      const users = await prisma.user.findMany({
+        where: playerAccounts,
+        select: { id: true },
+      });
+      targetUserIds = users.map((u) => u.id);
+    }
+
+    if (targetUserIds.length === 0) {
+      return { success: false, error: "No target users found for this broadcast." };
+    }
+
+    const createdNotifications = await prisma.$transaction(
+      targetUserIds.map((userId) =>
+        prisma.notification.create({
+          data: {
+            userId,
+            title,
+            message,
+            type: NotificationType.SYSTEM,
+            telegramDeliveryEligible: sendTelegram,
+            metadata: {
+              broadcast: true,
+              adminId: admin.id,
+              tournamentId: tournamentId ?? null,
+            },
+          },
+        })
+      )
+    );
+
+    if (sendTelegram) {
+      void dispatchPendingTelegramNotifications({ userIds: targetUserIds }).catch(() => undefined);
+    }
+
+    await prisma.auditLog.create({
+      data: {
+        adminId: admin.id,
+        action: "BROADCAST_NOTIFICATION_SENT",
+        entity: "Notification",
+        entityId: admin.id,
+        newValue: toAuditJson({ title, target, userCount: targetUserIds.length, sendTelegram }),
+      },
+    });
+
+    revalidatePath("/admin/notifications");
+    revalidatePath("/notifications");
+    return {
+      success: true,
+      message: `Broadcast delivered to ${createdNotifications.length} player${createdNotifications.length === 1 ? "" : "s"}.`,
+    };
+  } catch (error) {
+    if (error instanceof Error && ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.message)) {
+      return { success: false, error: "Access denied." };
+    }
+    console.error("sendAdminBroadcastNotification error", error);
+    return { success: false, error: "Failed to deliver broadcast." };
+  }
+}
+
+export async function retryFailedNotifications(notificationIds?: string[]) {
+  try {
+    await requireRole(["SUPER_ADMIN", "ADMIN"]);
+    const where: Prisma.NotificationWhereInput = {
+      telegramDeliveryError: { not: null },
+    };
+    if (notificationIds && notificationIds.length > 0) {
+      where.id = { in: notificationIds };
+    }
+
+    const updated = await prisma.notification.updateMany({
+      where,
+      data: {
+        telegramDeliveryAttempts: 0,
+        telegramDeliveryError: null,
+        telegramSentAt: null,
+      },
+    });
+
+    if (updated.count > 0) {
+      void dispatchPendingTelegramNotifications().catch(() => undefined);
+    }
+
+    revalidatePath("/admin/notifications");
+    return { success: true, message: `Queued ${updated.count} failed notification${updated.count === 1 ? "" : "s"} for re-delivery.` };
+  } catch (error) {
+    if (error instanceof Error && ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.message)) {
+      return { success: false, error: "Access denied." };
+    }
+    console.error("retryFailedNotifications error", error);
+    return { success: false, error: "Failed to retry notifications." };
   }
 }
 

@@ -14,9 +14,48 @@ export function AdminAnalytics({ data }: { data: AnalyticsData }) {
         <ChartCard title="Player growth & entries" detail="New player accounts and tournament registrations by day."><TrendChart data={data.trend} /></ChartCard>
         <ChartCard title="Stars flow" detail="Completed payments, refunds, and prize rewards by day."><StarsChart data={data.trend} /></ChartCard>
         <ChartCard title="Tournament lifecycle" detail="Every event, grouped by its current operating status."><DonutChart data={data.tournamentStatuses} emptyLabel="No tournaments" /></ChartCard>
-        <ChartCard title="Player access" detail="Player accounts by their current platform access state."><DonutChart data={data.playerStatuses} emptyLabel="No player accounts" /></ChartCard>
+        <ChartCard title="Most popular games" detail="Active catalog games ranked by tournament registrations."><PopularGamesBar data={data.popularGames ?? []} /></ChartCard>
       </div>
     </section>
+  );
+}
+
+function PopularGamesBar({ data }: { data: Array<{ name: string; tournamentsCount: number; registrationsCount: number }> }) {
+  if (data.length === 0) {
+    return <p className="py-6 text-center text-xs text-[#8e998f]">No game registration data recorded yet.</p>;
+  }
+  const maxRegistrations = Math.max(1, ...data.map((g) => g.registrationsCount));
+
+  return (
+    <div className="space-y-3 pt-1">
+      {data.map((game, index) => {
+        const percent = Math.min(100, Math.round((game.registrationsCount / maxRegistrations) * 100));
+        return (
+          <div key={game.name}>
+            <div className="flex items-center justify-between text-xs">
+              <span className="flex items-center gap-2 font-bold text-white">
+                <span className="grid h-5 w-5 place-items-center rounded bg-[#1c291c] text-[10px] text-[#c5f94d]">
+                  {index + 1}
+                </span>
+                <span className="truncate">{game.name}</span>
+              </span>
+              <span className="text-[#8e998f]">
+                <strong className="text-white">{game.registrationsCount}</strong> entries ({game.tournamentsCount} tournaments)
+              </span>
+            </div>
+            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#1b251c]">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${percent}%`,
+                  backgroundColor: seriesColors[index % seriesColors.length],
+                }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

@@ -3,9 +3,9 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, ChevronLeft, ChevronRight, CircleDollarSign, ClipboardList, LayoutDashboard, Menu, MonitorPlay, Search, Settings, ShieldAlert, Swords, Trophy, Users, X, Zap } from "lucide-react";
+import { BarChart3, Bell, ChevronLeft, ChevronRight, CircleDollarSign, ClipboardList, LayoutDashboard, Menu, MessageSquare, MonitorPlay, Search, Settings, Shield, ShieldAlert, Swords, Trophy, Users, X } from "lucide-react";
 
-type NavCounts = { disputes: number; finance: number; matches: number; registrations: number };
+type NavCounts = { disputes: number; finance: number; matches: number; registrations: number; notifications?: number };
 
 type NavItem = {
   label: string;
@@ -19,13 +19,14 @@ const navigation: NavItem[] = [
   { label: "Command Center", href: "/admin", icon: LayoutDashboard },
   { label: "Tournaments", href: "/admin/tournaments", icon: Trophy },
   { label: "Matches", href: "/admin/matches", icon: Swords, countKey: "matches" as const },
-  { label: "Players", href: "/admin/insights/players", icon: Users },
-  { label: "Registrations", href: "/admin/insights/confirmed-entries", icon: ClipboardList, countKey: "registrations" as const },
-  { label: "Finance", href: "/admin/finance", icon: CircleDollarSign, countKey: "finance" as const },
+  { label: "Players", href: "/admin/players", icon: Users },
+  { label: "Teams", href: "/admin/teams", icon: Shield },
+  { label: "Registrations", href: "/admin/registrations", icon: ClipboardList, countKey: "registrations" as const },
+  { label: "Discord", href: "/admin/discord", icon: MessageSquare },
+  { label: "Notifications", href: "/admin/notifications", icon: Bell, countKey: "notifications" as const },
   { label: "Disputes", href: "/admin/disputes", icon: ShieldAlert, countKey: "disputes" as const },
-  { label: "Rewards", href: "/admin/insights/prize-rewards", icon: Zap },
-  { label: "Notifications", href: "/admin#activity", icon: Bell },
-  { label: "Admin activity", href: "/admin#activity", icon: ClipboardList },
+  { label: "Finance", href: "/admin/finance", icon: CircleDollarSign, countKey: "finance" as const },
+  { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
@@ -63,7 +64,7 @@ export function AdminWorkspace({ children, adminName, adminRole, counts }: { chi
           {navigation.map((item) => {
             const Icon = item.icon;
             const active = item.href === "/admin" ? pathname === "/admin" : pathname === item.href || pathname.startsWith(`${item.href}/`);
-            const count = item.countKey ? counts[item.countKey] : 0;
+            const count = item.countKey ? (counts[item.countKey] ?? 0) : 0;
             return <Link key={item.label} href={item.href} onClick={() => setMobileOpen(false)} className={`admin-nav-link ${active ? "admin-nav-link--active" : ""}`} title={collapsed ? item.label : undefined}><Icon className="h-[18px] w-[18px] shrink-0" aria-hidden /><span className="admin-nav-link__label">{item.label}</span>{count > 0 && <span className="admin-nav-link__badge">{count > 99 ? "99+" : count}</span>}{item.external && <MonitorPlay className="admin-nav-link__external h-3.5 w-3.5" aria-hidden />}</Link>;
           })}
         </nav>
@@ -77,7 +78,7 @@ export function AdminWorkspace({ children, adminName, adminRole, counts }: { chi
           <form onSubmit={goToSearch} className="admin-search"><Search className="h-4 w-4" aria-hidden /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search players and tournaments…" aria-label="Search players and tournaments" /><kbd>Enter</kbd></form>
           <div className="admin-topbar__actions">
             <Link href="/admin/tournaments" className="admin-create-button"><span className="hidden sm:inline">Create tournament</span><span className="sm:hidden">Create</span></Link>
-            <Link href="/admin#activity" className="admin-icon-button" aria-label="Open recent platform activity"><Bell className="h-4 w-4" aria-hidden /></Link>
+            <Link href="/admin/notifications" className="admin-icon-button" aria-label="Open notifications and announcements"><Bell className="h-4 w-4" aria-hidden /></Link>
             <form action="/api/admin/auth/logout" method="post"><button type="submit" className="admin-avatar" aria-label="Sign out of the Command Center">{adminName.slice(0, 1).toUpperCase()}</button></form>
           </div>
         </header>

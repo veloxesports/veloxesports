@@ -53,6 +53,8 @@ export type AdminAnalytics = {
   trend: Array<{ label: string; players: number; registrations: number; payments: number; refunds: number; rewards: number }>;
   tournamentStatuses: Array<{ label: string; value: number }>;
   playerStatuses: Array<{ label: string; value: number }>;
+  popularGames: Array<{ name: string; tournamentsCount: number; registrationsCount: number }>;
+  matchesBreakdown: Array<{ label: string; value: number }>;
 };
 
 export type AdminSearchResults = {
@@ -74,7 +76,7 @@ export async function getAdminAnalytics(): Promise<{ success: true; data: AdminA
     start.setUTCHours(0, 0, 0, 0);
     start.setUTCDate(start.getUTCDate() - 13);
 
-    const [players, registrations, payments, refunds, rewards, tournamentStatuses, playerStatuses] = await Promise.all([
+    const [players, registrations, payments, refunds, rewards, tournamentStatuses, playerStatuses, games, matches] = await Promise.all([
       prisma.user.findMany({ where: { ...playerAccountFilter, createdAt: { gte: start } }, select: { createdAt: true } }),
       prisma.tournamentRegistration.findMany({ where: { createdAt: { gte: start } }, select: { createdAt: true } }),
       prisma.telegramPayment.findMany({ where: { status: "COMPLETED", completedAt: { gte: start } }, select: { amount: true, completedAt: true } }),
@@ -82,6 +84,18 @@ export async function getAdminAnalytics(): Promise<{ success: true; data: AdminA
       prisma.walletTransaction.findMany({ where: { type: "PRIZE_REWARD", status: "COMPLETED", completedAt: { gte: start } }, select: { amount: true, completedAt: true } }),
       prisma.tournament.groupBy({ by: ["status"], _count: { _all: true } }),
       prisma.user.groupBy({ by: ["status"], where: playerAccountFilter, _count: { _all: true } }),
+      prisma.game.findMany({
+        where: { isActive: true },
+        select: {
+          name: true,
+          tournaments: {
+            select: {
+              currentParticipants: true,
+            },
+          },
+        },
+      }),
+      prisma.match.groupBy({ by: ["status"], _count: { _all: true } }),
     ]);
 
     const days = Array.from({ length: 14 }, (_, index) => {
@@ -94,6 +108,20 @@ export async function getAdminAnalytics(): Promise<{ success: true; data: AdminA
     const paymentTotals = sumByDay(payments, (item) => item.completedAt, (item) => item.amount);
     const refundTotals = sumByDay(refunds, (item) => item.completedAt, (item) => item.amount);
     const rewardTotals = sumByDay(rewards, (item) => item.completedAt, (item) => item.amount);
+
+    const popularGames = games
+      .map((g) => ({
+        name: g.name,
+        tournamentsCount: g.tournaments.length,
+        registrationsCount: g.tournaments.reduce((acc, t) => acc + t.currentParticipants, 0),
+      }))
+      .sort((a, b) => b.registrationsCount - a.registrationsCount)
+      .slice(0, 6);
+
+    const matchesBreakdown = matches.map((entry) => ({
+      label: entry.status,
+      value: entry._count._all,
+    }));
 
     return {
       success: true,
@@ -108,6 +136,8 @@ export async function getAdminAnalytics(): Promise<{ success: true; data: AdminA
         })),
         tournamentStatuses: tournamentStatuses.map((entry) => ({ label: entry.status, value: entry._count._all })),
         playerStatuses: playerStatuses.map((entry) => ({ label: entry.status, value: entry._count._all })),
+        popularGames,
+        matchesBreakdown,
       },
     };
   } catch (error) {
