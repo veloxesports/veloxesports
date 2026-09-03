@@ -56,7 +56,7 @@ export function PlayerSearchClient({ initialPlayers }: PlayerSearchClientProps) 
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by username, player ID, game, or squad..."
+            placeholder="Search by username, game, or squad..."
             className="h-12 w-full bg-transparent px-3 text-sm font-semibold text-white placeholder:text-[#6a7c68] outline-none"
           />
           {isPending ? (
@@ -179,7 +179,7 @@ export function PlayerSearchClient({ initialPlayers }: PlayerSearchClientProps) 
           <h3 className="mt-4 text-base font-black text-white">No Competitors Found</h3>
           <p className="mt-1 text-xs text-[#879986] max-w-xs">
             We couldn&apos;t find any players matching &ldquo;{query}&rdquo;. Try searching with a different
-            username, player ID, or squad name.
+            username, game, or squad name.
           </p>
         </div>
       )}

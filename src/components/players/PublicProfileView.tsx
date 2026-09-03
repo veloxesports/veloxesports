@@ -7,7 +7,6 @@ import Link from "next/link";
 import {
   Check,
   ChevronRight,
-  Copy,
   Crown,
   EyeOff,
   Flame,
@@ -33,23 +32,12 @@ type ProfileTab = "overview" | "matches" | "tournaments" | "achievements" | "tea
 
 export function PublicProfileView({ profile, headToHead, isViewerProfile }: PublicProfileViewProps) {
   const [activeTab, setActiveTab] = useState<ProfileTab>("overview");
-  const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
 
   const stats = profile.stats;
   const currentTierXp = profile.xp % 500;
   const nextTierXp = 500;
   const xpPercent = Math.min(100, Math.max(10, Math.round((currentTierXp / nextTierXp) * 100)));
-
-  const handleCopyId = () => {
-    try {
-      void navigator.clipboard.writeText(profile.id);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Ignore
-    }
-  };
 
   const handleShare = () => {
     try {
@@ -175,18 +163,8 @@ export function PublicProfileView({ profile, headToHead, isViewerProfile }: Publ
             )}
           </div>
 
-          {/* Badges Bar: Player ID, Discord, Team */}
+          {/* Badges Bar: Discord, Team */}
           <div className="mt-3.5 flex flex-wrap items-center gap-2">
-            {/* Player ID with Copy */}
-            <button
-              type="button"
-              onClick={handleCopyId}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#273827] bg-[#111912] px-2.5 py-1 text-[11px] font-bold text-[#8ba088] transition hover:bg-[#182619] hover:text-white"
-            >
-              <span>ID: {profile.id.slice(0, 8)}...</span>
-              {copied ? <Check className="h-3 w-3 text-[#c5f94d]" /> : <Copy className="h-3 w-3" />}
-            </button>
-
             {/* Discord Badge */}
             {profile.discordConnected && (
               <div className="inline-flex items-center gap-1.5 rounded-xl border border-[#3b4382] bg-[#161a3b] px-2.5 py-1 text-[11px] font-black text-[#96a6ff]">

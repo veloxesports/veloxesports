@@ -106,7 +106,7 @@ export async function searchPlayers(
       const displayName =
         p?.veloxUsername ||
         (u.firstName ? `${u.firstName}${u.lastName ? ` ${u.lastName}` : ""}` : u.username) ||
-        `Player ${u.id.slice(0, 5)}`;
+        "Competitor";
 
       const primaryTeam = u.teamMemberships[0]?.team ?? null;
       const primaryGame = p?.favoriteGames?.[0] || null;
@@ -460,7 +460,7 @@ export async function getPublicPlayerProfile(
     const displayName =
       profile?.veloxUsername ||
       (user.firstName ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}` : user.username) ||
-      `Player ${user.id.slice(0, 5)}`;
+      "Competitor";
 
     const isVerified = (profile?.level ?? 1) >= 25 || Boolean(profile?.veloxUsername);
 
