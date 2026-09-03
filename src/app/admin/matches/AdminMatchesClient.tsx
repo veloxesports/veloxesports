@@ -23,6 +23,7 @@ import type { MatchStatus } from "@/lib/generated/prisma/client";
 import type { AdminMatchItem } from "@/features/admin/actions";
 import { createAdminMatch, updateAdminMatch } from "@/features/admin/actions";
 import { confirmMatchResult } from "@/features/matches/actions";
+import { AdminDateTimePicker } from "@/components/admin/AdminDateTimePicker";
 
 type MatchItem = AdminMatchItem;
 
@@ -529,13 +530,14 @@ function EditMatchModal({
                 <option value="CANCELLED">Cancelled</option>
               </select>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-[#b6c5b2]">Scheduled Time</label>
-              <input
-                type="datetime-local"
-                value={scheduledTime}
-                onChange={(e) => setScheduledTime(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-[#2d3e2e] bg-[#121a13] px-3.5 py-2.5 text-sm text-white outline-none focus:border-[#c5f94d]"
+            <div className="col-span-full">
+              <AdminDateTimePicker
+                name="scheduledTime"
+                label="Scheduled Time"
+                value={scheduledTime ? new Date(scheduledTime) : null}
+                onChange={(d) => setScheduledTime(d ? d.toISOString() : "")}
+                placeholder="Set scheduled fixture time..."
+                helperText=""
               />
             </div>
           </div>
@@ -649,13 +651,14 @@ function CreateMatchModal({
                 className="mt-1 w-full rounded-xl border border-[#2d3e2e] bg-[#121a13] px-3.5 py-2.5 text-sm text-white outline-none focus:border-[#c5f94d]"
               />
             </div>
-            <div>
-              <label className="block text-xs font-bold text-[#b6c5b2]">Scheduled Time</label>
-              <input
-                type="datetime-local"
-                value={scheduledTime}
-                onChange={(e) => setScheduledTime(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-[#2d3e2e] bg-[#121a13] px-3.5 py-2.5 text-sm text-white outline-none focus:border-[#c5f94d]"
+            <div className="col-span-full">
+              <AdminDateTimePicker
+                name="scheduledTime"
+                label="Scheduled Time"
+                value={scheduledTime ? new Date(scheduledTime) : null}
+                onChange={(d) => setScheduledTime(d ? d.toISOString() : "")}
+                placeholder="Set scheduled fixture time..."
+                helperText=""
               />
             </div>
           </div>

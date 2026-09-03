@@ -9,7 +9,6 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import {
-  CalendarDays,
   CircleAlert,
   LoaderCircle,
   Plus,
@@ -19,6 +18,7 @@ import {
 } from "lucide-react";
 import { createTournament, updateTournament } from "@/features/admin/actions";
 import { getTournamentRulesTemplate } from "@/lib/tournaments/rule-templates";
+import { AdminDateTimePicker } from "@/components/admin/AdminDateTimePicker";
 
 export type Game = { id: string; name: string; slug: string; isActive: boolean };
 
@@ -466,17 +466,21 @@ export function TournamentModal({
               title="Schedule and launch"
               detail="Registration must close before the tournament starts."
             >
-              <DateTimeInput
+              <AdminDateTimePicker
+                key={`reg-${isEdit ? tournament!.id : "new"}-${isOpen}`}
                 name="registrationDeadline"
                 label="Registration closes"
                 defaultValue={isEdit ? tournament!.registrationDeadline : undefined}
                 error={fieldErrors.registrationDeadline}
+                required
               />
-              <DateTimeInput
+              <AdminDateTimePicker
+                key={`start-${isEdit ? tournament!.id : "new"}-${isOpen}`}
                 name="startDate"
                 label="Tournament starts"
                 defaultValue={isEdit ? tournament!.startDate : undefined}
                 error={fieldErrors.startDate}
+                required
               />
               <Input
                 name="checkInPeriodMins"
@@ -699,60 +703,6 @@ function Select({
       )}
     </label>
   );
-}
-
-function DateTimeInput({
-  name,
-  label,
-  defaultValue,
-  error,
-}: {
-  name: string;
-  label: string;
-  defaultValue?: Date;
-  error?: string;
-}) {
-  const errorId = `modal-${name}-error`;
-  return (
-    <label className="grid gap-2 text-sm font-bold text-[#dce8d7]">
-      <span>{label}</span>
-      <span className="relative">
-        <CalendarDays
-          className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#c5f94d]"
-          aria-hidden
-        />
-        <input
-          name={name}
-          type="datetime-local"
-          required
-          defaultValue={defaultValue ? dateTimeLocal(defaultValue) : undefined}
-          aria-invalid={Boolean(error)}
-          aria-describedby={error ? errorId : undefined}
-          className={`${controlClass} [color-scheme:dark] pl-10 ${
-            error ? "border-[#c76a56] focus:border-[#ff9e87]" : ""
-          }`}
-        />
-      </span>
-      {error ? (
-        <span id={errorId} className="text-xs font-bold text-[#ffad9a]">
-          {error}
-        </span>
-      ) : (
-        <span className="text-xs font-medium text-[#748173]">
-          Choose a date and time with the calendar picker.
-        </span>
-      )}
-    </label>
-  );
-}
-
-function dateTimeLocal(value: Date | string | null | undefined): string {
-  if (!value) return "";
-  const date = typeof value === "string" ? new Date(value) : value;
-  if (Number.isNaN(date.getTime())) return "";
-  const local = new Date(date);
-  local.setMinutes(local.getMinutes() - local.getTimezoneOffset());
-  return local.toISOString().slice(0, 16);
 }
 
 function labelFor(value: string) {
