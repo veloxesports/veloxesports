@@ -13,7 +13,7 @@ export default async function DiscordConnectedPage({
     returnTo?: string;
   }>;
 }) {
-  const { id, username, displayName, avatar, connectedAt, returnTo } = await searchParams;
+  const { username, displayName, avatar, connectedAt, returnTo } = await searchParams;
   const botUsername = process.env.TELEGRAM_BOT_USERNAME || "velox_esports_bot";
   const telegramMiniAppUrl = `https://t.me/${botUsername}/app?startapp=discord_connected`;
   const telegramDirectProtocolUrl = `tg://resolve?domain=${botUsername}&appname=app&startapp=discord_connected`;
@@ -96,18 +96,16 @@ export default async function DiscordConnectedPage({
             </div>
           </div>
 
-          {/* Details Row: ID & Connected Date */}
+          {/* Details Row: Connection Status & Connected Date */}
           <div className="mt-1 grid grid-cols-2 gap-2 border-t border-[#1e2d1f] pt-3 text-[11px]">
-            {id && (
-              <div className="rounded-xl border border-[#1e2a20] bg-[#0c130d] p-2">
-                <span className="block text-[9px] font-bold uppercase tracking-wider text-[#637665]">
-                  Discord ID
-                </span>
-                <span className="font-mono text-xs font-bold text-[#b5c7b7] truncate block">
-                  {id}
-                </span>
-              </div>
-            )}
+            <div className="rounded-xl border border-[#1e2a20] bg-[#0c130d] p-2">
+              <span className="block text-[9px] font-bold uppercase tracking-wider text-[#637665]">
+                Connection Status
+              </span>
+              <span className="text-xs font-bold text-[#c5f94d] truncate block">
+                Verified & Synced
+              </span>
+            </div>
             <div className="rounded-xl border border-[#1e2a20] bg-[#0c130d] p-2">
               <span className="block text-[9px] font-bold uppercase tracking-wider text-[#637665]">
                 Connected Date

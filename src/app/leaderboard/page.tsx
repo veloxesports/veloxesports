@@ -226,9 +226,10 @@ function PodiumPlayer({
     </div>
   );
 
-  if (player?.userId) {
+  const playerSlug = player?.veloxUsername || player?.user.username || player?.userId;
+  if (playerSlug) {
     return (
-      <Link href={`/players/${player.userId}`} className="contents">
+      <Link href={`/players/${playerSlug}`} className="contents">
         {Content}
       </Link>
     );
@@ -309,9 +310,10 @@ function PlayerRow({
     </article>
   );
 
-  if (player.userId) {
+  const playerSlug = player.veloxUsername || player.user.username || player.userId;
+  if (playerSlug) {
     return (
-      <Link href={`/players/${player.userId}`} className="block">
+      <Link href={`/players/${playerSlug}`} className="block">
         {Row}
       </Link>
     );

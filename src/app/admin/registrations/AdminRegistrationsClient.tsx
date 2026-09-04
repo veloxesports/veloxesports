@@ -4,14 +4,19 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertCircle,
+  Check,
   CheckCircle2,
   ClipboardList,
+  Download,
+  LoaderCircle,
   MessageSquare,
   Search,
+  ShieldCheck,
+  Trash2,
   X,
 } from "lucide-react";
 import type { AdminRegistrationItem } from "@/features/admin/actions";
-import { updateRegistrationStatus } from "@/features/admin/actions";
+import { bulkUpdateRegistrationStatus, updateRegistrationStatus } from "@/features/admin/actions";
 
 type RegistrationItem = AdminRegistrationItem;
 
@@ -32,6 +37,7 @@ export function AdminRegistrationsClient({
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [tournamentFilter, setTournamentFilter] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -40,7 +46,11 @@ export function AdminRegistrationsClient({
     if (tournamentFilter !== "ALL" && r.tournamentId !== tournamentFilter) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      const pName = r.user.profile?.veloxUsername?.toLowerCase() ?? r.user.username?.toLowerCase() ?? r.user.firstName?.toLowerCase() ?? "";
+      const pName =
+        r.user.profile?.veloxUsername?.toLowerCase() ??
+        r.user.username?.toLowerCase() ??
+        r.user.firstName?.toLowerCase() ??
+        "";
       const tName = r.team?.name?.toLowerCase() ?? "";
       const tourney = r.tournament.title.toLowerCase();
       if (!pName.includes(q) && !tName.includes(q) && !tourney.includes(q)) return false;
@@ -52,23 +62,52 @@ export function AdminRegistrationsClient({
   const pendingCount = registrations.filter((r) => r.status === "PENDING").length;
   const checkedInCount = registrations.filter((r) => r.checkedIn).length;
 
-  function handleUpdateStatus(registrationId: string, status: "CONFIRMED" | "CANCELLED" | "PENDING") {
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === filteredRegistrations.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredRegistrations.map((r) => r.id)));
+    }
+  }
+
+  function handleUpdateStatus(
+    registrationId: string,
+    status: "CONFIRMED" | "CANCELLED" | "PENDING"
+  ) {
     startTransition(async () => {
       const result = await updateRegistrationStatus({ registrationId, status });
       if (result.success) {
         setToast({ message: `Registration updated to ${status}.`, type: "success" });
         router.refresh();
       } else {
-        setToast({ message: result.error ?? "Failed to update registration status.", type: "error" });
+        setToast({
+          message: result.error ?? "Failed to update registration status.",
+          type: "error",
+        });
       }
     });
   }
 
   function handleToggleCheckIn(registrationId: string, currentCheckedIn: boolean) {
     startTransition(async () => {
-      const result = await updateRegistrationStatus({ registrationId, checkedIn: !currentCheckedIn });
+      const result = await updateRegistrationStatus({
+        registrationId,
+        checkedIn: !currentCheckedIn,
+      });
       if (result.success) {
-        setToast({ message: !currentCheckedIn ? "Player checked in." : "Player check-in revoked.", type: "success" });
+        setToast({
+          message: !currentCheckedIn ? "Player checked in." : "Player check-in revoked.",
+          type: "success",
+        });
         router.refresh();
       } else {
         setToast({ message: result.error ?? "Failed to toggle check-in.", type: "error" });
@@ -76,8 +115,71 @@ export function AdminRegistrationsClient({
     });
   }
 
+  function handleBulkAction(status?: "CONFIRMED" | "CANCELLED", checkedIn?: boolean) {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
+    startTransition(async () => {
+      const result = await bulkUpdateRegistrationStatus({
+        registrationIds: ids,
+        status,
+        checkedIn,
+      });
+      if (result.success) {
+        setToast({ message: result.message ?? "Bulk update completed.", type: "success" });
+        setSelectedIds(new Set());
+        router.refresh();
+      } else {
+        setToast({ message: result.error ?? "Failed bulk update.", type: "error" });
+      }
+    });
+  }
+
+  function handleExportCSV() {
+    const headers = [
+      "ID",
+      "Participant",
+      "Telegram Handle",
+      "Discord Handle",
+      "Tournament",
+      "Status",
+      "Checked In",
+      "Registered Date",
+    ];
+    const rows = filteredRegistrations.map((r) => [
+      r.id,
+      `"${(
+        r.team?.name ??
+        r.user.profile?.veloxUsername ??
+        r.user.username ??
+        r.user.firstName ??
+        "Player"
+      ).replace(/"/g, '""')}"`,
+      r.user.username ? `@${r.user.username}` : (r.user.firstName ?? "N/A"),
+      r.user.profile?.discordUsername ? `@${r.user.profile.discordUsername}` : "N/A",
+      `"${r.tournament.title.replace(/"/g, '""')}"`,
+      r.status,
+      r.checkedIn ? "Yes" : "No",
+      new Date(r.createdAt).toISOString(),
+    ]);
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `velox-registrations-${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  const allSelected =
+    filteredRegistrations.length > 0 && selectedIds.size === filteredRegistrations.length;
+
   return (
-    <main className="velox-page">
+    <main className="velox-page pb-28">
       {/* Toast */}
       {toast && (
         <div
@@ -88,9 +190,17 @@ export function AdminRegistrationsClient({
               : "border-[#8a4237] bg-[#291715]/95 text-[#ffd5ce]"
           }`}
         >
-          {toast.type === "success" ? <CheckCircle2 className="h-5 w-5 text-[#c5f94d]" /> : <AlertCircle className="h-5 w-5 text-[#ff8e7d]" />}
+          {toast.type === "success" ? (
+            <CheckCircle2 className="h-5 w-5 text-[#c5f94d]" />
+          ) : (
+            <AlertCircle className="h-5 w-5 text-[#ff8e7d]" />
+          )}
           <span>{toast.message}</span>
-          <button type="button" onClick={() => setToast(null)} className="ml-2 text-current opacity-70 hover:opacity-100">
+          <button
+            type="button"
+            onClick={() => setToast(null)}
+            className="ml-2 text-current opacity-70 hover:opacity-100"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -104,7 +214,8 @@ export function AdminRegistrationsClient({
             Tournament Registrations Desk
           </h1>
           <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[#8e998f]">
-            Review tournament rosters, confirm pending entries, manage player check-ins, and inspect entry payment records.
+            Review tournament rosters, confirm pending entries, perform bulk approvals, manage
+            player check-ins, and export roster data.
           </p>
         </div>
       </header>
@@ -113,23 +224,37 @@ export function AdminRegistrationsClient({
       <section className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-2xl border border-[#2f4530] bg-[#121b12] p-4">
           <p className="text-2xl font-black text-white">{registrations.length}</p>
-          <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.1em] text-[#8e998f]">Total entries</p>
+          <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.1em] text-[#8e998f]">
+            Total entries
+          </p>
         </div>
         <div className="rounded-2xl border border-[#2f4530] bg-[#121b12] p-4">
           <p className="text-2xl font-black text-[#c5f94d]">{confirmedCount}</p>
-          <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.1em] text-[#8e998f]">Confirmed</p>
+          <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.1em] text-[#8e998f]">
+            Confirmed
+          </p>
         </div>
-        <div className={`rounded-2xl border p-4 ${pendingCount > 0 ? "border-[#964738]/70 bg-[#2b1916]" : "border-[#2f4530] bg-[#121b12]"}`}>
-          <p className={`text-2xl font-black ${pendingCount > 0 ? "text-[#f5c66b]" : "text-white"}`}>{pendingCount}</p>
-          <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.1em] text-[#8e998f]">Pending approval</p>
+        <div
+          className={`rounded-2xl border p-4 ${
+            pendingCount > 0 ? "border-[#964738]/70 bg-[#2b1916]" : "border-[#2f4530] bg-[#121b12]"
+          }`}
+        >
+          <p className={`text-2xl font-black ${pendingCount > 0 ? "text-[#f5c66b]" : "text-white"}`}>
+            {pendingCount}
+          </p>
+          <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.1em] text-[#8e998f]">
+            Pending approval
+          </p>
         </div>
         <div className="rounded-2xl border border-[#2f4530] bg-[#121b12] p-4">
           <p className="text-2xl font-black text-[#84d8ff]">{checkedInCount}</p>
-          <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.1em] text-[#8e998f]">Checked in</p>
+          <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.1em] text-[#8e998f]">
+            Checked in
+          </p>
         </div>
       </section>
 
-      {/* Filters and Search */}
+      {/* Filters, Search & CSV Export */}
       <section className="mt-5 flex flex-col gap-3 rounded-2xl border border-[#273628] bg-[#0e150f] p-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap gap-1 text-xs">
           {[
@@ -179,11 +304,27 @@ export function AdminRegistrationsClient({
               className="bg-transparent text-white outline-none placeholder:text-[#5f6f5f]"
             />
             {searchQuery && (
-              <button type="button" onClick={() => setSearchQuery("")} className="text-[#8e998f] hover:text-white">
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="text-[#8e998f] hover:text-white"
+              >
                 <X className="h-3 w-3" />
               </button>
             )}
           </div>
+
+          {/* Export CSV Button */}
+          <button
+            type="button"
+            onClick={handleExportCSV}
+            disabled={filteredRegistrations.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[#2e422f] bg-[#142215] px-3 py-1.5 text-xs font-bold text-[#c5f94d] transition hover:bg-[#1b2f1d] disabled:opacity-50"
+            title="Download filtered registrations as CSV"
+          >
+            <Download className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Export CSV</span>
+          </button>
         </div>
       </section>
 
@@ -193,13 +334,24 @@ export function AdminRegistrationsClient({
           <div className="py-16 text-center">
             <ClipboardList className="mx-auto h-10 w-10 text-[#4c5b4c]" aria-hidden />
             <p className="mt-3 font-bold text-white">No registrations found</p>
-            <p className="mt-1 text-xs text-[#8e998f]">Try adjusting your filter selection or search query.</p>
+            <p className="mt-1 text-xs text-[#8e998f]">
+              Try adjusting your filter selection or search query.
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-[#232f24] bg-[#0c130d] text-[10px] font-black uppercase tracking-[0.1em] text-[#8e998f]">
                 <tr>
+                  <th className="w-10 px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={toggleSelectAll}
+                      className="rounded border-[#344335] bg-[#080d09] text-[#c5f94d] focus:ring-[#c5f94d]"
+                      aria-label="Select all registrations"
+                    />
+                  </th>
                   <th className="px-5 py-3">Participant</th>
                   <th className="px-4 py-3">Tournament</th>
                   <th className="px-4 py-3">Payment</th>
@@ -213,17 +365,40 @@ export function AdminRegistrationsClient({
                 {filteredRegistrations.map((reg) => {
                   const participantName = reg.team
                     ? reg.team.name
-                    : reg.user.profile?.veloxUsername ?? reg.user.username ?? reg.user.firstName ?? "Player";
+                    : reg.user.profile?.veloxUsername ??
+                      reg.user.username ??
+                      reg.user.firstName ??
+                      "Player";
                   const isTeam = Boolean(reg.team);
                   const discordName = reg.user.profile?.discordUsername;
+                  const isSelected = selectedIds.has(reg.id);
 
                   return (
-                    <tr key={reg.id} className="transition hover:bg-[#131d14]">
+                    <tr
+                      key={reg.id}
+                      className={`transition ${
+                        isSelected ? "bg-[#162716]" : "hover:bg-[#131d14]"
+                      }`}
+                    >
+                      <td className="px-4 py-3.5">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelect(reg.id)}
+                          className="rounded border-[#344335] bg-[#080d09] text-[#c5f94d] focus:ring-[#c5f94d]"
+                          aria-label={`Select ${participantName}`}
+                        />
+                      </td>
+
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
                           {reg.team?.logoUrl || reg.user.profileImage ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={reg.team?.logoUrl ?? reg.user.profileImage ?? ""} alt="" className="h-9 w-9 rounded-full object-cover" />
+                            <img
+                              src={reg.team?.logoUrl ?? reg.user.profileImage ?? ""}
+                              alt=""
+                              className="h-9 w-9 rounded-full object-cover"
+                            />
                           ) : (
                             <span className="grid h-9 w-9 place-items-center rounded-full bg-[#1c291c] text-xs font-black text-[#c5f94d]">
                               {participantName.slice(0, 1).toUpperCase()}
@@ -237,7 +412,9 @@ export function AdminRegistrationsClient({
                                 <span>@{discordName}</span>
                               </p>
                             )}
-                            {isTeam && <p className="text-[10px] font-bold text-[#c5f94d]">TEAM ROSTER</p>}
+                            {isTeam && (
+                              <p className="text-[10px] font-bold text-[#c5f94d]">TEAM ROSTER</p>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -245,15 +422,21 @@ export function AdminRegistrationsClient({
                       <td className="px-4 py-3.5">
                         <div className="text-xs">
                           <p className="font-bold text-white">{reg.tournament.title}</p>
-                          <p className="text-[10px] text-[#8e998f]">{reg.tournament.game.name}</p>
+                          <p className="text-[10px] text-[#8e998f]">
+                            {reg.tournament.game.name}
+                          </p>
                         </div>
                       </td>
 
                       <td className="px-4 py-3.5">
                         {reg.tournament.isPaid ? (
                           <div className="text-xs">
-                            <span className="font-bold text-[#c5f94d]">⭐ {reg.tournament.entryFee} Stars</span>
-                            <p className="text-[10px] text-[#8e998f]">{reg.payment?.status ?? "Paid"}</p>
+                            <span className="font-bold text-[#c5f94d]">
+                              ⭐ {reg.tournament.entryFee} Stars
+                            </span>
+                            <p className="text-[10px] text-[#8e998f]">
+                              {reg.payment?.status ?? "Paid"}
+                            </p>
                           </div>
                         ) : (
                           <span className="rounded-md bg-[#162016] px-2 py-0.5 text-[10px] font-bold text-[#9eb09b]">
@@ -267,30 +450,32 @@ export function AdminRegistrationsClient({
                           type="button"
                           onClick={() => handleToggleCheckIn(reg.id, reg.checkedIn)}
                           disabled={isPending}
-                          className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] transition ${
+                          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-bold transition ${
                             reg.checkedIn
-                              ? "bg-[#1f311c] text-[#c5f94d] border border-[#3e6138] hover:bg-[#2e472a]"
-                              : "bg-[#212721] text-[#8e998f] border border-[#313a31] hover:bg-[#2b332b] hover:text-white"
+                              ? "border-[#406838] bg-[#1c2e1b] text-[#c5f94d]"
+                              : "border-[#364237] bg-[#131a14] text-[#8e998f] hover:text-white"
                           }`}
                         >
-                          {reg.checkedIn ? "Checked In ✓" : "Not Checked In"}
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${
+                              reg.checkedIn ? "bg-[#c5f94d]" : "bg-[#556654]"
+                            }`}
+                          />
+                          <span>{reg.checkedIn ? "Checked in" : "No check-in"}</span>
                         </button>
                       </td>
 
                       <td className="px-4 py-3.5 text-xs text-[#8e998f]">
-                        {new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(reg.createdAt))}
+                        {new Intl.DateTimeFormat("en", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        }).format(new Date(reg.createdAt))}
                       </td>
 
                       <td className="px-4 py-3.5">
-                        <span className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] ${
-                          reg.status === "CONFIRMED"
-                            ? "bg-[#1f311c] text-[#c5f94d] border border-[#3e6138]"
-                            : reg.status === "PENDING"
-                            ? "bg-[#2e2617] text-[#f0cf78] border border-[#54462a]"
-                            : "bg-[#251717] text-[#ff6f6f] border border-[#502424]"
-                        }`}>
-                          {reg.status}
-                        </span>
+                        <StatusChip status={reg.status} />
                       </td>
 
                       <td className="px-5 py-3.5 text-right">
@@ -300,19 +485,29 @@ export function AdminRegistrationsClient({
                               type="button"
                               onClick={() => handleUpdateStatus(reg.id, "CONFIRMED")}
                               disabled={isPending}
-                              className="rounded-lg bg-[#1f311c] px-2.5 py-1 text-xs font-bold text-[#c5f94d] transition hover:bg-[#2c4528]"
+                              className="rounded-lg bg-[#20361c] px-2.5 py-1 text-xs font-bold text-[#c5f94d] transition hover:bg-[#2b4b25] disabled:opacity-50"
                             >
-                              Approve
+                              Confirm
                             </button>
                           )}
-                          {reg.status !== "CANCELLED" && (
+                          {reg.status === "CONFIRMED" && (
                             <button
                               type="button"
                               onClick={() => handleUpdateStatus(reg.id, "CANCELLED")}
                               disabled={isPending}
-                              className="rounded-lg border border-[#3d2726] bg-[#1a1111] px-2.5 py-1 text-xs font-bold text-[#ff997d] transition hover:border-[#633a38]"
+                              className="rounded-lg border border-[#432d2a] bg-[#1e1312] px-2.5 py-1 text-xs font-bold text-[#ffad9a] transition hover:bg-[#2d1b19] disabled:opacity-50"
                             >
                               Cancel
+                            </button>
+                          )}
+                          {reg.status === "CANCELLED" && (
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateStatus(reg.id, "PENDING")}
+                              disabled={isPending}
+                              className="rounded-lg border border-[#2d3a2e] bg-[#121a13] px-2.5 py-1 text-xs font-bold text-[#8e998f] transition hover:text-white disabled:opacity-50"
+                            >
+                              Reopen
                             </button>
                           )}
                         </div>
@@ -325,6 +520,80 @@ export function AdminRegistrationsClient({
           </div>
         )}
       </section>
+
+      {/* Floating Bulk Action Bar */}
+      {selectedIds.size > 0 && (
+        <aside
+          aria-label="Bulk registration actions"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[80] flex items-center gap-3 rounded-2xl border border-[#48633e] bg-[#0c140d]/95 px-5 py-3 shadow-[0_15px_50px_rgba(0,0,0,0.75)] backdrop-blur-md"
+        >
+          <span className="text-xs font-bold text-white">
+            <strong className="text-[#c5f94d]">{selectedIds.size}</strong> selected
+          </span>
+
+          <div className="h-4 w-px bg-[#2b3a2c]" />
+
+          <button
+            type="button"
+            onClick={() => handleBulkAction("CONFIRMED")}
+            disabled={isPending}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#c5f94d] px-3.5 py-1.5 text-xs font-black text-[#080d09] transition hover:bg-[#d5ff70] disabled:opacity-50"
+          >
+            {isPending ? (
+              <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Check className="h-3.5 w-3.5" />
+            )}
+            <span>Bulk Confirm</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleBulkAction(undefined, true)}
+            disabled={isPending}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[#3e5934] bg-[#182717] px-3.5 py-1.5 text-xs font-bold text-[#c5f94d] transition hover:bg-[#223820] disabled:opacity-50"
+          >
+            <ShieldCheck className="h-3.5 w-3.5" />
+            <span>Bulk Check-In</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleBulkAction("CANCELLED")}
+            disabled={isPending}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[#6b352e] bg-[#291715] px-3.5 py-1.5 text-xs font-bold text-[#ffad9a] transition hover:bg-[#381e1a] disabled:opacity-50"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            <span>Bulk Cancel</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSelectedIds(new Set())}
+            className="ml-1 text-xs text-[#8e998f] hover:text-white"
+          >
+            Deselect
+          </button>
+        </aside>
+      )}
     </main>
+  );
+}
+
+function StatusChip({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    CONFIRMED: "bg-[#1f311c] text-[#c5f94d] border border-[#3e6138]",
+    PENDING: "bg-[#2e2617] text-[#f0cf78] border border-[#54462a]",
+    CANCELLED: "bg-[#381e1a] text-[#ffad9a] border border-[#6b352e]",
+  };
+
+  return (
+    <span
+      className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] ${
+        styles[status] ?? "bg-[#1e271f] text-[#8e998f]"
+      }`}
+    >
+      {status}
+    </span>
   );
 }

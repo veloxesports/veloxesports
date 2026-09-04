@@ -2510,3 +2510,145 @@ export async function retryFailedNotifications(notificationIds?: string[]) {
   }
 }
 
+export async function duplicateTournament(tournamentId: string) {
+  try {
+    await requireRole([...tournamentManagerRoles]);
+    const original = await prisma.tournament.findUnique({
+      where: { id: tournamentId },
+      include: { rules: true },
+    });
+
+    if (!original) {
+      return { success: false, error: "Original tournament not found." };
+    }
+
+    const uniqueSlug = `${original.slug}-copy-${Math.random().toString(36).slice(2, 7)}`;
+    const now = new Date();
+    const startDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const registrationDeadline = new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000);
+
+    const duplicated = await prisma.tournament.create({
+      data: {
+        title: `[Copy] ${original.title}`.slice(0, 140),
+        slug: uniqueSlug,
+        gameId: original.gameId,
+        prizePool: original.prizePool,
+        entryFee: original.entryFee,
+        isPaid: original.isPaid,
+        maxParticipants: original.maxParticipants,
+        currentParticipants: 0,
+        registrationDeadline,
+        startDate,
+        format: original.format,
+        participantType: original.participantType,
+        teamSize: original.teamSize,
+        region: original.region,
+        gameMode: original.gameMode,
+        status: TournamentStatus.DRAFT,
+        rules: original.rules
+          ? {
+              create: {
+                content: original.rules.content,
+                checkInPeriodMins: original.rules.checkInPeriodMins,
+              },
+            }
+          : undefined,
+      },
+    });
+
+    await createAuditLog(
+      "DUPLICATE_TOURNAMENT",
+      "Tournament",
+      duplicated.id,
+      { originalId: original.id },
+      { newId: duplicated.id, title: duplicated.title }
+    );
+
+    revalidatePath("/admin/tournaments");
+    revalidatePath("/tournaments");
+
+    return {
+      success: true,
+      message: `Tournament duplicated as draft: “${duplicated.title}”.`,
+      data: duplicated,
+    };
+  } catch (error) {
+    if (error instanceof Error && ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.message)) {
+      return { success: false, error: "Access denied." };
+    }
+    console.error("duplicateTournament error", error);
+    return { success: false, error: "Failed to duplicate tournament." };
+  }
+}
+
+export async function bulkUpdateRegistrationStatus({
+  registrationIds,
+  status,
+  checkedIn,
+}: {
+  registrationIds: string[];
+  status?: RegistrationStatus;
+  checkedIn?: boolean;
+}) {
+  try {
+    await requireRole([...tournamentManagerRoles]);
+    if (!registrationIds || registrationIds.length === 0) {
+      return { success: false, error: "No registrations selected." };
+    }
+
+    const updateData: Prisma.TournamentRegistrationUpdateManyMutationInput = {};
+    if (status) updateData.status = status;
+    if (typeof checkedIn === "boolean") {
+      updateData.checkedIn = checkedIn;
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.tournamentRegistration.updateMany({
+        where: { id: { in: registrationIds } },
+        data: updateData,
+      });
+
+      // Recalculate currentParticipants for affected tournaments
+      const affected = await tx.tournamentRegistration.findMany({
+        where: { id: { in: registrationIds } },
+        select: { tournamentId: true },
+        distinct: ["tournamentId"],
+      });
+
+      for (const item of affected) {
+        const confirmedCount = await tx.tournamentRegistration.count({
+          where: { tournamentId: item.tournamentId, status: "CONFIRMED" },
+        });
+        await tx.tournament.update({
+          where: { id: item.tournamentId },
+          data: { currentParticipants: confirmedCount },
+        });
+      }
+    });
+
+    await createAuditLog(
+      "BULK_UPDATE_REGISTRATIONS",
+      "TournamentRegistration",
+      "bulk",
+      { count: registrationIds.length },
+      { status, checkedIn }
+    );
+
+    revalidatePath("/admin/registrations");
+    revalidatePath("/admin/tournaments");
+    revalidatePath("/tournaments");
+
+    return {
+      success: true,
+      message: `Updated ${registrationIds.length} registration${registrationIds.length === 1 ? "" : "s"}.`,
+    };
+  } catch (error) {
+    if (error instanceof Error && ["UNAUTHENTICATED", "FORBIDDEN"].includes(error.message)) {
+      return { success: false, error: "Access denied." };
+    }
+    console.error("bulkUpdateRegistrationStatus error", error);
+    return { success: false, error: "Failed to perform bulk update." };
+  }
+}
+
+

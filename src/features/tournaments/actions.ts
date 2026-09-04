@@ -11,7 +11,7 @@ import { dispatchTelegramNotificationsCreatedSince } from "@/lib/notifications/d
 
 const tournamentIdSchema = z.string().uuid();
 const teamRegistrationSchema = z.object({ tournamentId: z.string().uuid(), teamId: z.string().uuid() });
-const publicTournamentStatuses: TournamentStatus[] = ["REGISTRATION_OPEN", "REGISTRATION_CLOSED", "UPCOMING", "CHECK_IN", "LIVE"];
+const publicTournamentStatuses: TournamentStatus[] = ["REGISTRATION_OPEN", "REGISTRATION_CLOSED", "UPCOMING", "CHECK_IN", "LIVE", "COMPLETED"];
 
 class TournamentRegistrationError extends Error {
   constructor(public code: "ALREADY_REGISTERED" | "FULL" | "REGISTRATION_CLOSED" | "PAID_TOURNAMENT" | "TEAM_TOURNAMENT") {

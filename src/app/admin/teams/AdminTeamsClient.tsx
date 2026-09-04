@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   ChevronRight,
+  ExternalLink,
   MessageSquare,
   Search,
   Shield,
@@ -21,7 +23,11 @@ export function AdminTeamsClient({ teams }: { teams: TeamItem[] }) {
       const q = searchQuery.toLowerCase();
       const tName = team.name.toLowerCase();
       const cName = team.captain?.profile?.veloxUsername?.toLowerCase() ?? team.captain?.username?.toLowerCase() ?? "";
-      if (!tName.includes(q) && !cName.includes(q)) return false;
+      const mMatches = team.members.some((m) => {
+        const mName = m.user.profile?.veloxUsername?.toLowerCase() ?? m.user.username?.toLowerCase() ?? m.user.firstName?.toLowerCase() ?? "";
+        return mName.includes(q);
+      });
+      if (!tName.includes(q) && !cName.includes(q) && !mMatches) return false;
     }
     return true;
   });
@@ -209,9 +215,20 @@ export function AdminTeamsClient({ teams }: { teams: TeamItem[] }) {
                         )}
                       </div>
                     </div>
-                    <span className="rounded-full bg-[#1b261b] px-2.5 py-0.5 text-[10px] font-bold text-[#c5f94d]">
-                      {m.role}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-[#1b261b] px-2.5 py-0.5 text-[10px] font-bold text-[#c5f94d]">
+                        {m.role}
+                      </span>
+                      <Link
+                        href={`/players/${m.user.profile?.veloxUsername || m.user.username || m.user.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-lg p-1 text-[#8e998f] transition hover:bg-[#1a291b] hover:text-[#c5f94d]"
+                        title="View player profile"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
                   </div>
                 );
               })}

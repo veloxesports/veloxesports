@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { ChevronLeft, CircleAlert, ClipboardCheck, ShieldAlert, Swords } from "lucide-react";
+import { ChevronLeft, CircleAlert, ClipboardCheck, ExternalLink, ShieldAlert, Swords } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { resolveDispute } from "@/features/matches/actions";
@@ -66,7 +66,7 @@ export function DisputesClient({ disputes }: { disputes: Dispute[] }) {
                   <label className="grid gap-2 text-sm font-bold text-[#dce8d7]">Resolution notes<textarea name="notes" required minLength={10} maxLength={1000} rows={4} className={`${controlClass} resize-y`} placeholder="State the evidence reviewed and the rationale for your decision." /></label>
                   <label className="grid gap-2 text-sm font-bold text-[#dce8d7]">Winner <span className="text-xs font-medium text-[#758373]">Optional — close the report without awarding a winner.</span><select name="winnerId" className={controlClass}><option value="">Close without awarding a winner</option>{participants.map((participant) => <option key={participant.id} value={participant.id}>{participant.name}</option>)}</select></label>
                   <div className="grid grid-cols-2 gap-3"><NumberInput name="score1" label="Score 1" /><NumberInput name="score2" label="Score 2" /></div>
-                  <div className="flex flex-col gap-3 border-t border-[#29342a] pt-4 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs leading-relaxed text-[#718071]">A resolution is stored as an immutable audit event.</p><div className="flex flex-wrap gap-2"><Link href={`/matches/${dispute.match.id}`} className="velox-muted-button px-3 py-2.5 text-xs"><Swords className="mr-1.5 h-4 w-4 text-[#c5f94d]" aria-hidden />Open match & evidence</Link><button type="submit" disabled={pending === dispute.id} className="velox-action shrink-0"><ClipboardCheck className="mr-2 h-4 w-4" aria-hidden />{pending === dispute.id ? "Recording…" : "Record resolution"}</button></div></div>
+                  <div className="flex flex-col gap-3 border-t border-[#29342a] pt-4 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs leading-relaxed text-[#718071]">A resolution is stored as an immutable audit event.</p><div className="flex flex-wrap gap-2"><Link href={`/matches/${dispute.match.id}`} target="_blank" rel="noopener noreferrer" className="velox-muted-button px-3 py-2.5 text-xs"><Swords className="mr-1.5 h-4 w-4 text-[#c5f94d]" aria-hidden />Open match & evidence<ExternalLink className="ml-1.5 h-3 w-3" /></Link><button type="submit" disabled={pending === dispute.id} className="velox-action shrink-0"><ClipboardCheck className="mr-2 h-4 w-4" aria-hidden />{pending === dispute.id ? "Recording…" : "Record resolution"}</button></div></div>
                 </form>
               </article>
             );

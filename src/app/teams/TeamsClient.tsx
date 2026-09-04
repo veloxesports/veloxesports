@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, type FormEvent, type ReactNode } from "react";
-import { Check, Copy, Crown, Plus, Shield, Trash2, Trophy, UserMinus, Users, XCircle } from "lucide-react";
+import { AlertTriangle, Check, Copy, Crown, Plus, Shield, Trash2, Trophy, UserMinus, Users, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { TelegramBottomSheet } from "@/components/ui/TelegramBottomSheet";
 import {
   createTeam,
   createTeamInvite,
@@ -50,6 +51,15 @@ export function TeamsClient({ initialTeams }: { initialTeams: Team[] }) {
   const [isPending, setIsPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Custom Telegram Confirmation Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    title: string;
+    description: string;
+    confirmLabel: string;
+    tone: "danger" | "warning";
+    onConfirm: () => Promise<void>;
+  } | null>(null);
 
   async function perform(action: () => Promise<{ success: boolean; error?: string }>, successMessage: string) {
     setIsPending(true);
@@ -105,19 +115,56 @@ export function TeamsClient({ initialTeams }: { initialTeams: Team[] }) {
     }
   }
 
-  async function handleTransferCaptaincy(teamId: string, member: TeamMemberItem) {
-    if (!window.confirm(`Transfer captaincy to ${member.name}? You will become a regular member.`)) return;
-    await perform(() => transferCaptaincy({ teamId, newCaptainUserId: member.userId }), `${member.name} is now the team captain.`);
+  function handleTransferCaptaincy(teamId: string, member: TeamMemberItem) {
+    setConfirmModal({
+      title: `Transfer Captaincy to ${member.name}?`,
+      description: "You will step down to regular member and transfer roster authority.",
+      confirmLabel: "Transfer Captaincy",
+      tone: "warning",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        await perform(() => transferCaptaincy({ teamId, newCaptainUserId: member.userId }), `${member.name} is now the team captain.`);
+      },
+    });
   }
 
-  async function handleRemoveMember(teamId: string, member: TeamMemberItem) {
-    if (!window.confirm(`Remove ${member.name} from the team?`)) return;
-    await perform(() => removeTeamMember({ teamId, memberUserId: member.userId }), `${member.name} was removed from the team.`);
+  function handleRemoveMember(teamId: string, member: TeamMemberItem) {
+    setConfirmModal({
+      title: `Remove ${member.name}?`,
+      description: `Are you sure you want to remove ${member.name} from the active roster?`,
+      confirmLabel: "Remove Member",
+      tone: "danger",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        await perform(() => removeTeamMember({ teamId, memberUserId: member.userId }), `${member.name} was removed from the team.`);
+      },
+    });
   }
 
-  async function handleDisbandTeam(team: Team) {
-    if (!window.confirm(`Disband ${team.name}? This removes all members and permanently deletes the team.`)) return;
-    await perform(() => disbandTeam(team.id), `${team.name} was disbanded.`);
+  function handleDisbandTeam(team: Team) {
+    setConfirmModal({
+      title: `Disband ${team.name}?`,
+      description: "This will remove all team members and permanently delete the squad roster. This cannot be undone.",
+      confirmLabel: "Disband Team",
+      tone: "danger",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        await perform(() => disbandTeam(team.id), `${team.name} was disbanded.`);
+      },
+    });
+  }
+
+  function handleLeaveTeam(team: Team) {
+    setConfirmModal({
+      title: `Leave ${team.name}?`,
+      description: "You will step down from the roster and forfeit participation in active squad tournaments.",
+      confirmLabel: "Leave Team",
+      tone: "danger",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        await perform(() => leaveTeam(team.id), "You left the team.");
+      },
+    });
   }
 
   return (
@@ -188,13 +235,9 @@ export function TeamsClient({ initialTeams }: { initialTeams: Team[] }) {
                 {!isCaptain && (
                   <button
                     type="button"
-                    onClick={() => {
-                      if (window.confirm(`Leave ${team.name}?`)) {
-                        void perform(() => leaveTeam(team.id), "You left the team.");
-                      }
-                    }}
+                    onClick={() => handleLeaveTeam(team)}
                     disabled={isPending}
-                    className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-xs font-bold text-red-300 transition hover:bg-red-500/20 disabled:opacity-50"
+                    className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-xs font-bold text-red-300 transition hover:bg-red-500/20 disabled:opacity-50 active:scale-95"
                   >
                     Leave
                   </button>
@@ -295,6 +338,57 @@ export function TeamsClient({ initialTeams }: { initialTeams: Team[] }) {
           );
         })}
       </section>
+
+      {/* Action Confirmation Modal */}
+      {confirmModal && (
+        <TelegramBottomSheet
+          isOpen={Boolean(confirmModal)}
+          onClose={() => setConfirmModal(null)}
+          title="Confirm Action"
+          showDragHandle
+        >
+          <div className="p-6 text-center">
+            <div
+              className={`mx-auto grid h-14 w-14 place-items-center rounded-2xl ${
+                confirmModal.tone === "danger"
+                  ? "bg-red-500/15 text-red-400 border border-red-500/30"
+                  : "bg-amber-400/15 text-amber-300 border border-amber-400/30"
+              }`}
+            >
+              <AlertTriangle className="h-7 w-7" />
+            </div>
+
+            <h2 className="mt-4 text-lg font-black text-white">{confirmModal.title}</h2>
+            <p className="mt-2 text-xs leading-relaxed text-[#9caea0]">
+              {confirmModal.description}
+            </p>
+
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setConfirmModal(null)}
+                disabled={isPending}
+                className="border-[#2b3a2c] bg-[#121c13] text-white hover:bg-[#182619]"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={() => void confirmModal.onConfirm()}
+                disabled={isPending}
+                className={
+                  confirmModal.tone === "danger"
+                    ? "bg-red-600 font-black text-white hover:bg-red-500"
+                    : "bg-[#c5f94d] font-black text-[#080d09] hover:bg-[#d5ff70]"
+                }
+              >
+                {isPending ? "Processing…" : confirmModal.confirmLabel}
+              </Button>
+            </div>
+          </div>
+        </TelegramBottomSheet>
+      )}
     </main>
   );
 }

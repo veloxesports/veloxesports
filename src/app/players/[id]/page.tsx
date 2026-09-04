@@ -51,7 +51,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
           </div>
           <h2 className="mt-4 text-base font-black text-white">Player Not Found</h2>
           <p className="mt-1 text-xs text-[#879986] max-w-xs">
-            We couldn&apos;t find a player with the identifier &ldquo;{id}&rdquo;. They may have changed their username or the profile does not exist.
+            We couldn&apos;t find this player profile. The username or tag may have changed, or the profile does not exist.
           </p>
           <Link
             href="/players"

@@ -5,6 +5,7 @@ import { ChevronLeft, CircleAlert, Landmark, ReceiptText, Search, WalletCards } 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { refundStarsPayment } from "@/features/payments/actions";
+import { AdminConfirmModal } from "@/components/admin/AdminConfirmModal";
 
 type Payment = {
   id: string;
@@ -25,6 +26,7 @@ export function FinanceClient({ initialData }: { initialData: FinanceData }) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [confirmPaymentId, setConfirmPaymentId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   const payments = useMemo(() => initialData.payments.filter((payment) => {
@@ -34,8 +36,8 @@ export function FinanceClient({ initialData }: { initialData: FinanceData }) {
   }), [initialData.payments, query, status]);
 
   async function refund(paymentId: string) {
-    if (!window.confirm("Refund this Telegram Stars payment? This sends the refund through Telegram and updates the permanent ledger.")) return;
     setPendingId(paymentId);
+    setConfirmPaymentId(null);
     const result = await refundStarsPayment(paymentId);
     setPendingId(null);
     setMessage(result.success ? "Refund completed and the ledger has been updated." : result.error ?? "Refund failed.");
@@ -86,13 +88,26 @@ export function FinanceClient({ initialData }: { initialData: FinanceData }) {
                 </div>
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                   <div className="flex flex-wrap gap-2">{payment.refund && <span className="rounded-full bg-[#2a2520] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-[#f0ca8b]">Refund {labelFor(payment.refund.status)}</span>}</div>
-                  {payment.status === "COMPLETED" && payment.refund?.status !== "COMPLETED" ? <button type="button" onClick={() => void refund(payment.id)} disabled={pendingId === payment.id} className="rounded-2xl border border-[#75453b] bg-[#2a1918] px-3.5 py-2.5 text-xs font-black text-[#ffad9a] transition hover:border-[#b9624f] hover:bg-[#3a211e] disabled:cursor-not-allowed disabled:opacity-50">{pendingId === payment.id ? "Processing refund…" : payment.refund?.status === "FAILED" ? "Retry failed refund" : "Refund Telegram Stars"}</button> : <span className="text-xs font-medium text-[#718071]">{payment.refund?.status === "COMPLETED" ? "Refund completed" : "No action available"}</span>}
+                  {payment.status === "COMPLETED" && payment.refund?.status !== "COMPLETED" ? <button type="button" onClick={() => setConfirmPaymentId(payment.id)} disabled={pendingId === payment.id} className="rounded-2xl border border-[#75453b] bg-[#2a1918] px-3.5 py-2.5 text-xs font-black text-[#ffad9a] transition hover:border-[#b9624f] hover:bg-[#3a211e] disabled:cursor-not-allowed disabled:opacity-50">{pendingId === payment.id ? "Processing refund…" : payment.refund?.status === "FAILED" ? "Retry failed refund" : "Refund Telegram Stars"}</button> : <span className="text-xs font-medium text-[#718071]">{payment.refund?.status === "COMPLETED" ? "Refund completed" : "No action available"}</span>}
                 </div>
               </article>
             );
           })}
         </div>
       </section>
+
+      {confirmPaymentId && (
+        <AdminConfirmModal
+          isOpen={Boolean(confirmPaymentId)}
+          title="Refund Telegram Stars"
+          message="Are you sure you want to refund this Telegram Stars payment? This sends the refund through Telegram and updates the permanent platform ledger. This cannot be undone."
+          confirmLabel="Issue Refund"
+          variant="danger"
+          pending={pendingId === confirmPaymentId}
+          onConfirm={() => refund(confirmPaymentId)}
+          onClose={() => setConfirmPaymentId(null)}
+        />
+      )}
     </main>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { CheckCircle2, ChevronLeft, Clock3, Copy, Gamepad2, ShieldAlert, Upload, XCircle } from "lucide-react";
+import { Check, CheckCircle2, ChevronLeft, Clock3, Copy, Gamepad2, ShieldAlert, Upload, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,10 +38,21 @@ export function MatchDetailsClient({ match }: { match: MatchDetails }) {
   const [comment, setComment] = useState("");
   const [evidence, setEvidence] = useState<File | null>(null);
   const [disputeReason, setDisputeReason] = useState("");
+  const [copiedTag, setCopiedTag] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResolving, setIsResolving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const copyDiscord = (tag: string) => {
+    try {
+      void navigator.clipboard.writeText(tag);
+      setCopiedTag(tag);
+      setTimeout(() => setCopiedTag(null), 2000);
+    } catch {
+      // ignore
+    }
+  };
 
   async function refreshAfter(action: () => Promise<{ success: boolean; error?: string }>, successMessage: string) {
     setIsResolving(true);
@@ -169,14 +180,15 @@ export function MatchDetailsClient({ match }: { match: MatchDetails }) {
                   </div>
                   <button
                     type="button"
-                    onClick={() => {
-                      void navigator.clipboard.writeText(match.player1.discordUsername!);
-                      alert(`Copied @${match.player1.discordUsername} to clipboard`);
-                    }}
-                    className="grid h-7 w-7 place-items-center rounded-lg border border-[#2b3c4d] bg-[#14202d] text-[#8ea5bc] hover:text-white transition"
+                    onClick={() => copyDiscord(`@${match.player1.discordUsername!}`)}
+                    className="grid h-7 w-7 place-items-center rounded-lg border border-[#2b3c4d] bg-[#14202d] text-[#8ea5bc] hover:text-white transition active:scale-95"
                     title="Copy Discord tag"
                   >
-                    <Copy className="h-3.5 w-3.5" />
+                    {copiedTag === `@${match.player1.discordUsername}` ? (
+                      <Check className="h-3.5 w-3.5 text-[#c5f94d]" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
                   </button>
                 </div>
               )}
@@ -189,14 +201,15 @@ export function MatchDetailsClient({ match }: { match: MatchDetails }) {
                   </div>
                   <button
                     type="button"
-                    onClick={() => {
-                      void navigator.clipboard.writeText(match.player2.discordUsername!);
-                      alert(`Copied @${match.player2.discordUsername} to clipboard`);
-                    }}
-                    className="grid h-7 w-7 place-items-center rounded-lg border border-[#2b3c4d] bg-[#14202d] text-[#8ea5bc] hover:text-white transition"
+                    onClick={() => copyDiscord(`@${match.player2.discordUsername!}`)}
+                    className="grid h-7 w-7 place-items-center rounded-lg border border-[#2b3c4d] bg-[#14202d] text-[#8ea5bc] hover:text-white transition active:scale-95"
                     title="Copy Discord tag"
                   >
-                    <Copy className="h-3.5 w-3.5" />
+                    {copiedTag === `@${match.player2.discordUsername}` ? (
+                      <Check className="h-3.5 w-3.5 text-[#c5f94d]" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
                   </button>
                 </div>
               )}

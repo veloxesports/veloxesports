@@ -1,12 +1,117 @@
-import { ChevronLeft, ReceiptText } from "lucide-react";
+import { ChevronLeft, ReceiptText, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { getWalletTransaction } from "@/features/wallet/services";
 
-export default async function TransactionDetailsPage({ params }: PageProps<"/wallet/transactions/[id]">) {
+export default async function TransactionDetailsPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const result = await getWalletTransaction(id);
-  if (!result.success || !result.data) return <main className="flex min-h-screen flex-col items-center justify-center bg-black p-6 text-center"><ReceiptText className="mb-4 h-14 w-14 text-slate-700" aria-hidden /><h1 className="text-xl font-bold text-white">Transaction unavailable</h1><p className="mt-2 text-sm text-slate-400">{result.error ?? "We couldn't find this transaction."}</p><Link href="/wallet" className="mt-5 text-sm font-semibold text-[#c5f94d]">Back to wallet</Link></main>;
+
+  if (!result.success || !result.data) {
+    return (
+      <main className="velox-page flex min-h-[70vh] flex-col items-center justify-center text-center">
+        <ReceiptText className="h-14 w-14 text-[#445545]" aria-hidden />
+        <h1 className="mt-4 text-2xl font-black text-white">Transaction unavailable</h1>
+        <p className="mt-2 max-w-sm text-sm text-[#8e998f]">
+          {result.error ?? "We couldn't load this ledger transaction."}
+        </p>
+        <Link href="/wallet" className="velox-action mt-6 text-xs font-black">
+          Back to Wallet
+        </Link>
+      </main>
+    );
+  }
+
   const transaction = result.data;
   const positive = ["PRIZE_REWARD", "REFUND", "BONUS", "ADMIN_CREDIT"].includes(transaction.type);
-  return <main className="min-h-screen bg-black p-4 pb-24 text-slate-100"><header className="flex items-center gap-3 pt-2"><Link href="/wallet" className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-900"><ChevronLeft className="h-5 w-5" aria-hidden /></Link><div><h1 className="text-xl font-bold text-white">Transaction details</h1><p className="text-xs text-slate-500">Immutable ledger record</p></div></header><section className="mt-7 rounded-2xl border border-white/5 bg-slate-900 p-5 text-center"><p className="text-sm font-bold uppercase text-slate-500">{transaction.type.replaceAll("_", " ")}</p><p className={`mt-2 text-4xl font-black ${positive ? "text-emerald-300" : "text-white"}`}>{positive ? "+" : "-"} ⭐ {transaction.amount}</p><span className="mt-3 inline-block rounded-full bg-black px-3 py-1 text-xs font-bold text-slate-300">{transaction.status}</span></section><section className="mt-5 divide-y divide-white/5 overflow-hidden rounded-2xl border border-white/5 bg-slate-900">{[["Tournament", transaction.tournament?.title ?? "Not applicable"], ["Currency", transaction.currency], ["Created", transaction.createdAt.toLocaleString()], ["Completed", transaction.completedAt?.toLocaleString() ?? "Pending"], ["Reference", transaction.telegramPaymentId ?? "Not applicable"], ["Transaction ID", transaction.id]].map(([label, value]) => <div key={label} className="flex items-start justify-between gap-4 p-4"><span className="text-sm text-slate-500">{label}</span><span className="break-all text-right text-sm font-medium text-slate-200">{value}</span></div>)}</section>{transaction.description && <p className="mt-4 rounded-xl border border-white/5 bg-slate-900 p-4 text-sm text-slate-400">{transaction.description}</p>}</main>;
+  const formattedRef = `#TX-${transaction.id.slice(0, 8).toUpperCase()}`;
+
+  return (
+    <main className="velox-page">
+      {/* Header */}
+      <header className="flex items-center gap-3">
+        <Link
+          href="/wallet"
+          className="velox-muted-button flex h-10 w-10 shrink-0 p-0"
+          aria-label="Back to wallet"
+        >
+          <ChevronLeft className="h-5 w-5" aria-hidden />
+        </Link>
+        <div>
+          <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#c5f94d]">
+            Ledger Receipt
+          </span>
+          <h1 className="text-xl font-black tracking-[-0.03em] text-white sm:text-2xl">
+            Transaction Details
+          </h1>
+        </div>
+      </header>
+
+      {/* Hero Receipt Card */}
+      <section className="velox-card relative mt-6 overflow-hidden p-6 text-center shadow-[0_16px_45px_rgba(0,0,0,0.35)]">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#182618] border border-[#2d402e] px-3 py-1 text-[10px] font-black uppercase tracking-wider text-[#c5f94d]">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          Verified Ledger Entry
+        </span>
+
+        <p className="mt-4 text-xs font-bold uppercase tracking-wider text-[#829683]">
+          {transaction.type.replaceAll("_", " ")}
+        </p>
+
+        <p
+          className={`mt-2 text-4xl font-black tracking-tight ${
+            positive ? "text-[#c5f94d]" : "text-white"
+          }`}
+        >
+          {positive ? "+" : "-"} ⭐ {transaction.amount.toLocaleString()}
+        </p>
+
+        <div className="mt-3 flex items-center justify-center gap-2">
+          <span className="rounded-full bg-[#172318] px-3 py-0.5 text-xs font-black uppercase text-[#96ab96]">
+            {transaction.status}
+          </span>
+        </div>
+      </section>
+
+      {/* Breakdown Details */}
+      <section className="velox-card mt-5 divide-y divide-[#202d21] overflow-hidden">
+        {[
+          ["Reference", formattedRef],
+          ["Tournament", transaction.tournament?.title ?? "Platform Economy"],
+          ["Currency", transaction.currency],
+          ["Created", new Date(transaction.createdAt).toLocaleString(undefined, {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+          })],
+          ["Status", transaction.status],
+        ].map(([label, value]) => (
+          <div key={label} className="flex items-center justify-between gap-4 p-4 text-xs">
+            <span className="font-bold text-[#798d7a] uppercase tracking-wider text-[11px]">{label}</span>
+            <span className="text-right font-black text-white">{value}</span>
+          </div>
+        ))}
+      </section>
+
+      {transaction.description && (
+        <section className="velox-card mt-4 p-4 text-xs text-[#8e9f8e]">
+          <p className="font-bold uppercase tracking-wider text-[#6b7d6c] text-[10px] mb-1">
+            Note
+          </p>
+          <p>{transaction.description}</p>
+        </section>
+      )}
+
+      <div className="mt-6">
+        <Link href="/wallet" className="velox-muted-button w-full text-center">
+          Return to Wallet
+        </Link>
+      </div>
+    </main>
+  );
 }

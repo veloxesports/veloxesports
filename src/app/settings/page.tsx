@@ -42,7 +42,6 @@ export default function SettingsPage() {
   // Discord State
   const [discordUsername, setDiscordUsername] = useState<string | null>(null);
   const [discordDisplayName, setDiscordDisplayName] = useState<string | null>(null);
-  const [discordId, setDiscordId] = useState<string | null>(null);
   const [discordAvatarUrl, setDiscordAvatarUrl] = useState<string | null>(null);
   const [discordConnectedAt, setDiscordConnectedAt] = useState<Date | string | null>(null);
 
@@ -71,7 +70,6 @@ export default function SettingsPage() {
         setDiscordDisplayName(
           result.data.profile.discordDisplayName || result.data.profile.discordUsername || null
         );
-        setDiscordId(result.data.profile.discordId || null);
         setDiscordAvatarUrl(result.data.profile.discordAvatarUrl || null);
         setDiscordConnectedAt(result.data.profile.discordConnectedAt || null);
       } else {
@@ -142,7 +140,6 @@ export default function SettingsPage() {
     if (result.success) {
       setDiscordUsername(null);
       setDiscordDisplayName(null);
-      setDiscordId(null);
       setDiscordAvatarUrl(null);
       setDiscordConnectedAt(null);
       setIsDisconnectModalOpen(false);
@@ -271,12 +268,10 @@ export default function SettingsPage() {
 
             {discordUsername && (
               <div className="grid grid-cols-2 gap-2 border-t border-[#1e2a20] pt-2 text-[10px]">
-                {discordId && (
-                  <div className="rounded-lg bg-[#0a100b] p-2 border border-[#1d2b1f]">
-                    <span className="block text-[8px] font-bold text-gray-500 uppercase">Discord ID</span>
-                    <span className="block font-mono font-bold text-gray-300 truncate">{discordId}</span>
-                  </div>
-                )}
+                <div className="rounded-lg bg-[#0a100b] p-2 border border-[#1d2b1f]">
+                  <span className="block text-[8px] font-bold text-gray-500 uppercase">Status</span>
+                  <span className="block font-bold text-[#c5f94d] truncate">Verified & Synced</span>
+                </div>
                 {formattedDate && (
                   <div className="rounded-lg bg-[#0a100b] p-2 border border-[#1d2b1f]">
                     <span className="block text-[8px] font-bold text-gray-500 uppercase">Connected Date</span>

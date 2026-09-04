@@ -135,7 +135,9 @@
 
 @layer components {
   .velox-page {
-    @apply mx-auto min-h-[100dvh] w-full max-w-3xl px-5 pb-28 pt-7 sm:px-8 sm:pt-10;
+    @apply mx-auto min-h-[100dvh] w-full max-w-3xl px-5 sm:px-8;
+    padding-top: max(1.75rem, env(safe-area-inset-top, 1.75rem));
+    padding-bottom: max(7rem, calc(5.5rem + env(safe-area-inset-bottom, 0px)));
   }
 
   .velox-eyebrow {

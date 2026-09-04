@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
   LoaderCircle,
   MessageSquare,
   Search,
@@ -26,6 +30,7 @@ export function AdminPlayersClient({
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [discordOnly, setDiscordOnly] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [moderatingPlayer, setModeratingPlayer] = useState<PlayerItem | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
@@ -46,6 +51,10 @@ export function AdminPlayersClient({
     }
     return true;
   });
+
+  const pageSize = 25;
+  const totalPages = Math.ceil(filteredPlayers.length / pageSize) || 1;
+  const paginatedPlayers = filteredPlayers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const activeCount = players.filter((p) => p.status === "ACTIVE").length;
   const restrictedCount = players.filter((p) => p.status === "RESTRICTED" || p.status === "SUSPENDED" || p.status === "BANNED").length;
@@ -186,7 +195,7 @@ export function AdminPlayersClient({
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1e2b20]">
-                {filteredPlayers.map((player) => {
+                {paginatedPlayers.map((player) => {
                   const displayName = player.profile?.veloxUsername ?? player.username ?? player.firstName ?? "Player";
                   const p = player.profile;
                   const winRate = (p?.wins ?? 0) + (p?.losses ?? 0) > 0 ? Math.round(((p?.wins ?? 0) / ((p?.wins ?? 0) + (p?.losses ?? 0))) * 100) : 0;
@@ -260,19 +269,63 @@ export function AdminPlayersClient({
                       </td>
 
                       <td className="px-5 py-3.5 text-right">
-                        <button
-                          type="button"
-                          onClick={() => setModeratingPlayer(player)}
-                          className="rounded-lg border border-[#2b3a2c] bg-[#121a13] px-2.5 py-1 text-xs font-bold text-[#b6c5b2] transition hover:border-[#527448] hover:text-white"
-                        >
-                          Moderate
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Link
+                            href={`/players/${player.profile?.veloxUsername || player.username || player.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 rounded-lg border border-[#2b3a2c] bg-[#121a13] px-2.5 py-1 text-xs font-bold text-[#b6c5b2] transition hover:border-[#527448] hover:text-[#c5f94d]"
+                            title="Open public player profile"
+                          >
+                            <span>Profile</span>
+                            <ExternalLink className="h-3 w-3" />
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => setModeratingPlayer(player)}
+                            className="rounded-lg border border-[#2b3a2c] bg-[#121a13] px-2.5 py-1 text-xs font-bold text-[#b6c5b2] transition hover:border-[#527448] hover:text-white"
+                          >
+                            Moderate
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border-t border-[#1e2b20] bg-[#0c130d] px-5 py-3 text-xs text-[#8e998f]">
+                <span>
+                  Showing {(currentPage - 1) * pageSize + 1}–
+                  {Math.min(currentPage * pageSize, filteredPlayers.length)} of {filteredPlayers.length}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="inline-flex items-center gap-1 rounded-lg border border-[#2b3a2c] bg-[#121a13] px-2.5 py-1 font-bold text-white transition hover:bg-[#1c291c] disabled:opacity-40"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                    <span>Prev</span>
+                  </button>
+                  <span className="font-bold text-white">
+                    {currentPage} / {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="inline-flex items-center gap-1 rounded-lg border border-[#2b3a2c] bg-[#121a13] px-2.5 py-1 font-bold text-white transition hover:bg-[#1c291c] disabled:opacity-40"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </section>

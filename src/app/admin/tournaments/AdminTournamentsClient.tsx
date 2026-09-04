@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   CircleAlert,
   Gamepad2,
+  Copy,
   Pencil,
   Plus,
   RefreshCw,
@@ -27,6 +28,7 @@ import {
   cancelTournamentAndRefund,
   createGame,
   deleteTournament,
+  duplicateTournament,
   openTournamentCheckIn,
   runTournamentLifecycleManually,
   setGameActive,
@@ -34,6 +36,7 @@ import {
 } from "@/features/admin/actions";
 import { generateSingleEliminationBracket } from "@/features/matches/actions";
 import { TournamentModal, type Game, type Tournament } from "./TournamentModal";
+import { AdminConfirmModal } from "@/components/admin/AdminConfirmModal";
 
 const controlClass =
   "w-full rounded-2xl border border-[#344335] bg-[#080d09] px-3.5 py-3 text-sm text-white outline-none transition placeholder:text-[#6f796f] focus:border-[#c5f94d] focus:ring-2 focus:ring-[#c5f94d]/15 disabled:cursor-not-allowed disabled:opacity-60";
@@ -54,6 +57,14 @@ export function AdminTournamentsClient({
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmLabel: string;
+    variant: "danger" | "default";
+    action: () => Promise<void>;
+  } | null>(null);
 
   useEffect(() => {
     if (!message) return;
@@ -152,13 +163,18 @@ export function AdminTournamentsClient({
         <button
           type="button"
           onClick={() => {
-            if (
-              window.confirm(
-                "Run the tournament lifecycle now? This applies every due step, including player notifications, brackets, live matches, completed events, and eligible prize rewards."
-              )
-            ) {
-              void execute(runTournamentLifecycleManually, "Manual lifecycle run finished.");
-            }
+            setConfirmModal({
+              isOpen: true,
+              title: "Run Tournament Lifecycle",
+              message:
+                "Run the tournament lifecycle now? This applies every due step, including player notifications, brackets, live matches, completed events, and eligible prize rewards.",
+              confirmLabel: "Run Lifecycle",
+              variant: "default",
+              action: async () => {
+                await execute(runTournamentLifecycleManually, "Manual lifecycle run finished.");
+                setConfirmModal(null);
+              },
+            });
           }}
           disabled={pending}
           className="velox-muted-button min-h-12"
@@ -419,6 +435,21 @@ export function AdminTournamentsClient({
                     <Pencil className="mr-1.5 h-4 w-4 text-[#c5f94d]" aria-hidden />
                     Edit
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void execute(
+                        () => duplicateTournament(tournament.id),
+                        "Tournament duplicated as draft."
+                      );
+                    }}
+                    disabled={pending}
+                    className="velox-muted-button px-3 py-2.5 text-xs"
+                    title="Duplicate this event into a new draft"
+                  >
+                    <Copy className="mr-1.5 h-4 w-4 text-[#c5f94d]" aria-hidden />
+                    Duplicate
+                  </button>
                   {tournament.status === "REGISTRATION_CLOSED" && (
                     <button
                       type="button"
@@ -456,16 +487,20 @@ export function AdminTournamentsClient({
                     <button
                       type="button"
                       onClick={() => {
-                        if (
-                          window.confirm(
-                            `Delete the empty draft “${tournament.title}”? This cannot be undone.`
-                          )
-                        ) {
-                          void execute(
-                            () => deleteTournament(tournament.id),
-                            "Draft tournament deleted."
-                          );
-                        }
+                        setConfirmModal({
+                          isOpen: true,
+                          title: "Delete Draft Tournament",
+                          message: `Delete the empty draft “${tournament.title}”? This action cannot be undone.`,
+                          confirmLabel: "Delete Draft",
+                          variant: "danger",
+                          action: async () => {
+                            await execute(
+                              () => deleteTournament(tournament.id),
+                              "Draft tournament deleted."
+                            );
+                            setConfirmModal(null);
+                          },
+                        });
                       }}
                       disabled={pending}
                       className="rounded-2xl border border-[#75453b] bg-[#2a1918] px-3 py-2.5 text-xs font-black text-[#ffad9a] transition hover:border-[#b9624f] hover:bg-[#3a211e] disabled:cursor-not-allowed disabled:opacity-50"
@@ -477,16 +512,20 @@ export function AdminTournamentsClient({
                   <button
                     type="button"
                     onClick={() => {
-                      if (
-                        window.confirm(
-                          "Cancel this tournament and refund eligible Telegram Stars payments? This cannot be undone."
-                        )
-                      ) {
-                        void execute(
-                          () => cancelTournamentAndRefund(tournament.id),
-                          "Tournament cancelled."
-                        );
-                      }
+                      setConfirmModal({
+                        isOpen: true,
+                        title: "Cancel & Refund Tournament",
+                        message: `Cancel “${tournament.title}” and issue full Telegram Stars refunds to all eligible participants? This action cannot be undone.`,
+                        confirmLabel: "Cancel & Refund",
+                        variant: "danger",
+                        action: async () => {
+                          await execute(
+                            () => cancelTournamentAndRefund(tournament.id),
+                            "Tournament cancelled and refunds issued."
+                          );
+                          setConfirmModal(null);
+                        },
+                      });
                     }}
                     disabled={pending || tournament.status === "CANCELLED"}
                     className="rounded-2xl border border-[#75453b] bg-[#2a1918] px-3 py-2.5 text-xs font-black text-[#ffad9a] transition hover:border-[#b9624f] hover:bg-[#3a211e] disabled:cursor-not-allowed disabled:opacity-50"
@@ -499,6 +538,19 @@ export function AdminTournamentsClient({
           )}
         </div>
       </section>
+
+      {confirmModal && (
+        <AdminConfirmModal
+          isOpen={confirmModal.isOpen}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          confirmLabel={confirmModal.confirmLabel}
+          variant={confirmModal.variant}
+          pending={pending}
+          onConfirm={confirmModal.action}
+          onClose={() => setConfirmModal(null)}
+        />
+      )}
     </main>
   );
 }

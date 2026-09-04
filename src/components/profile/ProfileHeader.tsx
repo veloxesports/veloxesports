@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- Telegram and Supabase avatar URLs are intentionally rendered directly. */
 
 import { useRef, useState, useTransition } from "react";
-import { Camera, Check, LoaderCircle, Settings, ShieldCheck } from "lucide-react";
+import { Camera, Check, LoaderCircle, Settings, ShieldCheck, User } from "lucide-react";
 import Link from "next/link";
 import { uploadCurrentProfileImage } from "@/features/profile/actions";
 import { PROFILE_IMAGE_ACCEPT, PROFILE_IMAGE_MAX_BYTES } from "@/lib/validation/profile-image";
@@ -14,9 +14,10 @@ type ProfileHeaderProps = {
   fallbackInitial: string;
   rank: string;
   level: number;
+  publicProfileHref?: string;
 };
 
-export function ProfileHeader({ initialImageUrl, displayName, fallbackInitial, rank, level }: ProfileHeaderProps) {
+export function ProfileHeader({ initialImageUrl, displayName, fallbackInitial, rank, level, publicProfileHref }: ProfileHeaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [imageUrl, setImageUrl] = useState(initialImageUrl);
   const [notice, setNotice] = useState<string | null>(null);
@@ -140,6 +141,16 @@ export function ProfileHeader({ initialImageUrl, displayName, fallbackInitial, r
           </span>
           <span className="text-xs font-semibold text-[#8a9b8b]">Level {level} Competitor</span>
         </div>
+
+        {publicProfileHref && (
+          <Link
+            href={publicProfileHref}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[#3e5932] bg-[#142013] px-3.5 py-1 text-[11px] font-bold text-[#c5f94d] transition hover:border-[#c5f94d] hover:bg-[#1a2b19]"
+          >
+            <User className="h-3.5 w-3.5" aria-hidden />
+            <span>View Public Card</span>
+          </Link>
+        )}
       </div>
     </section>
   );

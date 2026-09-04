@@ -5,7 +5,6 @@ import {
   AlertTriangle,
   Calendar,
   Check,
-  Copy,
   ExternalLink,
   Gamepad2,
   Loader2,
@@ -33,7 +32,6 @@ type DiscordConnectCardProps = {
 };
 
 export function DiscordConnectCard({
-  initialDiscordId,
   initialDiscordUsername,
   initialDiscordDisplayName,
   initialDiscordAvatarUrl,
@@ -43,7 +41,6 @@ export function DiscordConnectCard({
   const [discordConnected, setDiscordConnected] = useState(
     Boolean(initialDiscordConnected ?? initialDiscordUsername)
   );
-  const [discordId, setDiscordId] = useState(initialDiscordId || null);
   const [discordUsername, setDiscordUsername] = useState(initialDiscordUsername || null);
   const [discordDisplayName, setDiscordDisplayName] = useState(
     initialDiscordDisplayName || initialDiscordUsername || null
@@ -56,7 +53,6 @@ export function DiscordConnectCard({
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [isDisconnectModalOpen, setIsDisconnectModalOpen] = useState(false);
   const [isAwaitingOAuth, setIsAwaitingOAuth] = useState(false);
-  const [copiedId, setCopiedId] = useState(false);
   const [directTag, setDirectTag] = useState("");
   const [notice, setNotice] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
 
@@ -88,7 +84,6 @@ export function DiscordConnectCard({
       if (res.success && res.data?.connected) {
         triggerHaptic("success");
         setDiscordConnected(true);
-        setDiscordId(res.data.discordId);
         setDiscordUsername(res.data.discordUsername);
         setDiscordDisplayName(res.data.discordDisplayName);
         setDiscordAvatarUrl(res.data.discordAvatarUrl);
@@ -170,7 +165,6 @@ export function DiscordConnectCard({
       if (res.success && res.data) {
         triggerHaptic("success");
         setDiscordConnected(true);
-        setDiscordId(res.data.discordId);
         setDiscordUsername(res.data.discordUsername);
         setDiscordDisplayName(res.data.discordDisplayName);
         setDiscordAvatarUrl(res.data.discordAvatarUrl);
@@ -199,7 +193,6 @@ export function DiscordConnectCard({
       if (res.success) {
         triggerHaptic("success");
         setDiscordConnected(false);
-        setDiscordId(null);
         setDiscordUsername(null);
         setDiscordDisplayName(null);
         setDiscordAvatarUrl(null);
@@ -207,17 +200,9 @@ export function DiscordConnectCard({
         setIsDisconnectModalOpen(false);
       } else {
         triggerHaptic("error");
-        alert(res.error || "Failed to disconnect Discord.");
+        setNotice({ text: res.error || "Failed to disconnect Discord.", type: "error" });
       }
     });
-  };
-
-  const handleCopyId = () => {
-    if (!discordId) return;
-    triggerHaptic("light");
-    void navigator.clipboard.writeText(discordId);
-    setCopiedId(true);
-    setTimeout(() => setCopiedId(false), 2000);
   };
 
   const formattedConnectedDate = discordConnectedAt
@@ -297,26 +282,16 @@ export function DiscordConnectCard({
         {/* Connected Details Meta Bar */}
         {discordConnected && (
           <div className="grid grid-cols-2 gap-2 border-t border-[#1a261c] pt-2.5 text-[10px]">
-            {discordId && (
-              <div className="flex items-center justify-between rounded-lg border border-[#1d2b1f] bg-[#080d09] px-2.5 py-1.5">
-                <div className="min-w-0">
-                  <span className="block text-[8px] font-bold uppercase tracking-wider text-[#5a6b5c]">
-                    Discord ID
-                  </span>
-                  <span className="block truncate font-mono text-[10px] font-bold text-[#b0c2b2]">
-                    {discordId}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCopyId}
-                  title="Copy Discord ID"
-                  className="grid h-6 w-6 shrink-0 place-items-center rounded-md border border-[#2a3b2c] bg-[#111912] text-[#8ea390] transition hover:text-white"
-                >
-                  {copiedId ? <Check className="h-3 w-3 text-[#c5f94d]" /> : <Copy className="h-3 w-3" />}
-                </button>
+            <div className="flex items-center gap-2 rounded-lg border border-[#1d2b1f] bg-[#080d09] px-2.5 py-1.5">
+              <div className="min-w-0">
+                <span className="block text-[8px] font-bold uppercase tracking-wider text-[#5a6b5c]">
+                  Discord Status
+                </span>
+                <span className="block truncate text-[10px] font-bold text-[#c5f94d]">
+                  {discordUsername ? `@${discordUsername}` : "Verified & Active"}
+                </span>
               </div>
-            )}
+            </div>
 
             {formattedConnectedDate && (
               <div className="flex items-center gap-2 rounded-lg border border-[#1d2b1f] bg-[#080d09] px-2.5 py-1.5">

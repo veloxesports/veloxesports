@@ -39,13 +39,43 @@ export function TelegramInit() {
   useEffect(() => {
     if (typeof window !== "undefined" && window.Telegram?.WebApp?.BackButton) {
       const backButton = window.Telegram.WebApp.BackButton;
-      const isTopLevel = pathname === "/" || pathname === "/tournaments" || pathname.startsWith("/admin");
+      const topLevelRoutes = [
+        "/",
+        "/tournaments",
+        "/leaderboard",
+        "/matches",
+        "/wallet",
+        "/profile",
+        "/players",
+        "/teams",
+        "/notifications",
+      ];
+      const isTopLevel =
+        topLevelRoutes.includes(pathname) ||
+        pathname.startsWith("/admin") ||
+        pathname === "/onboarding";
 
       if (isTopLevel) {
         backButton.hide();
       } else {
         backButton.show();
-        const handleBack = () => router.back();
+        const handleBack = () => {
+          if (window.history.length > 1) {
+            router.back();
+          } else {
+            if (pathname.startsWith("/tournaments/")) {
+              router.push("/tournaments");
+            } else if (pathname.startsWith("/matches/")) {
+              router.push("/matches");
+            } else if (pathname.startsWith("/players/")) {
+              router.push("/players");
+            } else if (pathname.startsWith("/wallet/")) {
+              router.push("/wallet");
+            } else {
+              router.push("/");
+            }
+          }
+        };
         backButton.onClick(handleBack);
         return () => {
           backButton.offClick(handleBack);

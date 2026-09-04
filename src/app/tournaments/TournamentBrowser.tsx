@@ -37,6 +37,7 @@ const categories = [
   { id: "all", label: "All Events" },
   { id: "live", label: "🔴 Live Now" },
   { id: "upcoming", label: "Upcoming" },
+  { id: "completed", label: "🏆 Results" },
   { id: "free", label: "Free Entry" },
   { id: "paid", label: "High Stakes ⭐" },
   { id: "solo", label: "Solo (1v1)" },
@@ -85,6 +86,7 @@ export function TournamentBrowser({
           ["REGISTRATION_OPEN", "REGISTRATION_CLOSED", "UPCOMING", "CHECK_IN"].includes(
             tournament.status
           )) ||
+        (category === "completed" && tournament.status === "COMPLETED") ||
         (category === "free" && !tournament.isPaid) ||
         (category === "paid" && tournament.isPaid) ||
         (category === "solo" && tournament.participantType === "INDIVIDUAL") ||
@@ -249,6 +251,7 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
   const isOpen = tournament.status === "REGISTRATION_OPEN";
   const isLive = tournament.status === "LIVE";
   const isCheckIn = tournament.status === "CHECK_IN";
+  const isCompleted = tournament.status === "COMPLETED";
 
   // Participant progress
   const participantPercent = Math.min(
@@ -262,6 +265,8 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
     ? "bg-amber-400/15 text-amber-300 border-amber-400/25"
     : isOpen
     ? "bg-[#253d1d] text-[#c5f94d] border-[#38592c]"
+    : isCompleted
+    ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
     : "bg-[#182219] text-[#7d8d7e] border-[#253326]";
 
   const dotStyles = isLive
@@ -270,6 +275,8 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
     ? "bg-amber-400"
     : isOpen
     ? "bg-[#c5f94d]"
+    : isCompleted
+    ? "bg-emerald-400"
     : "bg-[#7d8d7e]";
 
   return (
@@ -300,6 +307,8 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
               ? "Check-In"
               : isOpen
               ? "Open"
+              : isCompleted
+              ? "Concluded"
               : formatLabel(tournament.status)}
           </span>
         </div>

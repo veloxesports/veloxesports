@@ -1,6 +1,7 @@
 import {
   Gift,
   Medal,
+  Search,
   Send,
   Settings,
   Swords,
@@ -35,6 +36,8 @@ export default async function ProfilePage() {
   const nextTierXp = 500;
   const xpPercent = Math.min(100, Math.max(10, Math.round((currentTierXp / nextTierXp) * 100)));
 
+  const publicProfileIdentifier = profile.veloxUsername || profile.user.username || profile.userId;
+
   return (
     <main className="velox-page">
       <ProfileHeader
@@ -43,6 +46,7 @@ export default async function ProfilePage() {
         fallbackInitial={(profile.veloxUsername || profile.user.firstName || "P")[0].toUpperCase()}
         rank={profile.rank}
         level={profile.level}
+        publicProfileHref={`/players/${publicProfileIdentifier}`}
       />
 
       <div className="mt-6 flex flex-col gap-6">
@@ -151,7 +155,7 @@ export default async function ProfilePage() {
         </section>
 
         {/* Quick Hub Navigation */}
-        <section className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        <section className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
           <Link
             href="/matches"
             className="flex items-center gap-2.5 rounded-2xl border border-[#233124] bg-[#0e1610] p-3 transition hover:border-[#3e5934] hover:bg-[#121c13]"
@@ -171,6 +175,17 @@ export default async function ProfilePage() {
             <div>
               <p className="text-xs font-black text-white">My Squad</p>
               <p className="text-[9px] text-[#788a79]">Manage team</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/players"
+            className="flex items-center gap-2.5 rounded-2xl border border-[#233124] bg-[#0e1610] p-3 transition hover:border-[#3e5934] hover:bg-[#121c13]"
+          >
+            <Search className="h-4 w-4 text-emerald-400" />
+            <div>
+              <p className="text-xs font-black text-white">Find Players</p>
+              <p className="text-[9px] text-[#788a79]">Discover rivals</p>
             </div>
           </Link>
 

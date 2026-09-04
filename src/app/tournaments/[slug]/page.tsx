@@ -1,4 +1,4 @@
-import { CalendarDays, ChevronLeft, CircleDollarSign, ExternalLink, Gamepad2, Info, ShieldCheck, Users } from "lucide-react";
+import { CalendarDays, ChevronLeft, CircleDollarSign, ExternalLink, Gamepad2, Info, ShieldCheck, Swords, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTournamentBySlug, getTournamentCheckInState } from "@/features/tournaments/actions";
@@ -65,6 +65,46 @@ export default async function TournamentDetailsPage({ params }: { params: Promis
         <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-[#b8c5b0]">{tournament.rules?.content || "Standard VELOX competitive rules apply. All matches must be played fairly. Cheating will result in an immediate ban."}</p>
       </section>
 
+      {tournament.status === "COMPLETED" && (
+        <section className="velox-card mt-6 overflow-hidden border border-[#406830] bg-gradient-to-r from-[#172814] to-[#0f1b0e] p-5 shadow-lg">
+          <div className="flex items-center gap-3.5">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-[#c5f94d]/40 bg-[#c5f94d]/15 text-[#c5f94d]">
+              <Trophy className="h-6 w-6" aria-hidden />
+            </span>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#c5f94d]">Tournament Concluded</p>
+              <h2 className="text-base font-black text-white">Championship Completed</h2>
+              <p className="text-xs text-[#9fb39c]">
+                All fixtures are completed and prize rewards have been disbursed to winners.
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {["LIVE", "COMPLETED"].includes(tournament.status) && (
+        <section className="velox-card mt-6 border border-[#c5f94d]/30 bg-[#162412] p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#c5f94d]/15 text-[#c5f94d]">
+                <Swords className="h-5 w-5" aria-hidden />
+              </span>
+              <div>
+                <p className="text-xs font-black uppercase tracking-wider text-[#c5f94d]">Active Bracket</p>
+                <h3 className="text-sm font-black text-white">Live Tournament Matches</h3>
+                <p className="text-[11px] text-[#8e998f]">Track round fixtures, live scores, and brackets in real time.</p>
+              </div>
+            </div>
+            <Link
+              href="/matches"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#c5f94d] px-4 py-2.5 text-xs font-black text-[#0f170d] transition hover:brightness-110"
+            >
+              <span>View Matches</span>
+            </Link>
+          </div>
+        </section>
+      )}
+
       {/* Official Discord Community & Match Arbitration */}
       <section className="velox-card mt-6 flex items-center justify-between p-5 border border-[#2e2b52] bg-[#0e1220]/70">
         <div className="flex items-center gap-3">
@@ -92,6 +132,20 @@ export default async function TournamentDetailsPage({ params }: { params: Promis
       <div className="mt-6">
         {registrationOpen ? <Link href={`/tournaments/${tournament.slug}/register`} className="velox-action w-full text-base">{registrationLabel}</Link> : <span className="flex w-full items-center justify-center rounded-2xl border border-[#2f3930] bg-[#151c15] px-4 py-3 text-sm font-black text-[#788477]">{registrationLabel}</span>}
       </div>
+
+      {registrationOpen && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#29342a] bg-[#0c120b]/95 p-3.5 backdrop-blur-md sm:hidden" style={{ paddingBottom: "max(0.875rem, env(safe-area-inset-bottom, 0.875rem))" }}>
+          <div className="mx-auto flex max-w-md items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-wider text-[#8e998f]">Entry Fee</p>
+              <p className="text-sm font-black text-[#c5f94d]">{tournament.isPaid ? `⭐ ${tournament.entryFee.toLocaleString()}` : "Free"}</p>
+            </div>
+            <Link href={`/tournaments/${tournament.slug}/register`} className="velox-action flex-1 py-3 text-center text-sm">
+              {registrationLabel}
+            </Link>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
@@ -101,7 +155,13 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
 }
 
 function StatusBadge({ value }: { value: string }) {
-  const styles: Record<string, string> = { REGISTRATION_OPEN: "bg-[#263c1c] text-[#d4ff76]", LIVE: "bg-[#3a211e] text-[#ffad9a]", CANCELLED: "bg-[#3a211e] text-[#ffad9a]", CHECK_IN: "bg-[#392f1c] text-[#f0cf78]" };
+  const styles: Record<string, string> = {
+    REGISTRATION_OPEN: "bg-[#263c1c] text-[#d4ff76]",
+    LIVE: "bg-[#3a211e] text-[#ffad9a]",
+    CANCELLED: "bg-[#3a211e] text-[#ffad9a]",
+    CHECK_IN: "bg-[#392f1c] text-[#f0cf78]",
+    COMPLETED: "bg-[#18291a] text-[#7ef088] border border-[#2b4c2a]",
+  };
   return <span className={`rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-[0.11em] ${styles[value] ?? "bg-[#202820] text-[#b7c0b5]"}`}>{labelFor(value)}</span>;
 }
 
