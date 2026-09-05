@@ -1,21 +1,33 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart3,
   Bell,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CircleDollarSign,
   ClipboardList,
   Command,
   Compass,
+  ExternalLink,
   LayoutDashboard,
+  LogOut,
   Menu,
   MessageSquare,
   MonitorPlay,
+  PanelLeftClose,
+  PanelLeftOpen,
   Search,
   Settings,
   Shield,
@@ -70,9 +82,9 @@ const navigationSections: NavSection[] = [
   {
     title: "Platform",
     items: [
-      { label: "Finance", href: "/admin/finance", icon: CircleDollarSign, countKey: "finance" as const },
-      { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
-      { label: "Settings", href: "/admin/settings", icon: Settings },
+      { label: "Finance & Stars", href: "/admin/finance", icon: CircleDollarSign, countKey: "finance" as const },
+      { label: "Analytics & KPIs", href: "/admin/analytics", icon: BarChart3 },
+      { label: "Settings & Logs", href: "/admin/settings", icon: Settings },
     ],
   },
 ];
@@ -118,6 +130,42 @@ function getBreadcrumbs(pathname: string) {
   return crumbs;
 }
 
+const SIDEBAR_STORAGE_KEY = "velox_admin_sidebar_collapsed";
+const sidebarListeners = new Set<() => void>();
+
+function subscribeToSidebar(listener: () => void) {
+  sidebarListeners.add(listener);
+  window.addEventListener("storage", listener);
+  return () => {
+    sidebarListeners.delete(listener);
+    window.removeEventListener("storage", listener);
+  };
+}
+
+function getSidebarSnapshot(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function getSidebarServerSnapshot(): boolean {
+  return false;
+}
+
+function toggleSidebarStorage() {
+  if (typeof window === "undefined") return;
+  try {
+    const current = localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+    localStorage.setItem(SIDEBAR_STORAGE_KEY, String(!current));
+    sidebarListeners.forEach((fn) => fn());
+  } catch {
+    // Ignore
+  }
+}
+
 export function AdminWorkspace({
   children,
   adminName,
@@ -131,31 +179,82 @@ export function AdminWorkspace({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [collapsed, setCollapsed] = useState(false);
+
+  // Desktop sidebar collapsed state with useSyncExternalStore persistence
+  const isCollapsed = useSyncExternalStore(
+    subscribeToSidebar,
+    getSidebarSnapshot,
+    getSidebarServerSnapshot
+  );
+
+  // Mobile / tablet off-canvas drawer open state
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close mobile drawer on route change
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
+    if (mobileOpen) {
+      setMobileOpen(false);
+    }
+  }
+
+  // Quick Command Palette state
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [query, setQuery] = useState("");
   const paletteInputRef = useRef<HTMLInputElement>(null);
 
-  // Global Ctrl+K / Cmd+K listener
+  // Collapsible sections state in expanded mode
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    Competition: true,
+    Community: true,
+    Platform: true,
+  });
+
+  const toggleCollapsed = () => {
+    toggleSidebarStorage();
+  };
+
+  const toggleSection = (title: string) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [title]: prev[title] === undefined ? false : !prev[title],
+    }));
+  };
+
+  // Handle ESC key to close mobile drawer or command palette
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      if (e.key === "Escape") {
+        if (mobileOpen) setMobileOpen(false);
+        if (paletteOpen) setPaletteOpen(false);
+      } else if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setPaletteOpen((prev) => !prev);
-      } else if (e.key === "Escape" && paletteOpen) {
-        setPaletteOpen(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [paletteOpen]);
+  }, [mobileOpen, paletteOpen]);
 
+  // Focus input when palette opens
   useEffect(() => {
     if (paletteOpen) {
-      setTimeout(() => paletteInputRef.current?.focus(), 50);
+      setTimeout(() => paletteInputRef.current?.focus(), 60);
     }
   }, [paletteOpen]);
+
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
 
   function goToSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -170,7 +269,7 @@ export function AdminWorkspace({
 
   const breadcrumbs = getBreadcrumbs(pathname);
 
-  // Filter sections by role
+  // Filter sections by authenticated role
   const visibleSections = navigationSections
     .map((section) => ({
       ...section,
@@ -179,161 +278,304 @@ export function AdminWorkspace({
     .filter((section) => section.items.length > 0);
 
   return (
-    <div className={`admin-shell ${collapsed ? "admin-shell--collapsed" : ""}`}>
-      <button
-        type="button"
-        aria-label="Open admin navigation"
-        onClick={() => setMobileOpen(true)}
-        className="admin-mobile-menu"
-      >
-        <Menu className="h-5 w-5" aria-hidden />
-      </button>
-
+    <div className={`admin-shell ${isCollapsed ? "admin-shell--collapsed" : ""}`}>
+      {/* Mobile Backdrop Scrim */}
       {mobileOpen && (
-        <button
-          type="button"
-          aria-label="Close admin navigation"
+        <div
+          role="presentation"
+          aria-hidden="true"
           onClick={() => setMobileOpen(false)}
           className="admin-drawer-scrim"
         />
       )}
 
-      {/* Admin Sidebar */}
+      {/* Production-Grade Sidebar */}
       <aside
         className={`admin-sidebar ${mobileOpen ? "admin-sidebar--open" : ""}`}
         aria-label="Admin navigation"
       >
+        {/* Pinned Brand Header */}
         <div className="admin-sidebar__brand">
           <Link
             href="/admin"
-            className="flex min-w-0 items-center gap-3"
+            className="flex min-w-0 items-center gap-3 group"
             onClick={() => setMobileOpen(false)}
           >
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#c5f94d] text-base font-black tracking-tighter text-[#090d09]">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#c5f94d] text-base font-black tracking-tighter text-[#090d09] shadow-[0_0_15px_rgba(197,249,77,0.3)] transition group-hover:scale-105">
               {"//"}
             </span>
-            <span className="admin-sidebar__wordmark text-sm font-black tracking-[0.22em] text-white">
-              VELOX
-            </span>
+            {!isCollapsed && (
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-black tracking-[0.2em] text-white">
+                  VELOX
+                </span>
+                <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#788e76]">
+                  Admin Console
+                </span>
+              </div>
+            )}
           </Link>
+
+          {/* Desktop Collapse / Expand Toggle Button */}
           <button
             type="button"
-            onClick={() => setCollapsed((value) => !value)}
-            className="admin-collapse-button"
-            aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
+            onClick={toggleCollapsed}
+            className="admin-collapse-button hidden lg:grid"
+            aria-label={isCollapsed ? "Expand sidebar navigation" : "Collapse sidebar navigation"}
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            {collapsed ? (
-              <ChevronRight className="h-4 w-4" aria-hidden />
+            {isCollapsed ? (
+              <PanelLeftOpen className="h-4 w-4" aria-hidden />
             ) : (
-              <ChevronLeft className="h-4 w-4" aria-hidden />
+              <PanelLeftClose className="h-4 w-4" aria-hidden />
             )}
           </button>
+
+          {/* Mobile Drawer Close Button */}
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
-            className="admin-mobile-close"
+            className="admin-mobile-close lg:hidden"
             aria-label="Close navigation"
           >
             <X className="h-4 w-4" aria-hidden />
           </button>
         </div>
 
-        {/* Grouped Navigation */}
-        <nav className="admin-sidebar__nav">
-          {visibleSections.map((section, idx) => (
-            <div key={section.title} className={idx > 0 ? "mt-4 pt-3 border-t border-[#1e2a1f]" : ""}>
-              {!collapsed && (
-                <p className="admin-sidebar__section text-[10px] font-black uppercase tracking-[0.14em] text-[#718570] px-3 pb-1.5">
-                  {section.title}
-                </p>
-              )}
-              <div className="space-y-1">
-                {section.items.map((item) => {
-                  const Icon = item.icon;
-                  const active =
-                    item.href === "/admin"
-                      ? pathname === "/admin"
-                      : pathname === item.href || pathname.startsWith(`${item.href}/`);
-                  const count = item.countKey ? (counts[item.countKey] ?? 0) : 0;
+        {/* Vertically Scrollable Navigation Area */}
+        <nav className="admin-sidebar__nav" role="navigation">
+          {visibleSections.map((section, idx) => {
+            const isSectionExpanded = expandedSections[section.title] !== false;
 
-                  return (
-                    <Link
-                      key={item.label}
-                      href={item.href}
-                      onClick={() => setMobileOpen(false)}
-                      className={`admin-nav-link ${active ? "admin-nav-link--active" : ""}`}
-                      title={collapsed ? item.label : undefined}
-                    >
-                      <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden />
-                      <span className="admin-nav-link__label">{item.label}</span>
-                      {count > 0 && (
-                        <span className="admin-nav-link__badge">
-                          {count > 99 ? "99+" : count}
-                        </span>
-                      )}
-                      {item.external && (
-                        <MonitorPlay className="admin-nav-link__external h-3.5 w-3.5" aria-hidden />
-                      )}
-                    </Link>
-                  );
-                })}
+            return (
+              <div key={section.title} className={idx > 0 && !isCollapsed ? "pt-2" : ""}>
+                {/* Section Header */}
+                {!isCollapsed ? (
+                  <button
+                    type="button"
+                    onClick={() => toggleSection(section.title)}
+                    className="flex w-full items-center justify-between px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-[#718570] hover:text-[#c5f94d] transition-colors rounded-lg group"
+                    aria-expanded={isSectionExpanded}
+                  >
+                    <span>{section.title}</span>
+                    <ChevronDown
+                      className={`h-3 w-3 text-[#586b57] group-hover:text-[#c5f94d] transition-transform duration-200 ${
+                        isSectionExpanded ? "" : "-rotate-90"
+                      }`}
+                      aria-hidden
+                    />
+                  </button>
+                ) : (
+                  idx > 0 && <div className="mx-2 my-2 h-px bg-[#1d291e]" aria-hidden />
+                )}
+
+                {/* Section Items */}
+                {(isCollapsed || isSectionExpanded) && (
+                  <div className="mt-1 space-y-1">
+                    {section.items.map((item) => {
+                      const Icon = item.icon;
+                      const active =
+                        item.href === "/admin"
+                          ? pathname === "/admin"
+                          : pathname === item.href || pathname.startsWith(`${item.href}/`);
+                      const count = item.countKey ? (counts[item.countKey] ?? 0) : 0;
+
+                      return (
+                        <div key={item.label} className="group relative">
+                          <Link
+                            href={item.href}
+                            onClick={() => setMobileOpen(false)}
+                            className={`admin-nav-link ${active ? "admin-nav-link--active" : ""}`}
+                            aria-current={active ? "page" : undefined}
+                          >
+                            <Icon
+                              className={`h-[18px] w-[18px] shrink-0 transition-colors ${
+                                active ? "text-[#c5f94d]" : "text-[#8e9f8c] group-hover:text-white"
+                              }`}
+                              aria-hidden
+                            />
+                            {!isCollapsed && (
+                              <>
+                                <span className="truncate flex-1">{item.label}</span>
+                                {count > 0 && (
+                                  <span className="admin-nav-link__badge">
+                                    {count > 99 ? "99+" : count}
+                                  </span>
+                                )}
+                                {item.external && (
+                                  <ExternalLink className="h-3 w-3 text-[#556955] group-hover:text-[#c5f94d]" aria-hidden />
+                                )}
+                              </>
+                            )}
+                          </Link>
+
+                          {/* Floating Tooltip in Collapsed Mode */}
+                          {isCollapsed && (
+                            <div className="admin-tooltip">
+                              <div className="flex items-center gap-2 rounded-xl border border-[#2f4230] bg-[#0c140e]/95 px-3 py-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.85)] backdrop-blur-md">
+                                <span className="text-xs font-bold text-white">{item.label}</span>
+                                {count > 0 && (
+                                  <span className="rounded-full bg-[#c5f94d] px-1.5 py-0.2 text-[9px] font-black text-[#080d09]">
+                                    {count}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
 
-        {/* Sidebar Footer */}
+        {/* Pinned Bottom Footer */}
         <div className="admin-sidebar__footer">
-          <Link href="/" className="admin-player-link">
-            <MonitorPlay className="h-4 w-4" aria-hidden />
-            <span>Player app</span>
-            <ChevronRight className="ml-auto h-3.5 w-3.5" aria-hidden />
-          </Link>
-          <div className="admin-user-card">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#253820] text-xs font-black text-[#c5f94d]">
-              {adminName.slice(0, 1).toUpperCase()}
-            </span>
-            <span className="min-w-0 admin-sidebar__user">
-              <span className="block truncate text-xs font-black text-white">{adminName}</span>
-              <span className="mt-0.5 block truncate text-[10px] font-bold uppercase tracking-[0.1em] text-[#92a18f]">
-                {adminRole.replaceAll("_", " ")}
+          {/* Player App Switcher */}
+          {!isCollapsed ? (
+            <Link
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="admin-player-link"
+              title="Open Player Telegram Mini App"
+            >
+              <MonitorPlay className="h-4 w-4 shrink-0" aria-hidden />
+              <span className="truncate flex-1">Player App</span>
+              <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
+            </Link>
+          ) : (
+            <div className="group relative w-full flex justify-center">
+              <Link
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="grid h-9 w-9 place-items-center rounded-xl border border-[#273827] bg-[#101711] text-[#c5f94d] hover:border-[#4d6d3d] hover:bg-[#152016] transition"
+                aria-label="Open Player App"
+              >
+                <MonitorPlay className="h-4 w-4" aria-hidden />
+              </Link>
+              <div className="admin-tooltip">
+                <div className="rounded-xl border border-[#2f4230] bg-[#0c140e]/95 px-3 py-1.5 text-xs font-bold text-white shadow-xl backdrop-blur-md">
+                  Open Player App ↗
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Admin User Card */}
+          {!isCollapsed ? (
+            <div className="admin-user-card">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#253820] text-xs font-black text-[#c5f94d]">
+                  {adminName.slice(0, 1).toUpperCase()}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-black text-white">{adminName}</p>
+                  <p className="truncate text-[9px] font-bold uppercase tracking-wider text-[#8b9e89]">
+                    {adminRole.replaceAll("_", " ")}
+                  </p>
+                </div>
+              </div>
+              <form action="/api/admin/auth/logout" method="post">
+                <button
+                  type="submit"
+                  className="grid h-7 w-7 place-items-center rounded-lg border border-[#243425] bg-[#121913] text-[#7d8f7b] hover:border-red-500/40 hover:text-red-400 hover:bg-red-500/10 transition"
+                  title="Sign out of Admin Dashboard"
+                  aria-label="Sign out"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                </button>
+              </form>
+            </div>
+          ) : (
+            <div className="group relative w-full flex justify-center">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#253820] text-xs font-black text-[#c5f94d] cursor-pointer">
+                {adminName.slice(0, 1).toUpperCase()}
               </span>
-            </span>
-          </div>
+              <div className="admin-tooltip">
+                <div className="rounded-xl border border-[#2f4230] bg-[#0c140e]/95 px-3 py-2 text-xs shadow-xl backdrop-blur-md min-w-[140px]">
+                  <p className="font-bold text-white">{adminName}</p>
+                  <p className="text-[9px] text-[#8b9e89] uppercase tracking-wider">{adminRole.replaceAll("_", " ")}</p>
+                  <div className="mt-2 border-t border-[#233324] pt-1.5">
+                    <form action="/api/admin/auth/logout" method="post">
+                      <button
+                        type="submit"
+                        className="flex w-full items-center gap-1.5 text-[10px] font-bold text-red-400 hover:text-red-300"
+                      >
+                        <LogOut className="h-3 w-3" />
+                        <span>Sign out</span>
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </aside>
 
       {/* Main Content Area */}
       <div className="admin-content">
         <header className="admin-topbar">
-          {/* Breadcrumb Navigation Trail */}
-          <div className="hidden lg:flex items-center gap-1.5 text-xs text-[#8e998f] min-w-0 mr-4">
-            <Compass className="h-3.5 w-3.5 text-[#c5f94d] shrink-0" />
-            {breadcrumbs.map((crumb, idx) => {
-              const isLast = idx === breadcrumbs.length - 1;
-              return (
-                <div key={crumb.href} className="flex items-center gap-1.5 min-w-0">
-                  {idx > 0 && <span className="text-[#4e604f]">/</span>}
-                  {isLast ? (
-                    <span className="truncate font-black text-white">{crumb.label}</span>
-                  ) : (
-                    <Link
-                      href={crumb.href}
-                      className="truncate font-semibold text-[#8e998f] hover:text-[#c5f94d] transition"
-                    >
-                      {crumb.label}
-                    </Link>
-                  )}
-                </div>
-              );
-            })}
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Hamburger Menu Button (Mobile & Tablet) */}
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg border border-[#263527] bg-[#0e150f] text-[#c5f94d] hover:bg-[#152216] transition active:scale-95 shrink-0"
+              aria-label="Open navigation drawer"
+            >
+              <Menu className="h-5 w-5" aria-hidden />
+            </button>
+
+            {/* Desktop Quick Sidebar Collapse Toggle in Topbar */}
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              className="hidden lg:flex h-8 w-8 items-center justify-center rounded-lg border border-[#263527] bg-[#0e150f] text-[#8e9f8c] hover:text-white hover:border-[#4d6a40] transition active:scale-95 shrink-0"
+              aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {isCollapsed ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
+            </button>
+
+            {/* Breadcrumbs Navigation Trail */}
+            <div className="hidden md:flex items-center gap-1.5 text-xs text-[#8e998f] min-w-0">
+              <Compass className="h-3.5 w-3.5 text-[#c5f94d] shrink-0" />
+              {breadcrumbs.map((crumb, idx) => {
+                const isLast = idx === breadcrumbs.length - 1;
+                return (
+                  <div key={crumb.href} className="flex items-center gap-1.5 min-w-0">
+                    {idx > 0 && <span className="text-[#4e604f]">/</span>}
+                    {isLast ? (
+                      <span className="truncate font-black text-white">{crumb.label}</span>
+                    ) : (
+                      <Link
+                        href={crumb.href}
+                        className="truncate font-semibold text-[#8e998f] hover:text-[#c5f94d] transition"
+                      >
+                        {crumb.label}
+                      </Link>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Quick Search & Command Palette Trigger */}
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
-            className="admin-search flex items-center justify-between text-left cursor-pointer transition hover:border-[#4d6645]"
+            className="admin-search flex items-center justify-between text-left cursor-pointer transition hover:border-[#4d6645] mx-2"
             aria-label="Open global search and command palette"
           >
             <div className="flex items-center gap-2">
@@ -356,6 +598,7 @@ export function AdminWorkspace({
               href="/admin/notifications"
               className="admin-icon-button"
               aria-label="Open notifications and announcements"
+              title="Notifications"
             >
               <Bell className="h-4 w-4" aria-hidden />
             </Link>
@@ -364,6 +607,7 @@ export function AdminWorkspace({
                 type="submit"
                 className="admin-avatar"
                 aria-label="Sign out of the Command Center"
+                title={`Signed in as ${adminName} (${adminRole}) - Click to sign out`}
               >
                 {adminName.slice(0, 1).toUpperCase()}
               </button>
@@ -371,7 +615,7 @@ export function AdminWorkspace({
           </div>
         </header>
 
-        {/* Command Palette Modal */}
+        {/* Global Command Palette Modal */}
         {paletteOpen && (
           <div
             role="dialog"
