@@ -9,10 +9,10 @@ import { AdminConfirmModal } from "@/components/admin/AdminConfirmModal";
 type ModerationAction = "BAN" | "UNBAN" | "FREEZE" | "UNFREEZE" | "RESTRICT";
 
 const details: Record<ModerationAction, { label: string; confirmation: string; icon: typeof Ban; className: string; isDanger: boolean }> = {
-  BAN: { label: "Ban", confirmation: "Ban this player? They will no longer be able to access VELOX until a Super Admin unbans them.", icon: Ban, className: "border-[#87493d] bg-[#2b1d19] text-[#ffad9a] hover:border-[#b9624f]", isDanger: true },
+  BAN: { label: "Ban", confirmation: "Ban this player? They will no longer be able to access Khemora until a Super Admin unbans them.", icon: Ban, className: "border-[#87493d] bg-[#2b1d19] text-[#ffad9a] hover:border-[#b9624f]", isDanger: true },
   UNBAN: { label: "Unban", confirmation: "Restore this banned player to active access?", icon: UserRoundCheck, className: "border-[#496b38] bg-[#182716] text-[#d8f5b3] hover:border-[#6c9b50]", isDanger: false },
-  FREEZE: { label: "Freeze", confirmation: "Freeze this player? Their VELOX access will be suspended until a Super Admin restores it.", icon: LockKeyhole, className: "border-[#715f37] bg-[#2d291a] text-[#f0d88e] hover:border-[#9d864c]", isDanger: true },
-  UNFREEZE: { label: "Restore", confirmation: "Restore this player's normal VELOX access?", icon: ShieldCheck, className: "border-[#496b38] bg-[#182716] text-[#d8f5b3] hover:border-[#6c9b50]", isDanger: false },
+  FREEZE: { label: "Freeze", confirmation: "Freeze this player? Their Khemora access will be suspended until a Super Admin restores it.", icon: LockKeyhole, className: "border-[#715f37] bg-[#2d291a] text-[#f0d88e] hover:border-[#9d864c]", isDanger: true },
+  UNFREEZE: { label: "Restore", confirmation: "Restore this player's normal Khemora access?", icon: ShieldCheck, className: "border-[#496b38] bg-[#182716] text-[#d8f5b3] hover:border-[#6c9b50]", isDanger: false },
   RESTRICT: { label: "Restrict", confirmation: "Restrict this player? This changes their platform access until a Super Admin restores it.", icon: LockKeyhole, className: "border-[#715f37] bg-[#2d291a] text-[#f0d88e] hover:border-[#9d864c]", isDanger: true },
 };
 

@@ -1,7 +1,8 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
 
-const SESSION_COOKIE = "velox_session";
+const SESSION_COOKIE = "khemora_session";
+const LEGACY_SESSION_COOKIE = "velox_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
 
 export type Session = {
@@ -67,7 +68,7 @@ export async function createSession(userId: string, telegramId: string) {
 export async function getSession() {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get(SESSION_COOKIE)?.value;
+    const token = cookieStore.get(SESSION_COOKIE)?.value ?? cookieStore.get(LEGACY_SESSION_COOKIE)?.value;
     return token ? deserialize(token) : null;
   } catch {
     return null;
@@ -77,4 +78,5 @@ export async function getSession() {
 export async function clearSession() {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE);
+  cookieStore.delete(LEGACY_SESSION_COOKIE);
 }

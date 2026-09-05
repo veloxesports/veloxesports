@@ -20,7 +20,7 @@ export default async function AdminDashboard() {
           {overviewResult.error ?? "Unable to load the operations command center."}
         </p>
         <Link href="/" className="velox-muted-button mt-6">
-          Return to VELOX
+          Return to Khemora
         </Link>
       </main>
     );

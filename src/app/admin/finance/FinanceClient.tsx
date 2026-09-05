@@ -79,7 +79,7 @@ export function FinanceClient({ initialData }: { initialData: FinanceData }) {
               <article key={payment.id} className="velox-card p-5">
                 <div className="flex items-start gap-3">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1f3119] text-[#c5f94d]"><ReceiptText className="h-5 w-5" aria-hidden /></span>
-                  <div className="min-w-0 flex-1"><p className="truncate text-base font-black text-white">{payment.tournament?.title ?? "VELOX transaction"}</p><p className="mt-1 truncate text-sm text-[#8e998f]">{player}</p></div>
+                  <div className="min-w-0 flex-1"><p className="truncate text-base font-black text-white">{payment.tournament?.title ?? "Khemora transaction"}</p><p className="mt-1 truncate text-sm text-[#8e998f]">{player}</p></div>
                   <div className="shrink-0 text-right"><p className="text-lg font-black text-white">⭐ {payment.amount.toLocaleString()}</p><StatusBadge value={payment.status} /></div>
                 </div>
                 <div className="mt-4 grid gap-2 border-y border-[#29342a] py-3 text-xs sm:grid-cols-2">

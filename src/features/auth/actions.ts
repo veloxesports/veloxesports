@@ -9,7 +9,7 @@ import { ensureReferralCode } from "@/features/referrals/service";
 const initDataSchema = z.string().trim().min(1).max(4_096);
 const PROFILE_IMAGES_STORAGE_SEGMENT = "/storage/v1/object/public/profile-images/";
 
-function isVeloxUploadedProfileImage(profileImage: string | null | undefined) {
+function isCustomUploadedProfileImage(profileImage: string | null | undefined) {
   return Boolean(profileImage?.includes(PROFILE_IMAGES_STORAGE_SEGMENT));
 }
 
@@ -33,7 +33,7 @@ export async function authenticateTelegram(initData: unknown) {
         where: { telegramId: String(telegramUser.id) },
         select: { profileImage: true },
       });
-      const profileImage = isVeloxUploadedProfileImage(existingAccount?.profileImage)
+      const profileImage = isCustomUploadedProfileImage(existingAccount?.profileImage)
         ? existingAccount!.profileImage
         : telegramUser.photo_url ?? null;
 
@@ -69,7 +69,7 @@ export async function authenticateTelegram(initData: unknown) {
     });
 
     if (user.status !== "ACTIVE") {
-      return { success: false, error: "This VELOX account is not currently available." };
+      return { success: false, error: "This Khemora account is not currently available." };
     }
 
     await createSession(user.id, user.telegramId);

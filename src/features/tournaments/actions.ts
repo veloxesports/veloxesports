@@ -212,7 +212,7 @@ export async function checkInForTournament(tournamentId: unknown) {
       };
       return { success: false, error: messages[error.code] };
     }
-    if (error instanceof Error && error.message === "UNAUTHENTICATED") return { success: false, error: "Open VELOX inside Telegram to check in." };
+    if (error instanceof Error && error.message === "UNAUTHENTICATED") return { success: false, error: "Open Khemora inside Telegram to check in." };
     console.error("Tournament check-in failed", error);
     return { success: false, error: "We couldn't complete your check-in. Please try again." };
   }
@@ -280,7 +280,7 @@ export async function getEligibleTeamsForTournament(tournamentId: unknown) {
 
     return { success: true as const, data: entries };
   } catch (error) {
-    if (error instanceof Error && error.message === "UNAUTHENTICATED") return { success: false as const, error: "Open VELOX in Telegram to register a team." };
+    if (error instanceof Error && error.message === "UNAUTHENTICATED") return { success: false as const, error: "Open Khemora in Telegram to register a team." };
     console.error("Eligible team lookup failed", error);
     return { success: false as const, error: "We couldn't load your teams." };
   }
@@ -373,7 +373,7 @@ export async function registerForFreeTournament(tournamentId: unknown) {
       return { success: false, error: messages[error.code] };
     }
     if (error instanceof Error && error.message === "UNAUTHENTICATED") {
-      return { success: false, error: "Open VELOX in Telegram to register." };
+      return { success: false, error: "Open Khemora in Telegram to register." };
     }
     console.error("Free tournament registration failed", error);
     return { success: false, error: "We couldn't complete your registration. Please try again." };
@@ -439,7 +439,7 @@ export async function registerTeamForFreeTournament(input: unknown) {
       };
       return { success: false, error: messages[error.code] };
     }
-    if (message === "UNAUTHENTICATED") return { success: false, error: "Open VELOX in Telegram to register a team." };
+    if (message === "UNAUTHENTICATED") return { success: false, error: "Open Khemora in Telegram to register a team." };
     console.error("Team tournament registration failed", error);
     return { success: false, error: "We couldn't complete the team registration. Please try again." };
   }

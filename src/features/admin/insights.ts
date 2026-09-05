@@ -165,7 +165,7 @@ export async function getAdminSearchResults(rawQuery: string): Promise<{ success
               OR: [
                 { username: contains },
                 { firstName: contains },
-                { profile: { is: { veloxUsername: contains } } },
+                { profile: { is: { khemoraUsername: contains } } },
                 { profile: { is: { discordUsername: contains } } },
                 { profile: { is: { discordDisplayName: contains } } },
               ],
@@ -181,7 +181,7 @@ export async function getAdminSearchResults(rawQuery: string): Promise<{ success
           profileImage: true,
           profile: {
             select: {
-              veloxUsername: true,
+              khemoraUsername: true,
               rank: true,
               level: true,
               discordUsername: true,
@@ -304,7 +304,7 @@ export async function getAdminTournamentDetail(tournamentId: string) {
                 profileImage: true,
                 profile: {
                   select: {
-                    veloxUsername: true,
+                    khemoraUsername: true,
                     rank: true,
                     level: true,
                     discordId: true,
@@ -344,7 +344,7 @@ const playerSelect = {
   lastLogin: true,
   profile: {
     select: {
-      veloxUsername: true,
+      khemoraUsername: true,
       rank: true,
       level: true,
       discordId: true,
@@ -383,7 +383,7 @@ async function tournamentInsight(where: { status?: "LIVE" }): Promise<AdminInsig
   return {
     eyebrow: isLive ? "Competition now" : "Competition archive",
     title: isLive ? "Live events" : "All tournaments",
-    description: isLive ? "Tournaments that are currently in play. Open any event to review its confirmed and pending registrations." : "Every tournament in the VELOX operating archive. Select an event to see its player roster.",
+    description: isLive ? "Tournaments that are currently in play. Open any event to review its confirmed and pending registrations." : "Every tournament in the Khemora operating archive. Select an event to see its player roster.",
     itemLabel: "tournament",
     total,
     items: tournaments.map((tournament) => ({
@@ -413,7 +413,7 @@ async function confirmedEntriesInsight(): Promise<AdminInsight> {
         checkedIn: true,
         createdAt: true,
         tournament: { select: { id: true, title: true, game: { select: { name: true } } } },
-        user: { select: { username: true, firstName: true, profileImage: true, profile: { select: { veloxUsername: true } } } },
+        user: { select: { username: true, firstName: true, profileImage: true, profile: { select: { khemoraUsername: true } } } },
         team: { select: { name: true } },
       },
     }),
@@ -454,7 +454,7 @@ async function paymentInsight(kind: "payments" | "refunds" | "rewards"): Promise
           amount: true,
           completedAt: true,
           createdAt: true,
-          user: { select: { username: true, firstName: true, profileImage: true, profile: { select: { veloxUsername: true } } } },
+          user: { select: { username: true, firstName: true, profileImage: true, profile: { select: { khemoraUsername: true } } } },
           tournament: { select: { id: true, title: true } },
         },
       }),
@@ -468,7 +468,7 @@ async function paymentInsight(kind: "payments" | "refunds" | "rewards"): Promise
       totalAmount: paymentTotal._sum.amount ?? 0,
       items: payments.map((payment) => ({
         id: payment.id,
-        title: payment.tournament?.title ?? "VELOX transaction",
+        title: payment.tournament?.title ?? "Khemora transaction",
         detail: playerName(payment.user),
         status: "COMPLETED",
         date: payment.completedAt ?? payment.createdAt,
@@ -496,7 +496,7 @@ async function paymentInsight(kind: "payments" | "refunds" | "rewards"): Promise
           createdAt: true,
           payment: {
             select: {
-              user: { select: { username: true, firstName: true, profileImage: true, profile: { select: { veloxUsername: true } } } },
+              user: { select: { username: true, firstName: true, profileImage: true, profile: { select: { khemoraUsername: true } } } },
               tournament: { select: { id: true, title: true } },
             },
           },
@@ -512,7 +512,7 @@ async function paymentInsight(kind: "payments" | "refunds" | "rewards"): Promise
       totalAmount: refundTotal._sum.amount ?? 0,
       items: refunds.map((refund) => ({
         id: refund.id,
-        title: refund.payment.tournament?.title ?? "VELOX refund",
+        title: refund.payment.tournament?.title ?? "Khemora refund",
         detail: playerName(refund.payment.user),
         status: "REFUNDED",
         date: refund.completedAt ?? refund.createdAt,
@@ -539,7 +539,7 @@ async function paymentInsight(kind: "payments" | "refunds" | "rewards"): Promise
         createdAt: true,
         description: true,
         tournament: { select: { id: true, title: true } },
-        wallet: { select: { user: { select: { username: true, firstName: true, profileImage: true, profile: { select: { veloxUsername: true } } } } } },
+        wallet: { select: { user: { select: { username: true, firstName: true, profileImage: true, profile: { select: { khemoraUsername: true } } } } } },
       },
     }),
   ]);
@@ -552,7 +552,7 @@ async function paymentInsight(kind: "payments" | "refunds" | "rewards"): Promise
     totalAmount: rewardTotal._sum.amount ?? 0,
     items: rewards.map((reward) => ({
       id: reward.id,
-      title: reward.tournament?.title ?? reward.description ?? "VELOX prize reward",
+      title: reward.tournament?.title ?? reward.description ?? "Khemora prize reward",
       detail: playerName(reward.wallet.user),
       status: "COMPLETED",
       date: reward.completedAt ?? reward.createdAt,
@@ -579,7 +579,7 @@ function playerInsight({
     createdAt: Date;
     lastLogin: Date | null;
     profile: {
-      veloxUsername: string | null;
+      khemoraUsername: string | null;
       rank: string;
       level: number;
       discordId?: string | null;
@@ -597,8 +597,8 @@ function playerInsight({
     eyebrow: activeOnly ? "Last 30 days" : "Platform accounts",
     title: activeOnly ? "Active players" : "All players",
     description: activeOnly
-      ? "Active player accounts with a recorded VELOX or Telegram sign-in during the last 30 days."
-      : "Every player account in VELOX, excluding administrative service accounts.",
+      ? "Active player accounts with a recorded Khemora or Telegram sign-in during the last 30 days."
+      : "Every player account in Khemora, excluding administrative service accounts.",
     itemLabel: "player",
     total,
     items: players.map((player) => {
@@ -632,8 +632,8 @@ function playerInsight({
   };
 }
 
-function playerName(user: { username: string | null; firstName: string | null; profile: { veloxUsername: string | null } | null }) {
-  return user.profile?.veloxUsername ?? user.username ?? user.firstName ?? "VELOX player";
+function playerName(user: { username: string | null; firstName: string | null; profile: { khemoraUsername: string | null } | null }) {
+  return user.profile?.khemoraUsername ?? user.username ?? user.firstName ?? "Khemora player";
 }
 
 function countByDay<T>(items: T[], dateFor: (item: T) => Date | null) {

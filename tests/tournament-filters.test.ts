@@ -51,7 +51,7 @@ describe("Tournament Filter Selector & Discovery", () => {
     const sampleTournaments = [
       {
         id: "t1",
-        title: "VELOX Chess Grand Prix",
+        title: "Khemora Chess Grand Prix",
         game: { id: "game-1", name: "Chess" },
         format: "SINGLE_ELIMINATION",
         region: "Global",
@@ -74,7 +74,7 @@ describe("Tournament Filter Selector & Discovery", () => {
     // Filter by game
     const chessOnly = sampleTournaments.filter((t) => t.game.id === "game-1");
     expect(chessOnly).toHaveLength(1);
-    expect(chessOnly[0].title).toBe("VELOX Chess Grand Prix");
+    expect(chessOnly[0].title).toBe("Khemora Chess Grand Prix");
 
     // Filter by format
     const doubleElimOnly = sampleTournaments.filter((t) => t.format === "DOUBLE_ELIMINATION");

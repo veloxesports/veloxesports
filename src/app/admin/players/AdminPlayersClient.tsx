@@ -41,11 +41,11 @@ export function AdminPlayersClient({
       const q = searchQuery.toLowerCase();
       const uName = player.username?.toLowerCase() ?? "";
       const fName = player.firstName?.toLowerCase() ?? "";
-      const vName = player.profile?.veloxUsername?.toLowerCase() ?? "";
+      const kName = player.profile?.khemoraUsername?.toLowerCase() ?? "";
       const dName = player.profile?.discordUsername?.toLowerCase() ?? "";
       const dDisp = player.profile?.discordDisplayName?.toLowerCase() ?? "";
       const teleId = player.telegramId.toLowerCase();
-      if (!uName.includes(q) && !fName.includes(q) && !vName.includes(q) && !dName.includes(q) && !dDisp.includes(q) && !teleId.includes(q)) {
+      if (!uName.includes(q) && !fName.includes(q) && !kName.includes(q) && !dName.includes(q) && !dDisp.includes(q) && !teleId.includes(q)) {
         return false;
       }
     }
@@ -196,7 +196,7 @@ export function AdminPlayersClient({
               </thead>
               <tbody className="divide-y divide-[#1e2b20]">
                 {paginatedPlayers.map((player) => {
-                  const displayName = player.profile?.veloxUsername ?? player.username ?? player.firstName ?? "Player";
+                  const displayName = player.profile?.khemoraUsername ?? player.username ?? player.firstName ?? "Player";
                   const p = player.profile;
                   const winRate = (p?.wins ?? 0) + (p?.losses ?? 0) > 0 ? Math.round(((p?.wins ?? 0) / ((p?.wins ?? 0) + (p?.losses ?? 0))) * 100) : 0;
 
@@ -271,7 +271,7 @@ export function AdminPlayersClient({
                       <td className="px-5 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <Link
-                            href={`/players/${player.profile?.veloxUsername || player.username || player.id}`}
+                            href={`/players/${player.profile?.khemoraUsername || player.username || player.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 rounded-lg border border-[#2b3a2c] bg-[#121a13] px-2.5 py-1 text-xs font-bold text-[#b6c5b2] transition hover:border-[#527448] hover:text-[#c5f94d]"
@@ -374,7 +374,7 @@ function ModeratePlayerModal({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const playerName = player.profile?.veloxUsername ?? player.username ?? player.firstName ?? "Player";
+  const playerName = player.profile?.khemoraUsername ?? player.username ?? player.firstName ?? "Player";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

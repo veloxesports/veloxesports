@@ -111,7 +111,7 @@ export async function initiateTournamentPayment(input: unknown) {
       });
       const payment = await tx.telegramPayment.update({
         where: { id: created.id },
-        data: { invoicePayload: `velox:${created.id}` },
+        data: { invoicePayload: `khemora:${created.id}` },
       });
 
       return { payment, title: tournament.title };
@@ -137,7 +137,7 @@ export async function initiateTournamentPayment(input: unknown) {
       return { success: false, error: message };
     }
     if (error instanceof Error && error.message === "UNAUTHENTICATED") {
-      return { success: false, error: "Open VELOX in Telegram to make a payment." };
+      return { success: false, error: "Open Khemora in Telegram to make a payment." };
     }
     if (error instanceof Error && error.message === "TELEGRAM_NOT_CONFIGURED") {
       return { success: false, error: "Payments are not configured yet." };

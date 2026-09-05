@@ -18,7 +18,7 @@ export async function getCurrentUser() {
       role: true,
       status: true,
       profile: {
-        select: { veloxUsername: true, rank: true, level: true, xp: true, wins: true, losses: true },
+        select: { khemoraUsername: true, rank: true, level: true, xp: true, wins: true, losses: true },
       },
     },
   });

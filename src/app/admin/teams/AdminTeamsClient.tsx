@@ -22,9 +22,9 @@ export function AdminTeamsClient({ teams }: { teams: TeamItem[] }) {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       const tName = team.name.toLowerCase();
-      const cName = team.captain?.profile?.veloxUsername?.toLowerCase() ?? team.captain?.username?.toLowerCase() ?? "";
+      const cName = team.captain?.profile?.khemoraUsername?.toLowerCase() ?? team.captain?.username?.toLowerCase() ?? "";
       const mMatches = team.members.some((m) => {
-        const mName = m.user.profile?.veloxUsername?.toLowerCase() ?? m.user.username?.toLowerCase() ?? m.user.firstName?.toLowerCase() ?? "";
+        const mName = m.user.profile?.khemoraUsername?.toLowerCase() ?? m.user.username?.toLowerCase() ?? m.user.firstName?.toLowerCase() ?? "";
         return mName.includes(q);
       });
       if (!tName.includes(q) && !cName.includes(q) && !mMatches) return false;
@@ -100,7 +100,7 @@ export function AdminTeamsClient({ teams }: { teams: TeamItem[] }) {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {filteredTeams.map((team) => {
-              const captainName = team.captain?.profile?.veloxUsername ?? team.captain?.username ?? team.captain?.firstName ?? "Captain";
+              const captainName = team.captain?.profile?.khemoraUsername ?? team.captain?.username ?? team.captain?.firstName ?? "Captain";
 
               return (
                 <article key={team.id} className="velox-card flex flex-col overflow-hidden transition hover:border-[#4f6e3e]">
@@ -139,7 +139,7 @@ export function AdminTeamsClient({ teams }: { teams: TeamItem[] }) {
                       <p className="text-[10px] font-black uppercase tracking-[0.08em] text-[#8e998f]">Roster Preview</p>
                       <div className="mt-2 space-y-1.5">
                         {team.members.slice(0, 4).map((m) => {
-                          const mName = m.user.profile?.veloxUsername ?? m.user.username ?? m.user.firstName ?? "Member";
+                          const mName = m.user.profile?.khemoraUsername ?? m.user.username ?? m.user.firstName ?? "Member";
                           return (
                             <div key={m.id} className="flex items-center justify-between text-xs">
                               <span className="truncate text-[#b6c5b2]">{mName}</span>
@@ -196,7 +196,7 @@ export function AdminTeamsClient({ teams }: { teams: TeamItem[] }) {
 
             <div className="mt-4 max-h-96 space-y-2 overflow-y-auto pr-1">
               {selectedTeam.members.map((m) => {
-                const memberName = m.user.profile?.veloxUsername ?? m.user.username ?? m.user.firstName ?? "Member";
+                const memberName = m.user.profile?.khemoraUsername ?? m.user.username ?? m.user.firstName ?? "Member";
                 const dName = m.user.profile?.discordUsername;
 
                 return (
@@ -220,7 +220,7 @@ export function AdminTeamsClient({ teams }: { teams: TeamItem[] }) {
                         {m.role}
                       </span>
                       <Link
-                        href={`/players/${m.user.profile?.veloxUsername || m.user.username || m.user.id}`}
+                        href={`/players/${m.user.profile?.khemoraUsername || m.user.username || m.user.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="rounded-lg p-1 text-[#8e998f] transition hover:bg-[#1a291b] hover:text-[#c5f94d]"

@@ -146,7 +146,7 @@ function StatusBadge({ value }: { value: string }) {
 }
 
 function Empty({ itemLabel }: { itemLabel: string }) {
-  return <div className="velox-card px-5 py-12 text-center"><Users className="mx-auto h-9 w-9 text-[#526052]" aria-hidden /><p className="mt-3 font-black text-white">No {itemLabel}s recorded</p><p className="mt-1 text-sm text-[#8e998f]">New activity will appear here as VELOX records it.</p></div>;
+  return <div className="velox-card px-5 py-12 text-center"><Users className="mx-auto h-9 w-9 text-[#526052]" aria-hidden /><p className="mt-3 font-black text-white">No {itemLabel}s recorded</p><p className="mt-1 text-sm text-[#8e998f]">New activity will appear here as Khemora records it.</p></div>;
 }
 
 function Unavailable({ message }: { message: string }) {

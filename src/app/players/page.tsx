@@ -4,8 +4,8 @@ import { PlayerSearchClient } from "@/components/players/PlayerSearchClient";
 import { Users } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Player Search & Discovery | VELOX",
-  description: "Search and explore players, squads, and competitive rankings on VELOX.",
+  title: "Player Search & Discovery | Khemora",
+  description: "Search and explore players, squads, and competitive rankings on Khemora.",
 };
 
 export default async function PlayersPage() {

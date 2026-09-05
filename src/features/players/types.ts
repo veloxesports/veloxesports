@@ -1,6 +1,6 @@
 export type PlayerSearchResult = {
   id: string;
-  veloxUsername: string | null;
+  khemoraUsername: string | null;
   displayName: string;
   username: string | null;
   profileImage: string | null;
@@ -137,7 +137,7 @@ export type HeadToHeadRecord = {
 
 export type PublicPlayerProfile = {
   id: string;
-  veloxUsername: string | null;
+  khemoraUsername: string | null;
   displayName: string;
   telegramUsername: string | null;
   profileImage: string | null;

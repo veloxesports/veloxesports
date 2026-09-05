@@ -69,7 +69,7 @@ export function Screen7StayUpdated() {
           You&apos;re Ready to <span className="text-[#c5f94d]">Compete</span>
         </h2>
         <p className="text-xs sm:text-sm font-medium leading-relaxed text-[#9ab097] max-w-xs mx-auto">
-          Stay updated, enter the arena and make your mark with Velox.
+          Stay updated, enter the arena and make your mark with Khemora.
         </p>
       </div>
     </div>

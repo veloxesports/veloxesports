@@ -101,7 +101,7 @@ export function AdminDashboardClient({
       {/* Header */}
       <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <p className="velox-eyebrow">VELOX / Command Center</p>
+          <p className="velox-eyebrow">Khemora / Command Center</p>
           <h1 className="mt-1 text-2xl font-black tracking-[-0.05em] text-white sm:text-3xl">
             Operations Command Center
           </h1>
@@ -590,7 +590,7 @@ export function AdminDashboardClient({
             ) : (
               <div className="divide-y divide-[#232f24]">
                 {overview.recentRegistrations.map((r) => {
-                  const playerName = r.user.profile?.veloxUsername ?? r.user.username ?? r.user.firstName ?? "Player";
+                  const playerName = r.user.profile?.khemoraUsername ?? r.user.username ?? r.user.firstName ?? "Player";
                   return (
                     <div key={r.id} className="flex items-center gap-3 px-5 py-3.5 transition hover:bg-[#131d14]">
                       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#1b271c] text-xs font-black text-[#c5f94d]">
@@ -655,7 +655,7 @@ export function AdminDashboardClient({
             ) : (
               <div className="divide-y divide-[#232f24]">
                 {overview.recentDiscordConnections.map((p) => {
-                  const playerName = p.veloxUsername ?? p.user.username ?? p.user.firstName ?? "Player";
+                  const playerName = p.khemoraUsername ?? p.user.username ?? p.user.firstName ?? "Player";
                   return (
                     <div key={p.id} className="flex items-center gap-3 px-5 py-3.5 transition hover:bg-[#131d14]">
                       {p.discordAvatarUrl ? (

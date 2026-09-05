@@ -39,7 +39,7 @@ model UserProfile {
   id                String    @id @default(uuid())
   userId            String    @unique
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  veloxUsername     String?   @unique
+  khemoraUsername   String?   @unique @map("veloxUsername")
   rank              Rank      @default(BRONZE)
   level             Int       @default(1)
   xp                Int       @default(0)

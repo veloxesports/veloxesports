@@ -17,7 +17,7 @@ async function makePlayer(index: number) {
       telegramId: `${runId}-telegram-${index}`,
       username: `${runId}-player-${index}`,
       firstName: `Test ${index}`,
-      profile: { create: { veloxUsername: `${runId}-player-${index}`, favoriteGames: [] } },
+      profile: { create: { khemoraUsername: `${runId}-player-${index}`, favoriteGames: [] } },
     },
   });
   ids.userIds.push(user.id);

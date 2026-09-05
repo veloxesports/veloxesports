@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
       return statusRedirect("identity_error", returnTo);
     }
 
-    // 3. Prevent duplicate account linking across different VELOX users
+    // 3. Prevent duplicate account linking across different Khemora users
     const existing = await prisma.userProfile.findFirst({
       where: {
         discordId: discordUser.id,

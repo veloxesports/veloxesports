@@ -85,7 +85,7 @@ export function TournamentModal({
   const [selectedGameId, setSelectedGameId] = useState(initialGameId);
 
   const defaultRules = isEdit
-    ? tournament!.rules?.content ?? "Standard VELOX competitive rules apply."
+    ? tournament!.rules?.content ?? "Standard Khemora competitive rules apply."
     : (() => {
         const found = activeGames.find((g) => g.id === initialGameId) ?? games[0];
         return found ? getTournamentRulesTemplate(found) : "";

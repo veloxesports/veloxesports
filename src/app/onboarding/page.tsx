@@ -3,8 +3,8 @@ import type { Metadata, Viewport } from "next";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 
 export const metadata: Metadata = {
-  title: "Welcome to VELOX | How It Works",
-  description: "Learn how to discover, join, and compete in esports tournaments on VELOX.",
+  title: "Welcome to Khemora Esports | How It Works",
+  description: "Learn how to discover, join, and compete in esports tournaments on Khemora Esports.",
 };
 
 export const viewport: Viewport = {
@@ -20,10 +20,10 @@ function OnboardingFallback() {
     <div className="flex h-[100dvh] w-full items-center justify-center bg-[#080d09] text-[#c5f94d]">
       <div className="flex flex-col items-center gap-3">
         <div className="grid h-12 w-12 place-items-center rounded-2xl border-2 border-[#c5f94d] bg-[#111912] shadow-[0_0_20px_rgba(197,249,77,0.3)] animate-pulse">
-          <span className="text-base font-black text-white">V</span>
+          <span className="text-base font-black text-white">K</span>
         </div>
         <span className="text-xs font-black uppercase tracking-widest text-[#728570]">
-          Loading Velox...
+          Loading Khemora...
         </span>
       </div>
     </div>

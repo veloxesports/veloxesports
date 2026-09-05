@@ -42,7 +42,7 @@ export function TournamentCheckInCard({ tournamentId, state }: { tournamentId: s
   const openingLabel = formatDateTime(state.opensAt);
   const isCheckedIn = Boolean(state.registration?.checkedIn);
   const unavailableMessage = state.requiresTelegram
-    ? "Open VELOX inside Telegram to verify your registration and check in."
+    ? "Open Khemora inside Telegram to verify your registration and check in."
     : !state.registration
       ? "A confirmed tournament registration is required before you can check in."
       : state.phase === "NOT_STARTED"

@@ -59,7 +59,7 @@ export async function getMyTeams() {
                     profileImage: true,
                     profile: {
                       select: {
-                        veloxUsername: true,
+                        khemoraUsername: true,
                         rank: true,
                         level: true,
                         wins: true,
@@ -92,7 +92,7 @@ export async function getMyTeams() {
           id: member.id,
           userId: member.userId,
           role: member.role,
-          name: member.user.profile?.veloxUsername ?? member.user.username ?? member.user.firstName ?? "Player",
+          name: member.user.profile?.khemoraUsername ?? member.user.username ?? member.user.firstName ?? "Player",
           profileImage: member.user.profileImage,
           rank: member.user.profile?.rank ?? "BRONZE",
           level: member.user.profile?.level ?? 1,
@@ -116,7 +116,7 @@ export async function getMyTeams() {
     };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHENTICATED") {
-      return { success: false, error: "Open VELOX in Telegram to manage your teams." };
+      return { success: false, error: "Open Khemora in Telegram to manage your teams." };
     }
     console.error("Team fetch failed", error);
     return { success: false, error: "We couldn't load your teams." };
@@ -144,7 +144,7 @@ export async function createTeam(input: unknown) {
     return { success: true, data: team };
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
-    if (message === "UNAUTHENTICATED") return { success: false, error: "Open VELOX in Telegram to create a team." };
+    if (message === "UNAUTHENTICATED") return { success: false, error: "Open Khemora in Telegram to create a team." };
     if (message === "TEAM_NAME_TAKEN") return { success: false, error: "That team name is already taken." };
     console.error("Team creation failed", error);
     return { success: false, error: "We couldn't create the team. Please try again." };
@@ -180,7 +180,7 @@ export async function createTeamInvite(teamId: unknown) {
     return { success: true, data: { code: invite.code, expiresAt: invite.expiresAt } };
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
-    if (message === "UNAUTHENTICATED") return { success: false, error: "Open VELOX in Telegram to invite teammates." };
+    if (message === "UNAUTHENTICATED") return { success: false, error: "Open Khemora in Telegram to invite teammates." };
     if (message === "NOT_CAPTAIN") return { success: false, error: "Only the team captain can create invitations." };
     console.error("Team invite creation failed", error);
     return { success: false, error: "We couldn't create an invitation. Please try again." };
@@ -214,7 +214,7 @@ export async function redeemTeamInvite(code: unknown) {
     return { success: true, data: membership };
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
-    if (message === "UNAUTHENTICATED") return { success: false, error: "Open VELOX in Telegram to join a team." };
+    if (message === "UNAUTHENTICATED") return { success: false, error: "Open Khemora in Telegram to join a team." };
     if (message === "INVITE_INVALID") return { success: false, error: "That invite is expired, used, or invalid." };
     if (message === "ALREADY_MEMBER") return { success: false, error: "You are already a member of this team." };
     if (message === "ROSTER_LOCKED") return { success: false, error: "This roster is locked while it has an active tournament entry." };
@@ -243,7 +243,7 @@ export async function leaveTeam(teamId: unknown) {
     if (message === "NOT_MEMBER") return { success: false, error: "You are not a member of this team." };
     if (message === "CAPTAIN_MUST_TRANSFER") return { success: false, error: "Transfer captaincy before leaving this team." };
     if (message === "ROSTER_LOCKED") return { success: false, error: "This roster is locked while it has an active tournament entry." };
-    if (message === "UNAUTHENTICATED") return { success: false, error: "Open VELOX in Telegram to manage your teams." };
+    if (message === "UNAUTHENTICATED") return { success: false, error: "Open Khemora in Telegram to manage your teams." };
     console.error("Leave team failed", error);
     return { success: false, error: "We couldn't leave the team. Please try again." };
   }
@@ -293,7 +293,7 @@ export async function transferCaptaincy(input: unknown) {
     const message = error instanceof Error ? error.message : "";
     if (message === "NOT_CAPTAIN") return { success: false, error: "Only the team captain can transfer leadership." };
     if (message === "TARGET_NOT_MEMBER") return { success: false, error: "The new captain must already be a member of the team." };
-    if (message === "UNAUTHENTICATED") return { success: false, error: "Open VELOX in Telegram to manage your teams." };
+    if (message === "UNAUTHENTICATED") return { success: false, error: "Open Khemora in Telegram to manage your teams." };
     console.error("Transfer captaincy failed", error);
     return { success: false, error: "We couldn't transfer team captaincy." };
   }
@@ -337,7 +337,7 @@ export async function removeTeamMember(input: unknown) {
     if (message === "CANNOT_REMOVE_SELF") return { success: false, error: "Transfer captaincy or disband the team instead." };
     if (message === "ROSTER_LOCKED") return { success: false, error: "This roster is locked while it has an active tournament entry." };
     if (message === "TARGET_NOT_MEMBER") return { success: false, error: "That player is no longer on the team." };
-    if (message === "UNAUTHENTICATED") return { success: false, error: "Open VELOX in Telegram to manage your teams." };
+    if (message === "UNAUTHENTICATED") return { success: false, error: "Open Khemora in Telegram to manage your teams." };
     console.error("Remove team member failed", error);
     return { success: false, error: "We couldn't remove that player." };
   }
@@ -369,7 +369,7 @@ export async function disbandTeam(teamId: unknown) {
     const message = error instanceof Error ? error.message : "";
     if (message === "NOT_CAPTAIN") return { success: false, error: "Only the team captain can disband the team." };
     if (message === "ROSTER_LOCKED") return { success: false, error: "This team cannot be disbanded while registered in an active tournament." };
-    if (message === "UNAUTHENTICATED") return { success: false, error: "Open VELOX in Telegram to manage your teams." };
+    if (message === "UNAUTHENTICATED") return { success: false, error: "Open Khemora in Telegram to manage your teams." };
     console.error("Disband team failed", error);
     return { success: false, error: "We couldn't disband the team." };
   }

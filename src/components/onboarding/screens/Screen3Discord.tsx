@@ -22,15 +22,15 @@ export function Screen3Discord() {
 
         {/* Dual Cards Bridge Container */}
         <div className="relative z-10 flex w-full max-w-[320px] flex-col items-center gap-3">
-          {/* Top Row: Velox Card <-> Discord Card */}
+          {/* Top Row: Khemora Card <-> Discord Card */}
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 w-full">
-            {/* Velox Player Card */}
+            {/* Khemora Player Card */}
             <div className="flex flex-col items-center rounded-2xl border border-[#30452e] bg-gradient-to-b from-[#131f14] to-[#0a100b] p-3 text-center shadow-lg">
               <div className="grid h-10 w-10 place-items-center rounded-xl border border-[#c5f94d]/60 bg-[#1e2f1d] text-[#c5f94d] shadow-[0_0_12px_rgba(197,249,77,0.3)]">
                 <User className="h-5 w-5" />
               </div>
               <span className="mt-1.5 text-xs font-black text-white truncate max-w-[85px]">
-                VELOX
+                KHEMORA
               </span>
               <span className="text-[9px] font-bold text-[#8ba089]">
                 Player Profile
@@ -99,7 +99,7 @@ export function Screen3Discord() {
           Connect Your <span className="text-[#5865F2]">Discord</span>
         </h2>
         <p className="text-xs sm:text-sm font-medium leading-relaxed text-[#9ab097] max-w-xs mx-auto">
-          Link Discord with Velox and stay connected with your tournament community.
+          Link Discord with Khemora and stay connected with your tournament community.
         </p>
       </div>
     </div>

@@ -60,7 +60,7 @@ export default async function DiscordConnectedPage({
           Discord Connected!
         </h1>
         <p className="mt-2 text-xs leading-relaxed text-[#8a9d8b]">
-          Your Discord account has been securely linked to your VELOX Esports competitor profile.
+          Your Discord account has been securely linked to your Khemora Esports competitor profile.
         </p>
 
         {/* Discord Profile Card */}

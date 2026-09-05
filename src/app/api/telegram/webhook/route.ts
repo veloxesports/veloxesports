@@ -229,7 +229,7 @@ async function processSuccessfulPayment(
             userId: payment.userId,
             type: "PAYMENT",
             title: "Team entry requires a refund",
-            message: "Your selected team roster changed before payment verification. VELOX is returning the entry fee.",
+            message: "Your selected team roster changed before payment verification. Khemora is returning the entry fee.",
             metadata: { tournamentId: payment.tournamentId, paymentId: payment.id },
             telegramDeliveryEligible: true,
           },

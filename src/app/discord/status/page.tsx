@@ -4,7 +4,7 @@ import Link from "next/link";
 const statusMessages: Record<string, { title: string; detail: string }> = {
   already_connected: {
     title: "Account Already Linked",
-    detail: "That Discord account is already connected to another VELOX player account. Disconnect it there first or use a different Discord account.",
+    detail: "That Discord account is already connected to another Khemora player account. Disconnect it there first or use a different Discord account.",
   },
   cancelled: {
     title: "Connection Cancelled",
@@ -12,15 +12,15 @@ const statusMessages: Record<string, { title: string; detail: string }> = {
   },
   unavailable: {
     title: "Discord Service Notice",
-    detail: "Discord OAuth is temporarily unavailable. You can link your Discord tag directly inside the VELOX Telegram Mini App.",
+    detail: "Discord OAuth is temporarily unavailable. You can link your Discord tag directly inside the Khemora Telegram Mini App.",
   },
   auth_required: {
     title: "Authentication Required",
-    detail: "Please launch the VELOX Esports Telegram Mini App before connecting your Discord account.",
+    detail: "Please launch the Khemora Esports Telegram Mini App before connecting your Discord account.",
   },
   invalid_state: {
     title: "Session Expired",
-    detail: "The authorization session expired or was invalid. Please initiate connection again from the VELOX app.",
+    detail: "The authorization session expired or was invalid. Please initiate connection again from the Khemora app.",
   },
   failed: {
     title: "Connection Failed",
@@ -34,7 +34,7 @@ export default async function DiscordStatusPage({
   searchParams: Promise<{ status?: string; returnTo?: string }>;
 }) {
   const { status, returnTo } = await searchParams;
-  const botUsername = process.env.TELEGRAM_BOT_USERNAME || "velox_esports_bot";
+  const botUsername = process.env.TELEGRAM_BOT_USERNAME || "khemora_esports_bot";
   const telegramMiniAppUrl = `https://t.me/${botUsername}/app`;
   const fallbackUrl = returnTo === "settings" ? "/settings" : "/profile";
 

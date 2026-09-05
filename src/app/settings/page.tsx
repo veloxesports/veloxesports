@@ -64,7 +64,7 @@ export default function SettingsPage() {
     void getPlayerProfile().then((result) => {
       if (result.success && result.data) {
         setSignedIn(true);
-        setUsername(result.data.profile.veloxUsername || "");
+        setUsername(result.data.profile.khemoraUsername || "");
         setCountry(result.data.profile.country || "");
         setDiscordUsername(result.data.profile.discordUsername || null);
         setDiscordDisplayName(
@@ -78,7 +78,7 @@ export default function SettingsPage() {
       }
       const discordStatus = new URLSearchParams(window.location.search).get("discord");
       if (discordStatus === "connected") setMessage("Discord connected.");
-      if (discordStatus === "already_connected") setMessage("That Discord account is already linked to another VELOX account.");
+      if (discordStatus === "already_connected") setMessage("That Discord account is already linked to another Khemora account.");
       if (discordStatus === "unavailable") setMessage("Discord connection is not configured yet.");
       if (discordStatus === "failed") setMessage("Discord connection failed. Please try again.");
       if (discordStatus === "cancelled") setMessage("Discord connection was cancelled or expired.");
@@ -98,7 +98,7 @@ export default function SettingsPage() {
     setSaving(true);
     setMessage(null);
 
-    void updateCurrentProfile({ veloxUsername: username, country }).then((res) => {
+    void updateCurrentProfile({ khemoraUsername: username, country }).then((res) => {
       setSaving(false);
       if (res.success) {
         setMessage("Profile updated successfully!");
@@ -178,13 +178,13 @@ export default function SettingsPage() {
 
           <form onSubmit={handleSave} className="velox-card p-4 flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-gray-400">VELOX Username</label>
+              <label className="text-xs font-bold text-gray-400">Khemora Username</label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 disabled={loading || !signedIn}
-                placeholder="Your VELOX username"
+                placeholder="Your Khemora username"
                 className="bg-[#090d09] border border-[#2a352b] text-white p-3 rounded-xl focus:border-[#c5f94d] outline-none text-sm font-bold placeholder:text-gray-600 transition"
               />
             </div>
@@ -395,7 +395,7 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* Help & Guide: How Velox Works */}
+        {/* Help & Guide: How Khemora Works */}
         <section className="flex flex-col gap-4">
           <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
             <HelpCircle className="w-4 h-4" /> Help & Platform Guide
@@ -408,7 +408,7 @@ export default function SettingsPage() {
                   <Sparkles className="h-5 w-5" />
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <h3 className="text-sm font-bold text-white truncate">How Velox Works</h3>
+                  <h3 className="text-sm font-bold text-white truncate">How Khemora Works</h3>
                   <p className="text-xs text-gray-400 line-clamp-2">
                     Tournaments, squads, Discord sync, check-ins, and brackets.
                   </p>

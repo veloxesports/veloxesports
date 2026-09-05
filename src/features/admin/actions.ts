@@ -232,7 +232,7 @@ export async function getAdminStats() {
                 select: {
                   username: true,
                   firstName: true,
-                  profile: { select: { veloxUsername: true } },
+                  profile: { select: { khemoraUsername: true } },
                 },
               },
             },
@@ -251,7 +251,7 @@ export async function getAdminStats() {
             select: {
               username: true,
               firstName: true,
-              profile: { select: { veloxUsername: true } },
+              profile: { select: { khemoraUsername: true } },
             },
           },
         },
@@ -268,7 +268,7 @@ export async function getAdminStats() {
             select: {
               username: true,
               firstName: true,
-              profile: { select: { veloxUsername: true } },
+              profile: { select: { khemoraUsername: true } },
             },
           },
         },
@@ -300,10 +300,10 @@ export async function getAdminStats() {
     const playerIds = [...new Set(liveMatches.flatMap((match) => [match.player1Id, match.player2Id]).filter((id): id is string => Boolean(id)))];
     const teamIds = [...new Set(liveMatches.flatMap((match) => [match.team1Id, match.team2Id]).filter((id): id is string => Boolean(id)))];
     const [matchPlayers, matchTeams] = await Promise.all([
-      prisma.user.findMany({ where: { id: { in: playerIds } }, select: { id: true, username: true, firstName: true, profile: { select: { veloxUsername: true } } } }),
+      prisma.user.findMany({ where: { id: { in: playerIds } }, select: { id: true, username: true, firstName: true, profile: { select: { khemoraUsername: true } } } }),
       prisma.team.findMany({ where: { id: { in: teamIds } }, select: { id: true, name: true } }),
     ]);
-    const playerNames = new Map(matchPlayers.map((player) => [player.id, player.profile?.veloxUsername ?? player.username ?? player.firstName ?? "Player"]));
+    const playerNames = new Map(matchPlayers.map((player) => [player.id, player.profile?.khemoraUsername ?? player.username ?? player.firstName ?? "Player"]));
     const teamNames = new Map(matchTeams.map((team) => [team.id, team.name]));
     const participantName = (playerId: string | null, teamId: string | null) => playerId ? playerNames.get(playerId) ?? "Player" : teamId ? teamNames.get(teamId) ?? "Team" : "TBD";
 
@@ -345,7 +345,7 @@ export async function getAdminStats() {
     };
   } catch (error) {
     if (error instanceof Error && (error.message === "UNAUTHENTICATED" || error.message === "FORBIDDEN")) {
-      return { success: false, error: "You do not have access to the VELOX command center." };
+      return { success: false, error: "You do not have access to the Khemora command center." };
     }
     console.error("Failed to fetch admin stats", error);
     return { success: false, error: "Failed to fetch stats" };
@@ -357,7 +357,7 @@ function slugify(value: string) {
 }
 
 async function uniqueTournamentSlug(title: string) {
-  const base = slugify(title) || "velox-tournament";
+  const base = slugify(title) || "khemora-tournament";
   for (let index = 0; index < 20; index += 1) {
     const candidate = index === 0 ? base : `${base}-${index + 1}`;
     const found = await prisma.tournament.findUnique({ where: { slug: candidate }, select: { id: true } });
@@ -550,8 +550,8 @@ export async function updateTournament(input: unknown) {
           gameMode: parsed.data.gameMode || null,
           rules: {
             upsert: {
-              create: { content: parsed.data.rules ?? "Standard VELOX competitive rules apply.", checkInPeriodMins: parsed.data.checkInPeriodMins },
-              update: { content: parsed.data.rules ?? "Standard VELOX competitive rules apply.", checkInPeriodMins: parsed.data.checkInPeriodMins },
+              create: { content: parsed.data.rules ?? "Standard Khemora competitive rules apply.", checkInPeriodMins: parsed.data.checkInPeriodMins },
+              update: { content: parsed.data.rules ?? "Standard Khemora competitive rules apply.", checkInPeriodMins: parsed.data.checkInPeriodMins },
             },
           },
         },
@@ -1113,7 +1113,7 @@ export type AdminDashboardOverviewData = {
       username: string | null;
       firstName: string | null;
       profileImage: string | null;
-      profile: { veloxUsername: string | null; discordUsername: string | null } | null;
+      profile: { khemoraUsername: string | null; discordUsername: string | null } | null;
     };
     team: { id: string; name: string; logoUrl: string | null } | null;
   }>;
@@ -1132,7 +1132,7 @@ export type AdminDashboardOverviewData = {
   }>;
   recentDiscordConnections: Array<{
     id: string;
-    veloxUsername: string | null;
+    khemoraUsername: string | null;
     discordUsername: string | null;
     discordDisplayName: string | null;
     discordAvatarUrl: string | null;
@@ -1185,7 +1185,7 @@ export type AdminMatchItem = {
     firstName: string | null;
     profileImage: string | null;
     profile: {
-      veloxUsername: string | null;
+      khemoraUsername: string | null;
       discordUsername: string | null;
       discordDisplayName: string | null;
       discordAvatarUrl: string | null;
@@ -1199,7 +1199,7 @@ export type AdminMatchItem = {
     firstName: string | null;
     profileImage: string | null;
     profile: {
-      veloxUsername: string | null;
+      khemoraUsername: string | null;
       discordUsername: string | null;
       discordDisplayName: string | null;
       discordAvatarUrl: string | null;
@@ -1226,7 +1226,7 @@ export type AdminPlayerItem = {
   createdAt: Date;
   lastLogin: Date | null;
   profile: {
-    veloxUsername: string | null;
+    khemoraUsername: string | null;
     rank: Rank;
     level: number;
     xp: number;
@@ -1260,7 +1260,7 @@ export type AdminTeamItem = {
     username: string | null;
     firstName: string | null;
     profileImage: string | null;
-    profile: { veloxUsername: string | null } | null;
+    profile: { khemoraUsername: string | null } | null;
   } | null;
   members: Array<{
     id: string;
@@ -1271,7 +1271,7 @@ export type AdminTeamItem = {
       firstName: string | null;
       profileImage: string | null;
       profile: {
-        veloxUsername: string | null;
+        khemoraUsername: string | null;
         rank: Rank;
         level: number;
         discordUsername: string | null;
@@ -1307,7 +1307,7 @@ export type AdminRegistrationItem = {
     firstName: string | null;
     profileImage: string | null;
     profile: {
-      veloxUsername: string | null;
+      khemoraUsername: string | null;
       rank: Rank;
       level: number;
       discordUsername: string | null;
@@ -1485,7 +1485,7 @@ export async function getAdminDashboardOverview(): Promise<
               username: true,
               firstName: true,
               profileImage: true,
-              profile: { select: { veloxUsername: true, discordUsername: true } },
+              profile: { select: { khemoraUsername: true, discordUsername: true } },
             },
           },
           team: { select: { id: true, name: true, logoUrl: true } },
@@ -1546,9 +1546,9 @@ export async function getAdminDashboardOverview(): Promise<
               id: true,
               username: true,
               firstName: true,
-              profile: { select: { veloxUsername: true, discordUsername: true } },
+              profile: { select: { khemoraUsername: true, discordUsername: true } },
             },
-          }).then((users) => new Map(users.map((u) => [u.id, u.profile?.veloxUsername ?? u.username ?? u.firstName ?? "Player"])))
+          }).then((users) => new Map(users.map((u) => [u.id, u.profile?.khemoraUsername ?? u.username ?? u.firstName ?? "Player"])))
         : new Map<string, string>(),
       participantIds.length > 0
         ? prisma.team.findMany({
@@ -1732,7 +1732,7 @@ export async function getAdminMatches(filter?: {
               profileImage: true,
               profile: {
                 select: {
-                  veloxUsername: true,
+                  khemoraUsername: true,
                   discordUsername: true,
                   discordDisplayName: true,
                   discordAvatarUrl: true,
@@ -1939,7 +1939,7 @@ export async function getAdminPlayers(filter?: {
           { firstName: contains },
           { lastName: contains },
           { telegramId: contains },
-          { profile: { is: { veloxUsername: contains } } },
+          { profile: { is: { khemoraUsername: contains } } },
           { profile: { is: { discordUsername: contains } } },
           { profile: { is: { discordDisplayName: contains } } },
           { profile: { is: { discordId: contains } } },
@@ -1972,7 +1972,7 @@ export async function getAdminPlayers(filter?: {
         lastLogin: true,
         profile: {
           select: {
-            veloxUsername: true,
+            khemoraUsername: true,
             rank: true,
             level: true,
             xp: true,
@@ -2036,7 +2036,7 @@ export async function getAdminTeams(filter?: {
                 username: true,
                 firstName: true,
                 profileImage: true,
-                profile: { select: { veloxUsername: true, rank: true, level: true, discordUsername: true } },
+                profile: { select: { khemoraUsername: true, rank: true, level: true, discordUsername: true } },
               },
             },
           },
@@ -2059,7 +2059,7 @@ export async function getAdminTeams(filter?: {
         username: true,
         firstName: true,
         profileImage: true,
-        profile: { select: { veloxUsername: true } },
+        profile: { select: { khemoraUsername: true } },
       },
     });
     const captainMap = new Map(captains.map((c) => [c.id, c]));
@@ -2103,7 +2103,7 @@ export async function getAdminRegistrations(filter?: {
       where.OR = [
         { user: { username: contains } },
         { user: { firstName: contains } },
-        { user: { profile: { is: { veloxUsername: contains } } } },
+        { user: { profile: { is: { khemoraUsername: contains } } } },
         { user: { profile: { is: { discordUsername: contains } } } },
         { team: { is: { name: contains } } },
         { tournament: { title: contains } },
@@ -2133,7 +2133,7 @@ export async function getAdminRegistrations(filter?: {
             profileImage: true,
             profile: {
               select: {
-                veloxUsername: true,
+                khemoraUsername: true,
                 rank: true,
                 level: true,
                 discordUsername: true,
@@ -2254,7 +2254,7 @@ export async function getAdminDiscordStats(filter?: {
         { discordUsername: contains },
         { discordDisplayName: contains },
         { discordId: contains },
-        { veloxUsername: contains },
+        { khemoraUsername: contains },
         { user: { username: contains } },
         { user: { firstName: contains } },
       ];
@@ -2290,7 +2290,7 @@ export async function getAdminDiscordStats(filter?: {
         profiles: profiles.map((p) => ({
           id: p.id,
           userId: p.userId,
-          playerName: p.veloxUsername ?? p.user.username ?? p.user.firstName ?? "Player",
+          playerName: p.khemoraUsername ?? p.user.username ?? p.user.firstName ?? "Player",
           telegramId: p.user.telegramId,
           profileImage: p.user.profileImage,
           userStatus: p.user.status,
@@ -2349,7 +2349,7 @@ export async function getAdminNotifications(filter?: {
               username: true,
               firstName: true,
               telegramId: true,
-              profile: { select: { veloxUsername: true } },
+              profile: { select: { khemoraUsername: true } },
             },
           },
         },
@@ -2376,7 +2376,7 @@ export async function getAdminNotifications(filter?: {
           createdAt: n.createdAt,
           user: {
             id: n.user.id,
-            name: n.user.profile?.veloxUsername ?? n.user.username ?? n.user.firstName ?? "Player",
+            name: n.user.profile?.khemoraUsername ?? n.user.username ?? n.user.firstName ?? "Player",
             telegramId: n.user.telegramId,
           },
         })),

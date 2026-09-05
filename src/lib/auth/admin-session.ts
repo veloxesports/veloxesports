@@ -3,7 +3,8 @@ import "server-only";
 import crypto from "crypto";
 import { cookies } from "next/headers";
 
-const ADMIN_SESSION_COOKIE = "velox_admin_session";
+const ADMIN_SESSION_COOKIE = "khemora_admin_session";
+const LEGACY_ADMIN_SESSION_COOKIE = "velox_admin_session";
 const ADMIN_SESSION_TTL_SECONDS = 60 * 60 * 8;
 
 type AdminSession = {
@@ -59,7 +60,7 @@ export async function createAdminSession(accountId: string, userId: string) {
 export async function getAdminSession() {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
+    const token = cookieStore.get(ADMIN_SESSION_COOKIE)?.value ?? cookieStore.get(LEGACY_ADMIN_SESSION_COOKIE)?.value;
     return token ? deserialize(token) : null;
   } catch {
     return null;
@@ -69,4 +70,5 @@ export async function getAdminSession() {
 export async function clearAdminSession() {
   const cookieStore = await cookies();
   cookieStore.delete(ADMIN_SESSION_COOKIE);
+  cookieStore.delete(LEGACY_ADMIN_SESSION_COOKIE);
 }

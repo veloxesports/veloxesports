@@ -80,7 +80,7 @@ function fallbackAnswer(question: string, tournaments: TournamentContext[]) {
   }
 
   if (/(star|payment|pay|refund|wallet|fee)/.test(normalized)) {
-    return "Paid tournament entry is handled through a Telegram Stars invoice. Select the event, tap Join, and approve the Telegram payment. Your wallet shows completed activity. Refunds are handled by VELOX moderators where the event is eligible—never send Stars directly to another player.";
+    return "Paid tournament entry is handled through a Telegram Stars invoice. Select the event, tap Join, and approve the Telegram payment. Your wallet shows completed activity. Refunds are handled by Khemora moderators where the event is eligible—never send Stars directly to another player.";
   }
 
   if (/(match|result|score|evidence|dispute|report)/.test(normalized)) {
@@ -91,8 +91,8 @@ function fallbackAnswer(question: string, tournaments: TournamentContext[]) {
     return "Go to Teams to create a squad or join one with an 8-character invite code from its captain. Captains can create team invites; never post invite codes publicly if you want to keep the team private.";
   }
 
-  if (/(hello|hi|hey|what is velox|about)/.test(normalized)) {
-    return "VELOX is a Telegram esports tournament platform. You can discover events, register, manage matches, join teams, track rankings, and review your wallet activity in one place.";
+  if (/(hello|hi|hey|what is velox|what is khemora|about)/.test(normalized)) {
+    return "Khemora Esports is a Telegram esports tournament platform. You can discover events, register, manage matches, join teams, track rankings, and review your wallet activity in one place.";
   }
 
   return "I can help with tournament discovery and registration, Telegram Stars payments, match results and disputes, teams, rankings, and wallet activity. Try asking about one of those.";
@@ -122,9 +122,9 @@ function buildInstructions(tournaments: TournamentContext[]) {
     ? tournaments.map(formatTournament).join("\n")
     : "No active or upcoming tournament records are available right now.";
 
-  return `You are VELOX Guide, the concise support assistant inside an esports tournament app.
+  return `You are Khemora Guide, the concise support assistant inside an esports tournament app.
 
-You can help only with VELOX, its current public tournaments, registration, Telegram Stars payments, wallet activity, matches, results/evidence/disputes, teams, referrals, rankings, and profiles. Do not perform actions, claim you changed account data, or request passwords, API keys, payment details, or private codes. Never invent tournament dates, prizes, availability, rules, policies, or a player's account information. If context does not answer a question, say what is unavailable and point the player to the relevant VELOX screen. Be friendly, practical, and under 150 words. Use short bullets only when they make steps clearer.
+You can help only with Khemora Esports, its current public tournaments, registration, Telegram Stars payments, wallet activity, matches, results/evidence/disputes, teams, referrals, rankings, and profiles. Do not perform actions, claim you changed account data, or request passwords, API keys, payment details, or private codes. Never invent tournament dates, prizes, availability, rules, policies, or a player's account information. If context does not answer a question, say what is unavailable and point the player to the relevant Khemora screen. Be friendly, practical, and under 150 words. Use short bullets only when they make steps clearer.
 
 Current public tournament context:
 ${eventContext}`;
@@ -189,7 +189,7 @@ async function askOpenAi(message: string, history: Array<{ role: "user" | "assis
 
   if (!response.ok) {
     const detail = await response.text();
-    console.error("VELOX Guide OpenAI request failed", response.status, detail.slice(0, 500));
+    console.error("Khemora Guide OpenAI request failed", response.status, detail.slice(0, 500));
     return null;
   }
 
@@ -217,14 +217,14 @@ export async function POST(request: Request) {
   try {
     tournaments = await getTournamentContext();
   } catch (error) {
-    console.error("VELOX Guide tournament context failed", error);
+    console.error("Khemora Guide tournament context failed", error);
   }
 
   try {
     const answer = await askOpenAi(parsedRequest.data.message, parsedRequest.data.history, tournaments);
     if (answer) return Response.json({ answer, source: "ai" });
   } catch (error) {
-    console.error("VELOX Guide AI response failed", error);
+    console.error("Khemora Guide AI response failed", error);
   }
 
   return Response.json({

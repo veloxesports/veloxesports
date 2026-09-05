@@ -223,7 +223,7 @@ export async function completeTournamentIfReady(tournamentId: string) {
               userId: payout.userId,
               type: "TOURNAMENT",
               title: "Tournament prize awarded",
-              message: `${placement === 1 ? "Champion" : `Place ${placement}`} reward: ${payout.amount.toLocaleString()} Telegram Stars added to your VELOX wallet.`,
+              message: `${placement === 1 ? "Champion" : `Place ${placement}`} reward: ${payout.amount.toLocaleString()} Telegram Stars added to your Khemora wallet.`,
               metadata: { tournamentId: tournament.id, placement, amount: payout.amount },
               telegramDeliveryEligible: true,
             },

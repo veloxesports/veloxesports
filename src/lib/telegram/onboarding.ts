@@ -17,26 +17,26 @@ let competeBufferCache: Buffer | null = null;
 export async function getWelcomeHeroImage(): Promise<Buffer | string> {
   if (heroBufferCache) return heroBufferCache;
   try {
-    const filePath = path.join(process.cwd(), "public", "images", "velox-welcome-hero.jpg");
+    const filePath = path.join(process.cwd(), "public", "images", "khemora-welcome-hero.jpg");
     heroBufferCache = await fs.readFile(filePath);
     return heroBufferCache;
   } catch (err) {
     console.warn("Could not read local welcome hero image, falling back to public URL", err);
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
-    return appUrl ? `${appUrl}/images/velox-welcome-hero.jpg` : "";
+    return appUrl ? `${appUrl}/images/khemora-welcome-hero.jpg` : "";
   }
 }
 
 export async function getCompetePromoImage(): Promise<Buffer | string> {
   if (competeBufferCache) return competeBufferCache;
   try {
-    const filePath = path.join(process.cwd(), "public", "images", "velox-compete-promo.jpg");
+    const filePath = path.join(process.cwd(), "public", "images", "khemora-compete-promo.jpg");
     competeBufferCache = await fs.readFile(filePath);
     return competeBufferCache;
   } catch (err) {
     console.warn("Could not read local compete promo image, falling back to public URL", err);
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
-    return appUrl ? `${appUrl}/images/velox-compete-promo.jpg` : "";
+    return appUrl ? `${appUrl}/images/khemora-compete-promo.jpg` : "";
   }
 }
 
@@ -52,7 +52,7 @@ export function getMiniAppUrl(): string {
       // ignore
     }
   }
-  return "https://veloxesports.com";
+  return "https://khemoraesports.com";
 }
 
 export function getCommunityUrl(): string {
@@ -67,12 +67,12 @@ export function getCommunityUrl(): string {
       // ignore
     }
   }
-  return "https://t.me/veloxesports";
+  return "https://t.me/khemoraesports";
 }
 
 export function getWelcomeCardCaption(): string {
   return [
-    "<b>Welcome to VELOX 🎮🏆</b>",
+    "<b>Welcome to KHEMORA ESPORTS 🎮🏆</b>",
     "<i>The Premier Esports Arena on Telegram</i>",
     "",
     "Discover high-stakes tournaments, challenge real opponents, track brackets, and win verified prizes—all inside Telegram.",
@@ -281,7 +281,7 @@ async function tryRedeemReferral(userId: string, refCodeCandidate?: string | nul
           userId: source.referrerId,
           type: "SYSTEM",
           title: "Referral completed",
-          message: "A player you invited joined VELOX via Telegram.",
+          message: "A player you invited joined Khemora Esports via Telegram.",
           metadata: { referralId: source.id },
           telegramDeliveryEligible: true,
         },
@@ -330,7 +330,7 @@ export async function handleBotStartCommand(input: {
         status: "ACTIVE",
         profile: {
           create: {
-            veloxUsername: input.from.username ?? null,
+            khemoraUsername: input.from.username ?? null,
             favoriteGames: [],
             gamerIds: { botOnboarded: false },
           },

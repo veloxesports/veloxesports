@@ -99,7 +99,7 @@ export function Screen6Matches() {
           Play. Win. <span className="text-[#c5f94d]">Advance.</span>
         </h2>
         <p className="text-xs sm:text-sm font-medium leading-relaxed text-[#9ab097] max-w-xs mx-auto">
-          Everything you need for your next match is right inside Velox.
+          Everything you need for your next match is right inside Khemora.
         </p>
       </div>
     </div>

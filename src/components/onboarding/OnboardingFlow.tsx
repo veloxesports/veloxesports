@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, ChevronLeft, X } from "lucide-react";
 import { Screen1Welcome } from "./screens/Screen1Welcome";
@@ -43,8 +44,8 @@ export function OnboardingFlow() {
     triggerHaptic("success");
 
     try {
-      localStorage.setItem("velox_onboarding_completed_v1", "true");
-      document.cookie = "velox_onboarding_completed_v1=true; path=/; max-age=31536000; SameSite=Lax";
+      localStorage.setItem("khemora_onboarding_completed_v1", "true");
+      document.cookie = "khemora_onboarding_completed_v1=true; path=/; max-age=31536000; SameSite=Lax";
     } catch {
       // Ignore storage errors in restricted webviews
     }
@@ -136,11 +137,17 @@ export function OnboardingFlow() {
       <header className="flex shrink-0 items-center justify-between gap-3 pt-2">
         {/* Brand indicator */}
         <div className="flex items-center gap-2">
-          <div className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-[#c5f94d] to-[#7aa422] text-[#0a0e0a] font-black text-xs shadow-[0_0_15px_rgba(197,249,77,0.3)]">
-            V
+          <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-xl border border-[#2e422f] bg-[#0c140e] shadow-[0_0_15px_rgba(197,249,77,0.3)]">
+            <Image
+              src="/images/khemora-logo.png"
+              alt="Khemora Esports"
+              fill
+              className="object-contain p-1"
+              priority
+            />
           </div>
           <span className="text-sm font-black tracking-wider text-white">
-            VELOX
+            KHEMORA
           </span>
         </div>
 
@@ -226,7 +233,7 @@ export function OnboardingFlow() {
                 : "bg-[#c5f94d] text-[#080d09] shadow-[0_0_20px_rgba(197,249,77,0.3)] hover:bg-[#d5ff70]"
             }`}
           >
-            <span>{isFinalStep ? (isReplay ? "Back to Velox →" : "Get Started →") : "Next"}</span>
+            <span>{isFinalStep ? (isReplay ? "Back to Khemora →" : "Get Started →") : "Next"}</span>
             {!isFinalStep && <ArrowRight className="h-4 w-4" />}
           </button>
         </div>

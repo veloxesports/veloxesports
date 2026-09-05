@@ -15,7 +15,7 @@ function safePathSegment(value: string | null) {
   return value ? encodeURIComponent(value) : null;
 }
 
-/** Resolves both in-app cards and Telegram actions to the same relevant VELOX screen. */
+/** Resolves both in-app cards and Telegram actions to the same relevant Khemora screen. */
 export function notificationTarget(type: NotificationType | string, metadata: unknown): NotificationTarget {
   const matchId = safePathSegment(metadataValue(metadata, "matchId"));
   if (matchId) return { href: `/matches/${matchId}`, label: "Open match" };

@@ -60,7 +60,7 @@ export function ProfileHeader({ initialImageUrl, displayName, fallbackInitial, r
         
         <div className="absolute bottom-4 left-5">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#c5f94d]">
-            VELOX Competitor
+            Khemora Competitor
           </p>
           <p className="mt-0.5 text-lg font-black tracking-tight text-white sm:text-xl">
             Pro Circuit Season 04

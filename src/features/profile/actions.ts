@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 const profileUpdateSchema = z.object({
+  khemoraUsername: z.string().trim().min(3).max(24).regex(/^[a-zA-Z0-9_]+$/, "Use letters, numbers, and underscores only").optional().or(z.literal("")),
   veloxUsername: z.string().trim().min(3).max(24).regex(/^[a-zA-Z0-9_]+$/, "Use letters, numbers, and underscores only").optional().or(z.literal("")),
   country: z.string().trim().max(80).optional().or(z.literal("")),
 });
@@ -52,15 +53,16 @@ export async function updateCurrentProfile(input: unknown) {
 
   try {
     const user = await requireCurrentUser();
+    const chosenUsername = parsed.data.khemoraUsername || parsed.data.veloxUsername || null;
     const profile = await prisma.userProfile.upsert({
       where: { userId: user.id },
       update: {
-        veloxUsername: parsed.data.veloxUsername || null,
+        khemoraUsername: chosenUsername,
         country: parsed.data.country || null,
       },
       create: {
         userId: user.id,
-        veloxUsername: parsed.data.veloxUsername || null,
+        khemoraUsername: chosenUsername,
         country: parsed.data.country || null,
         favoriteGames: [],
       },
@@ -72,10 +74,10 @@ export async function updateCurrentProfile(input: unknown) {
     return { success: true, data: profile };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHENTICATED") {
-      return { success: false, error: "Open VELOX in Telegram to update your profile." };
+      return { success: false, error: "Open Khemora in Telegram to update your profile." };
     }
     if (error instanceof Error && "code" in error && error.code === "P2002") {
-      return { success: false, error: "That VELOX username is already taken." };
+      return { success: false, error: "That Khemora username is already taken." };
     }
     console.error("Profile update failed", error);
     return { success: false, error: "We couldn't save your profile. Please try again." };
@@ -101,7 +103,7 @@ export async function uploadCurrentProfileImage(formData: FormData) {
     return { success: true, data: { profileImage } };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHENTICATED") {
-      return { success: false, error: "Open VELOX in Telegram to update your profile image." };
+      return { success: false, error: "Open Khemora in Telegram to update your profile image." };
     }
     if (error instanceof Error && error.message === "SUPABASE_STORAGE_NOT_CONFIGURED") {
       return { success: false, error: "Profile image storage has not been configured yet." };
@@ -158,7 +160,7 @@ export async function connectDiscordDirect(tag: string) {
     });
 
     if (existing) {
-      return { success: false, error: "That Discord username is already linked to another VELOX account." };
+      return { success: false, error: "That Discord username is already linked to another Khemora account." };
     }
 
     // Deterministic Discord avatar selection (colors 0-5)
@@ -264,7 +266,7 @@ export async function disconnectDiscord() {
     return { success: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHENTICATED") {
-      return { success: false, error: "Open VELOX in Telegram to update your connections." };
+      return { success: false, error: "Open Khemora in Telegram to update your connections." };
     }
     console.error("Discord disconnect failed", error);
     return { success: false, error: "We couldn't disconnect Discord. Please try again." };

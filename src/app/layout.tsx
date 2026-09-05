@@ -1,14 +1,23 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { BottomNav } from "@/components/layout/BottomNav";
-import { VeloxGuide } from "@/components/assistant/VeloxGuide";
+import { KhemoraGuide } from "@/components/assistant/KhemoraGuide";
 import { Providers } from "@/components/providers";
 import { TelegramInit } from "@/components/telegram-init";
 import Script from "next/script";
 
 export const metadata: Metadata = {
-  title: "VELOX | Esports Tournaments",
+  title: "Khemora Esports | Tournaments",
   description: "A premium esports tournament platform on Telegram.",
+  icons: {
+    icon: "/images/khemora-logo.png",
+    apple: "/images/khemora-logo.png",
+  },
+  openGraph: {
+    title: "Khemora Esports | Tournaments",
+    description: "A premium esports tournament platform on Telegram.",
+    images: ["/images/khemora-logo.png"],
+  },
 };
 
 export const viewport: Viewport = {
@@ -36,7 +45,7 @@ export default function RootLayout({
             {children}
           </div>
           <BottomNav />
-          <VeloxGuide />
+          <KhemoraGuide />
         </Providers>
       </body>
     </html>

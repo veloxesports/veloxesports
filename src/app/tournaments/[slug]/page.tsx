@@ -62,7 +62,7 @@ export default async function TournamentDetailsPage({ params }: { params: Promis
 
       <section className="velox-card mt-6 p-5">
         <div className="flex items-center gap-2"><Info className="h-5 w-5 text-[#c5f94d]" aria-hidden /><div><p className="velox-eyebrow">Rules</p><h2 className="mt-1 text-lg font-black text-white">Competition information</h2></div></div>
-        <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-[#b8c5b0]">{tournament.rules?.content || "Standard VELOX competitive rules apply. All matches must be played fairly. Cheating will result in an immediate ban."}</p>
+        <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-[#b8c5b0]">{tournament.rules?.content || "Standard Khemora competitive rules apply. All matches must be played fairly. Cheating will result in an immediate ban."}</p>
       </section>
 
       {tournament.status === "COMPLETED" && (
@@ -117,7 +117,7 @@ export default async function TournamentDetailsPage({ params }: { params: Promis
           </div>
         </div>
         <a
-          href="https://discord.gg/veloxesports"
+          href="https://discord.gg/khemoraesports"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[#5865F2]/40 bg-[#5865F2]/15 px-3 py-2 text-xs font-black text-[#a5b4fc] transition hover:bg-[#5865F2]/25"
@@ -127,7 +127,7 @@ export default async function TournamentDetailsPage({ params }: { params: Promis
         </a>
       </section>
 
-      <section className="velox-card mt-6 flex items-start gap-3 p-5"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1f3119] text-[#c5f94d]"><ShieldCheck className="h-5 w-5" aria-hidden /></span><p className="text-sm leading-relaxed text-[#aeb8ad]">Registration is confirmed only after VELOX verifies your entry. Telegram Stars payments are never collected outside Telegram.</p></section>
+      <section className="velox-card mt-6 flex items-start gap-3 p-5"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1f3119] text-[#c5f94d]"><ShieldCheck className="h-5 w-5" aria-hidden /></span><p className="text-sm leading-relaxed text-[#aeb8ad]">Registration is confirmed only after Khemora verifies your entry. Telegram Stars payments are never collected outside Telegram.</p></section>
 
       <div className="mt-6">
         {registrationOpen ? <Link href={`/tournaments/${tournament.slug}/register`} className="velox-action w-full text-base">{registrationLabel}</Link> : <span className="flex w-full items-center justify-center rounded-2xl border border-[#2f3930] bg-[#151c15] px-4 py-3 text-sm font-black text-[#788477]">{registrationLabel}</span>}

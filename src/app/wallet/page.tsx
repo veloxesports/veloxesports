@@ -16,7 +16,7 @@ export default async function WalletPage() {
     return (
       <TelegramAccessRequired
         title="Wallet needs Telegram"
-        message={res.error ?? "Open VELOX in Telegram to view your Stars activity."}
+        message={res.error ?? "Open Khemora in Telegram to view your Stars activity."}
       />
     );
   }
@@ -129,7 +129,7 @@ export default async function WalletPage() {
       <section className="mt-5 rounded-2xl border border-[#1e2c20] bg-[#0b120c] p-4 text-xs text-[#8ca08e]">
         <div className="flex items-center gap-2 font-bold text-white">
           <Zap className="h-4 w-4 text-[#c5f94d]" />
-          <span>How VELOX Stars Work</span>
+          <span>How Khemora Stars Work</span>
         </div>
         <p className="mt-1.5 text-[11px] leading-relaxed text-[#7c8e7e]">
           Entry fees are paid safely using official Telegram Stars. When a tournament concludes, prize pool rewards are credited to winners directly. If an event is cancelled, automatic capacity refunds are restored to your account ledger.

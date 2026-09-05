@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { canAcceptTournamentRegistration, isVerifiedStarsPaymentEvent, paymentIdFromInvoicePayload } from "../src/lib/payments/validation";
 
-const payment = { status: "PENDING", invoicePayload: "velox:123e4567-e89b-42d3-a456-426614174000", currency: "XTR", amount: 100, userTelegramId: "42" };
-const successfulPayment = { invoice_payload: "velox:123e4567-e89b-42d3-a456-426614174000", currency: "XTR", total_amount: 100 };
+const payment = { status: "PENDING", invoicePayload: "khemora:123e4567-e89b-42d3-a456-426614174000", currency: "XTR", amount: 100, userTelegramId: "42" };
+const successfulPayment = { invoice_payload: "khemora:123e4567-e89b-42d3-a456-426614174000", currency: "XTR", total_amount: 100 };
 
 describe("Telegram Stars verification invariants", () => {
   it("accepts only the pending payment belonging to the Telegram sender", () => {
@@ -14,8 +14,9 @@ describe("Telegram Stars verification invariants", () => {
     expect(isVerifiedStarsPaymentEvent({ payment, senderTelegramId: 42, successfulPayment: { ...successfulPayment, total_amount: 1 } })).toBe(false);
   });
 
-  it("requires a valid VELOX invoice UUID payload", () => {
+  it("requires a valid Khemora invoice UUID payload (with backwards-compatible velox support)", () => {
     expect(paymentIdFromInvoicePayload(successfulPayment.invoice_payload)).toBe("123e4567-e89b-42d3-a456-426614174000");
+    expect(paymentIdFromInvoicePayload("velox:123e4567-e89b-42d3-a456-426614174000")).toBe("123e4567-e89b-42d3-a456-426614174000");
     expect(paymentIdFromInvoicePayload("payment:123")).toBeNull();
   });
 

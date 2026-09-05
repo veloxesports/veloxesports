@@ -41,11 +41,11 @@ async function main() {
         data: {
           telegramId: `web-admin:${username}`,
           username,
-          firstName: "VELOX",
+          firstName: "Khemora",
           lastName: "Administrator",
           role: "SUPER_ADMIN",
           status: "ACTIVE",
-          profile: { create: { veloxUsername: username, favoriteGames: [] } },
+          profile: { create: { khemoraUsername: username, favoriteGames: [] } },
           wallet: { create: {} },
         },
       });

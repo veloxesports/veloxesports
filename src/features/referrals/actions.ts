@@ -72,7 +72,7 @@ export async function redeemReferralCode(code: unknown) {
           userId: source.referrerId,
           type: "SYSTEM",
           title: "Referral completed",
-          message: "A player you invited joined VELOX.",
+          message: "A player you invited joined Khemora.",
           metadata: { referralId: source.id },
           telegramDeliveryEligible: true,
         },
@@ -86,7 +86,7 @@ export async function redeemReferralCode(code: unknown) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
     const known: Record<string, string> = {
-      UNAUTHENTICATED: "Open VELOX in Telegram to redeem a referral.",
+      UNAUTHENTICATED: "Open Khemora in Telegram to redeem a referral.",
       REFERRAL_ALREADY_USED: "You have already redeemed a referral code.",
       REFERRAL_INVALID: "That referral code is invalid or has already been used.",
       REFERRAL_SELF: "You cannot use your own referral code.",

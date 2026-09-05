@@ -29,7 +29,7 @@ export function Screen4Squad() {
                 <Shield className="h-4 w-4" />
               </div>
               <div className="text-left">
-                <span className="block text-xs font-black text-white">VELOX PHANTOM</span>
+                <span className="block text-xs font-black text-white">KHEMORA PHANTOM</span>
                 <span className="block text-[9px] font-bold text-[#798e78]">Competitive 4-Man Squad</span>
               </div>
             </div>

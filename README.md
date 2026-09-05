@@ -1,6 +1,6 @@
-# VELOX - Esports Tournament Platform (Telegram Mini App)
+# Khemora Esports - Esports Tournament Platform (Telegram Mini App)
 
-VELOX is a premium, scalable, and production-ready esports tournament platform built specifically for Telegram. Users can discover tournaments, register using Telegram Stars (XTR), track their transaction wallets, manage teams, and climb the global leaderboards.
+Khemora Esports is a premium, scalable, and production-ready esports tournament platform built specifically for Telegram. Users can discover tournaments, register using Telegram Stars (XTR), track their transaction wallets, manage teams, and climb the global leaderboards.
 
 ## Tech Stack
 - **Frontend**: Next.js (App Router), React, Tailwind CSS, shadcn/ui
@@ -85,12 +85,12 @@ To test the Telegram Webhook logic locally, you must expose your local server to
   ```bash
   npm run telegram:configure
   ```
-  The script registers the protected `/api/telegram/webhook` endpoint and the bot's **Open VELOX** menu button without printing any credentials.
+  The script registers the protected `/api/telegram/webhook` endpoint and the bot's **Open Khemora** menu button without printing any credentials.
 
 ### 4. Optional Discord connection
 - Create a Discord OAuth2 application with the `identify` scope.
 - Add `https://your-app-domain/api/discord/callback` as its redirect URL.
-- Set `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET`; VELOX exchanges the
+- Set `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET`; Khemora exchanges the
   authorization code server-side and never exposes the client secret to users.
 
 ## Project Structure
@@ -101,7 +101,7 @@ To test the Telegram Webhook logic locally, you must expose your local server to
 - `prisma/schema.prisma`: The central truth for the database architecture.
 
 ## Security Considerations
-- **Telegram authentication**: Mini App `initData` is checked server-side with Telegram's HMAC flow and an `auth_date` expiry before VELOX creates a signed, HTTP-only session.
+- **Telegram authentication**: Mini App `initData` is checked server-side with Telegram's HMAC flow and an `auth_date` expiry before Khemora creates a signed, HTTP-only session.
 - **Payments**: A Stars invoice is created through Telegram's `createInvoiceLink` API. A client-side invoice result never confirms a registration; only a signed Telegram webhook can do that.
 - **Webhook integrity and idempotency**: Webhook requests require `X-Telegram-Bot-Api-Secret-Token`. `telegram_payment_charge_id` is unique in `payment_events`, so duplicate deliveries do not duplicate registrations or ledger records.
 - **Financial immutability**: Ledger records are appended in the same database transaction as payment/refund state. Corrections are refunds or reversals, never an edit to completed history.

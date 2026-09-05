@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const invoicePayloadSchema = z.string().regex(/^velox:[0-9a-f-]{36}$/i);
+export const invoicePayloadSchema = z.string().regex(/^(?:khemora|velox):[0-9a-f-]{36}$/i);
 
 export type TournamentAvailability = {
   status: string;
@@ -11,7 +11,7 @@ export type TournamentAvailability = {
 
 export function paymentIdFromInvoicePayload(payload: string) {
   const parsed = invoicePayloadSchema.safeParse(payload);
-  return parsed.success ? payload.slice("velox:".length) : null;
+  return parsed.success ? payload.replace(/^(?:khemora|velox):/i, "") : null;
 }
 
 export function canAcceptTournamentRegistration(tournament: TournamentAvailability, now = new Date()) {

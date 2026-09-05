@@ -62,7 +62,7 @@ export function Screen1Welcome() {
           <span>Esports Command Center</span>
         </div>
         <h2 className="text-2xl sm:text-3xl font-black tracking-[-0.03em] text-white">
-          Welcome to <span className="text-[#c5f94d]">Velox</span>
+          Welcome to <span className="text-[#c5f94d]">Khemora</span>
         </h2>
         <p className="text-xs sm:text-sm font-medium leading-relaxed text-[#9ab097] max-w-xs mx-auto">
           Discover tournaments. Build your squad. Compete. Win. Repeat.

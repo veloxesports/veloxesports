@@ -52,7 +52,7 @@ export async function searchPlayers(
           { firstName: contains },
           { lastName: contains },
           { id: { startsWith: query } },
-          { profile: { is: { veloxUsername: contains } } },
+          { profile: { is: { khemoraUsername: contains } } },
           { teamMemberships: { some: { team: { name: contains } } } },
         ],
       });
@@ -78,7 +78,7 @@ export async function searchPlayers(
         createdAt: true,
         profile: {
           select: {
-            veloxUsername: true,
+            khemoraUsername: true,
             rank: true,
             level: true,
             xp: true,
@@ -104,7 +104,7 @@ export async function searchPlayers(
     const results: PlayerSearchResult[] = users.map((u) => {
       const p = u.profile;
       const displayName =
-        p?.veloxUsername ||
+        p?.khemoraUsername ||
         (u.firstName ? `${u.firstName}${u.lastName ? ` ${u.lastName}` : ""}` : u.username) ||
         "Competitor";
 
@@ -120,7 +120,7 @@ export async function searchPlayers(
 
       return {
         id: u.id,
-        veloxUsername: p?.veloxUsername ?? null,
+        khemoraUsername: p?.khemoraUsername ?? null,
         displayName,
         username: u.username ?? null,
         profileImage: u.profileImage ?? null,
@@ -130,7 +130,7 @@ export async function searchPlayers(
         primaryGame,
         teamName: primaryTeam?.name ?? null,
         teamLogoUrl: primaryTeam?.logoUrl ?? null,
-        isVerified: (p?.level ?? 1) >= 25 || Boolean(p?.veloxUsername),
+        isVerified: (p?.level ?? 1) >= 25 || Boolean(p?.khemoraUsername),
         activityStatus,
       };
     });
@@ -150,7 +150,7 @@ export async function getPublicPlayerProfile(
       where: {
         OR: [
           { id: targetIdentifier },
-          { profile: { is: { veloxUsername: { equals: targetIdentifier, mode: "insensitive" } } } },
+          { profile: { is: { khemoraUsername: { equals: targetIdentifier, mode: "insensitive" } } } },
           { username: { equals: targetIdentifier, mode: "insensitive" } },
         ],
         NOT: { telegramId: { startsWith: "web-admin:" } },
@@ -164,7 +164,7 @@ export async function getPublicPlayerProfile(
         createdAt: true,
         profile: {
           select: {
-            veloxUsername: true,
+            khemoraUsername: true,
             rank: true,
             level: true,
             xp: true,
@@ -200,7 +200,7 @@ export async function getPublicPlayerProfile(
                         profileImage: true,
                         profile: {
                           select: {
-                            veloxUsername: true,
+                            khemoraUsername: true,
                             rank: true,
                             level: true,
                           },
@@ -287,7 +287,7 @@ export async function getPublicPlayerProfile(
         firstName: true,
         username: true,
         profileImage: true,
-        profile: { select: { veloxUsername: true } },
+        profile: { select: { khemoraUsername: true } },
       },
     });
     const opponentMap = new Map(opponents.map((o) => [o.id, o]));
@@ -360,7 +360,7 @@ export async function getPublicPlayerProfile(
       const oppId = isP1 ? m.player2Id : m.player1Id;
       const opp = oppId ? opponentMap.get(oppId) : null;
       const oppName =
-        opp?.profile?.veloxUsername ||
+        opp?.profile?.khemoraUsername ||
         opp?.firstName ||
         opp?.username ||
         "Opponent";
@@ -434,7 +434,7 @@ export async function getPublicPlayerProfile(
       const roster: PlayerTeamDetails["roster"] = t.members.map((m) => ({
         userId: m.userId,
         name:
-          m.user.profile?.veloxUsername ||
+          m.user.profile?.khemoraUsername ||
           m.user.firstName ||
           m.user.username ||
           "Teammate",
@@ -458,17 +458,17 @@ export async function getPublicPlayerProfile(
     }
 
     const displayName =
-      profile?.veloxUsername ||
+      profile?.khemoraUsername ||
       (user.firstName ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}` : user.username) ||
       "Competitor";
 
-    const isVerified = (profile?.level ?? 1) >= 25 || Boolean(profile?.veloxUsername);
+    const isVerified = (profile?.level ?? 1) >= 25 || Boolean(profile?.khemoraUsername);
 
     return {
       success: true,
       data: {
         id: user.id,
-        veloxUsername: profile?.veloxUsername ?? null,
+        khemoraUsername: profile?.khemoraUsername ?? null,
         displayName,
         telegramUsername: user.username ?? null,
         profileImage: user.profileImage ?? null,
@@ -519,7 +519,7 @@ export async function getHeadToHeadRecord(
           firstName: true,
           username: true,
           profileImage: true,
-          profile: { select: { veloxUsername: true, rank: true } },
+          profile: { select: { khemoraUsername: true, rank: true } },
         },
       }),
       prisma.user.findUnique({
@@ -529,7 +529,7 @@ export async function getHeadToHeadRecord(
           firstName: true,
           username: true,
           profileImage: true,
-          profile: { select: { veloxUsername: true, rank: true } },
+          profile: { select: { khemoraUsername: true, rank: true } },
         },
       }),
     ]);
@@ -594,13 +594,13 @@ export async function getHeadToHeadRecord(
     const record: HeadToHeadRecord = {
       playerA: {
         id: userA.id,
-        name: userA.profile?.veloxUsername || userA.firstName || userA.username || "Player A",
+        name: userA.profile?.khemoraUsername || userA.firstName || userA.username || "Player A",
         avatar: userA.profileImage,
         rank: userA.profile?.rank ?? "BRONZE",
       },
       playerB: {
         id: userB.id,
-        name: userB.profile?.veloxUsername || userB.firstName || userB.username || "You",
+        name: userB.profile?.khemoraUsername || userB.firstName || userB.username || "You",
         avatar: userB.profileImage,
         rank: userB.profile?.rank ?? "BRONZE",
       },

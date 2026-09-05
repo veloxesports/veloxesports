@@ -137,7 +137,7 @@ export default function RegisterPage({ params }: { params: Promise<{ slug: strin
           <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1f3119] text-[#c5f94d]"><CheckCircle2 className="h-9 w-9" aria-hidden /></span>
           <p className="velox-eyebrow mt-6">You&apos;re in</p>
           <h1 className="mt-2 text-3xl font-black tracking-[-0.05em] text-white">{success ? "Registration confirmed" : "Payment received"}</h1>
-          <p className="mt-3 text-sm leading-relaxed text-[#aeb8ad]">{success ? `${isTeamTournament ? "Your team is" : "You are"} registered for ${tournament.title}.` : "VELOX is verifying Telegram's payment event and will confirm your entry shortly."}</p>
+          <p className="mt-3 text-sm leading-relaxed text-[#aeb8ad]">{success ? `${isTeamTournament ? "Your team is" : "You are"} registered for ${tournament.title}.` : "Khemora is verifying Telegram's payment event and will confirm your entry shortly."}</p>
           <Link href={`/tournaments/${slug}`} className="velox-action mt-7 w-full">Back to tournament</Link>
         </section>
       </main>
@@ -179,10 +179,10 @@ export default function RegisterPage({ params }: { params: Promise<{ slug: strin
 
       <label className="velox-card mt-5 flex cursor-pointer items-start gap-3 p-4 text-sm leading-relaxed text-[#c9d3c4]">
         <input type="checkbox" checked={acceptedRules} onChange={(event) => setAcceptedRules(event.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[#c5f94d]" />
-        <span>I have read and accept the VELOX tournament rules and terms of service.</span>
+        <span>I have read and accept the Khemora tournament rules and terms of service.</span>
       </label>
 
-      <section className="mt-5 flex items-start gap-3 rounded-2xl border border-[#2e4722] bg-[#12200e] p-4"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#203318] text-[#c5f94d]"><ShieldCheck className="h-5 w-5" aria-hidden /></span><p className="text-sm leading-relaxed text-[#aeb8ad]">Payments are completed securely through Telegram. VELOX never asks for payment details in chat.</p></section>
+      <section className="mt-5 flex items-start gap-3 rounded-2xl border border-[#2e4722] bg-[#12200e] p-4"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#203318] text-[#c5f94d]"><ShieldCheck className="h-5 w-5" aria-hidden /></span><p className="text-sm leading-relaxed text-[#aeb8ad]">Payments are completed securely through Telegram. Khemora never asks for payment details in chat.</p></section>
 
       <div className="fixed inset-x-0 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-40 px-5 sm:px-8"><div className="mx-auto w-full max-w-3xl rounded-2xl bg-[#080d09]/90 p-1.5 backdrop-blur"><button type="button" onClick={handleRegister} disabled={registering || !acceptedRules || !hasSlots || (isTeamTournament && !selectedTeamId)} className="velox-action w-full disabled:cursor-not-allowed disabled:opacity-45">{registering ? "Preparing…" : !hasSlots ? "Tournament is full" : isTeamTournament && !selectedTeamId ? "Choose a ready team" : tournament.isPaid ? `Pay ⭐ ${tournament.entryFee.toLocaleString()}${isTeamTournament ? " for team entry" : ""}` : isTeamTournament ? "Confirm team registration" : "Confirm free registration"}</button></div></div>
     </main>

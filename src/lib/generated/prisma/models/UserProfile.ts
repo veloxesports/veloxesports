@@ -45,7 +45,7 @@ export type UserProfileSumAggregateOutputType = {
 export type UserProfileMinAggregateOutputType = {
   id: string | null
   userId: string | null
-  veloxUsername: string | null
+  khemoraUsername: string | null
   rank: $Enums.Rank | null
   level: number | null
   xp: number | null
@@ -66,7 +66,7 @@ export type UserProfileMinAggregateOutputType = {
 export type UserProfileMaxAggregateOutputType = {
   id: string | null
   userId: string | null
-  veloxUsername: string | null
+  khemoraUsername: string | null
   rank: $Enums.Rank | null
   level: number | null
   xp: number | null
@@ -87,7 +87,7 @@ export type UserProfileMaxAggregateOutputType = {
 export type UserProfileCountAggregateOutputType = {
   id: number
   userId: number
-  veloxUsername: number
+  khemoraUsername: number
   rank: number
   level: number
   xp: number
@@ -128,7 +128,7 @@ export type UserProfileSumAggregateInputType = {
 export type UserProfileMinAggregateInputType = {
   id?: true
   userId?: true
-  veloxUsername?: true
+  khemoraUsername?: true
   rank?: true
   level?: true
   xp?: true
@@ -149,7 +149,7 @@ export type UserProfileMinAggregateInputType = {
 export type UserProfileMaxAggregateInputType = {
   id?: true
   userId?: true
-  veloxUsername?: true
+  khemoraUsername?: true
   rank?: true
   level?: true
   xp?: true
@@ -170,7 +170,7 @@ export type UserProfileMaxAggregateInputType = {
 export type UserProfileCountAggregateInputType = {
   id?: true
   userId?: true
-  veloxUsername?: true
+  khemoraUsername?: true
   rank?: true
   level?: true
   xp?: true
@@ -280,7 +280,7 @@ export type UserProfileGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inte
 export type UserProfileGroupByOutputType = {
   id: string
   userId: string
-  veloxUsername: string | null
+  khemoraUsername: string | null
   rank: $Enums.Rank
   level: number
   xp: number
@@ -326,7 +326,7 @@ export type UserProfileWhereInput = {
   NOT?: Prisma.UserProfileWhereInput | Prisma.UserProfileWhereInput[]
   id?: Prisma.StringFilter<"UserProfile"> | string
   userId?: Prisma.StringFilter<"UserProfile"> | string
-  veloxUsername?: Prisma.StringNullableFilter<"UserProfile"> | string | null
+  khemoraUsername?: Prisma.StringNullableFilter<"UserProfile"> | string | null
   rank?: Prisma.EnumRankFilter<"UserProfile"> | $Enums.Rank
   level?: Prisma.IntFilter<"UserProfile"> | number
   xp?: Prisma.IntFilter<"UserProfile"> | number
@@ -350,7 +350,7 @@ export type UserProfileWhereInput = {
 export type UserProfileOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  veloxUsername?: Prisma.SortOrderInput | Prisma.SortOrder
+  khemoraUsername?: Prisma.SortOrderInput | Prisma.SortOrder
   rank?: Prisma.SortOrder
   level?: Prisma.SortOrder
   xp?: Prisma.SortOrder
@@ -374,7 +374,7 @@ export type UserProfileOrderByWithRelationInput = {
 export type UserProfileWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   userId?: string
-  veloxUsername?: string
+  khemoraUsername?: string
   discordId?: string
   AND?: Prisma.UserProfileWhereInput | Prisma.UserProfileWhereInput[]
   OR?: Prisma.UserProfileWhereInput[]
@@ -396,12 +396,12 @@ export type UserProfileWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"UserProfile"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserProfile"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-}, "id" | "userId" | "veloxUsername" | "discordId">
+}, "id" | "userId" | "khemoraUsername" | "discordId">
 
 export type UserProfileOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  veloxUsername?: Prisma.SortOrderInput | Prisma.SortOrder
+  khemoraUsername?: Prisma.SortOrderInput | Prisma.SortOrder
   rank?: Prisma.SortOrder
   level?: Prisma.SortOrder
   xp?: Prisma.SortOrder
@@ -432,7 +432,7 @@ export type UserProfileScalarWhereWithAggregatesInput = {
   NOT?: Prisma.UserProfileScalarWhereWithAggregatesInput | Prisma.UserProfileScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"UserProfile"> | string
   userId?: Prisma.StringWithAggregatesFilter<"UserProfile"> | string
-  veloxUsername?: Prisma.StringNullableWithAggregatesFilter<"UserProfile"> | string | null
+  khemoraUsername?: Prisma.StringNullableWithAggregatesFilter<"UserProfile"> | string | null
   rank?: Prisma.EnumRankWithAggregatesFilter<"UserProfile"> | $Enums.Rank
   level?: Prisma.IntWithAggregatesFilter<"UserProfile"> | number
   xp?: Prisma.IntWithAggregatesFilter<"UserProfile"> | number
@@ -454,7 +454,7 @@ export type UserProfileScalarWhereWithAggregatesInput = {
 
 export type UserProfileCreateInput = {
   id?: string
-  veloxUsername?: string | null
+  khemoraUsername?: string | null
   rank?: $Enums.Rank
   level?: number
   xp?: number
@@ -478,7 +478,7 @@ export type UserProfileCreateInput = {
 export type UserProfileUncheckedCreateInput = {
   id?: string
   userId: string
-  veloxUsername?: string | null
+  khemoraUsername?: string | null
   rank?: $Enums.Rank
   level?: number
   xp?: number
@@ -500,7 +500,7 @@ export type UserProfileUncheckedCreateInput = {
 
 export type UserProfileUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  veloxUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  khemoraUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   rank?: Prisma.EnumRankFieldUpdateOperationsInput | $Enums.Rank
   level?: Prisma.IntFieldUpdateOperationsInput | number
   xp?: Prisma.IntFieldUpdateOperationsInput | number
@@ -524,7 +524,7 @@ export type UserProfileUpdateInput = {
 export type UserProfileUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  veloxUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  khemoraUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   rank?: Prisma.EnumRankFieldUpdateOperationsInput | $Enums.Rank
   level?: Prisma.IntFieldUpdateOperationsInput | number
   xp?: Prisma.IntFieldUpdateOperationsInput | number
@@ -547,7 +547,7 @@ export type UserProfileUncheckedUpdateInput = {
 export type UserProfileCreateManyInput = {
   id?: string
   userId: string
-  veloxUsername?: string | null
+  khemoraUsername?: string | null
   rank?: $Enums.Rank
   level?: number
   xp?: number
@@ -569,7 +569,7 @@ export type UserProfileCreateManyInput = {
 
 export type UserProfileUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  veloxUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  khemoraUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   rank?: Prisma.EnumRankFieldUpdateOperationsInput | $Enums.Rank
   level?: Prisma.IntFieldUpdateOperationsInput | number
   xp?: Prisma.IntFieldUpdateOperationsInput | number
@@ -592,7 +592,7 @@ export type UserProfileUpdateManyMutationInput = {
 export type UserProfileUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  veloxUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  khemoraUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   rank?: Prisma.EnumRankFieldUpdateOperationsInput | $Enums.Rank
   level?: Prisma.IntFieldUpdateOperationsInput | number
   xp?: Prisma.IntFieldUpdateOperationsInput | number
@@ -628,7 +628,7 @@ export type StringNullableListFilter<$PrismaModel = never> = {
 export type UserProfileCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  veloxUsername?: Prisma.SortOrder
+  khemoraUsername?: Prisma.SortOrder
   rank?: Prisma.SortOrder
   level?: Prisma.SortOrder
   xp?: Prisma.SortOrder
@@ -659,7 +659,7 @@ export type UserProfileAvgOrderByAggregateInput = {
 export type UserProfileMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  veloxUsername?: Prisma.SortOrder
+  khemoraUsername?: Prisma.SortOrder
   rank?: Prisma.SortOrder
   level?: Prisma.SortOrder
   xp?: Prisma.SortOrder
@@ -680,7 +680,7 @@ export type UserProfileMaxOrderByAggregateInput = {
 export type UserProfileMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  veloxUsername?: Prisma.SortOrder
+  khemoraUsername?: Prisma.SortOrder
   rank?: Prisma.SortOrder
   level?: Prisma.SortOrder
   xp?: Prisma.SortOrder
@@ -761,7 +761,7 @@ export type UserProfileUpdatefavoriteGamesInput = {
 
 export type UserProfileCreateWithoutUserInput = {
   id?: string
-  veloxUsername?: string | null
+  khemoraUsername?: string | null
   rank?: $Enums.Rank
   level?: number
   xp?: number
@@ -783,7 +783,7 @@ export type UserProfileCreateWithoutUserInput = {
 
 export type UserProfileUncheckedCreateWithoutUserInput = {
   id?: string
-  veloxUsername?: string | null
+  khemoraUsername?: string | null
   rank?: $Enums.Rank
   level?: number
   xp?: number
@@ -821,7 +821,7 @@ export type UserProfileUpdateToOneWithWhereWithoutUserInput = {
 
 export type UserProfileUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  veloxUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  khemoraUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   rank?: Prisma.EnumRankFieldUpdateOperationsInput | $Enums.Rank
   level?: Prisma.IntFieldUpdateOperationsInput | number
   xp?: Prisma.IntFieldUpdateOperationsInput | number
@@ -843,7 +843,7 @@ export type UserProfileUpdateWithoutUserInput = {
 
 export type UserProfileUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  veloxUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  khemoraUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   rank?: Prisma.EnumRankFieldUpdateOperationsInput | $Enums.Rank
   level?: Prisma.IntFieldUpdateOperationsInput | number
   xp?: Prisma.IntFieldUpdateOperationsInput | number
@@ -868,7 +868,7 @@ export type UserProfileUncheckedUpdateWithoutUserInput = {
 export type UserProfileSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
-  veloxUsername?: boolean
+  khemoraUsername?: boolean
   rank?: boolean
   level?: boolean
   xp?: boolean
@@ -892,7 +892,7 @@ export type UserProfileSelect<ExtArgs extends runtime.Types.Extensions.InternalA
 export type UserProfileSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
-  veloxUsername?: boolean
+  khemoraUsername?: boolean
   rank?: boolean
   level?: boolean
   xp?: boolean
@@ -916,7 +916,7 @@ export type UserProfileSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
 export type UserProfileSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
-  veloxUsername?: boolean
+  khemoraUsername?: boolean
   rank?: boolean
   level?: boolean
   xp?: boolean
@@ -940,7 +940,7 @@ export type UserProfileSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
 export type UserProfileSelectScalar = {
   id?: boolean
   userId?: boolean
-  veloxUsername?: boolean
+  khemoraUsername?: boolean
   rank?: boolean
   level?: boolean
   xp?: boolean
@@ -960,7 +960,7 @@ export type UserProfileSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "veloxUsername" | "rank" | "level" | "xp" | "country" | "wins" | "losses" | "tournamentWins" | "favoriteGames" | "gamerIds" | "discordId" | "discordUsername" | "discordDisplayName" | "discordAvatarUrl" | "discordConnected" | "discordConnectedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["userProfile"]>
+export type UserProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "khemoraUsername" | "rank" | "level" | "xp" | "country" | "wins" | "losses" | "tournamentWins" | "favoriteGames" | "gamerIds" | "discordId" | "discordUsername" | "discordDisplayName" | "discordAvatarUrl" | "discordConnected" | "discordConnectedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["userProfile"]>
 export type UserProfileInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -979,7 +979,7 @@ export type $UserProfilePayload<ExtArgs extends runtime.Types.Extensions.Interna
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     userId: string
-    veloxUsername: string | null
+    khemoraUsername: string | null
     rank: $Enums.Rank
     level: number
     xp: number
@@ -1423,7 +1423,7 @@ export interface Prisma__UserProfileClient<T, Null = never, ExtArgs extends runt
 export interface UserProfileFieldRefs {
   readonly id: Prisma.FieldRef<"UserProfile", 'String'>
   readonly userId: Prisma.FieldRef<"UserProfile", 'String'>
-  readonly veloxUsername: Prisma.FieldRef<"UserProfile", 'String'>
+  readonly khemoraUsername: Prisma.FieldRef<"UserProfile", 'String'>
   readonly rank: Prisma.FieldRef<"UserProfile", 'Rank'>
   readonly level: Prisma.FieldRef<"UserProfile", 'Int'>
   readonly xp: Prisma.FieldRef<"UserProfile", 'Int'>

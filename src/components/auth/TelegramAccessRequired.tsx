@@ -6,7 +6,7 @@ type TelegramAccessRequiredProps = { title: string; message: string };
 /** Shared empty state for player-only surfaces opened outside Telegram. */
 export function TelegramAccessRequired({ title, message }: TelegramAccessRequiredProps) {
   const botUsername = process.env.TELEGRAM_BOT_USERNAME?.replace(/^@/, "");
-  const telegramUrl = botUsername ? `https://t.me/${botUsername}?startapp=velox` : null;
+  const telegramUrl = botUsername ? `https://t.me/${botUsername}?startapp=khemora` : null;
 
   return (
     <main className="velox-page flex min-h-[70dvh] flex-col items-center justify-center text-center">
@@ -16,7 +16,7 @@ export function TelegramAccessRequired({ title, message }: TelegramAccessRequire
       <p className="mt-2 max-w-sm text-sm leading-relaxed text-[#8e998f]">{message}</p>
       <div className="mt-6 flex flex-col gap-2 sm:flex-row">
         {telegramUrl && <a href={telegramUrl} target="_blank" rel="noreferrer" className="velox-action"><Send className="mr-2 h-4 w-4" aria-hidden />Open in Telegram</a>}
-        <Link href="/" className="velox-muted-button">Back to VELOX</Link>
+        <Link href="/" className="velox-muted-button">Back to Khemora</Link>
       </div>
     </main>
   );

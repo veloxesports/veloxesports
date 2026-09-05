@@ -37,19 +37,19 @@ async function main() {
   }, token);
   await telegram("setMyCommands", {
     commands: [
-      { command: "start", description: "Open VELOX Esports Arena" },
+      { command: "start", description: "Open Khemora Esports Arena" },
       { command: "onboarding", description: "Tour & How it works" },
     ],
   }, token);
   await telegram("setChatMenuButton", {
     menu_button: {
       type: "web_app",
-      text: "Open VELOX",
+      text: "Open Khemora",
       web_app: { url: appUrl.toString() },
     },
   }, token);
 
-  console.log(`Configured @${bot.username}: webhook, commands, and Open VELOX menu button are ready.`);
+  console.log(`Configured @${bot.username}: webhook, commands, and Open Khemora menu button are ready.`);
 }
 
 main().catch((error: unknown) => {

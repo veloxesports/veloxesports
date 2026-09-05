@@ -67,7 +67,7 @@ export function teamEntryErrorMessage(code: string, teamSize?: number) {
     TEAM_NOT_FOUND: "That team is no longer available.",
     NOT_TEAM_CAPTAIN: "Only the team captain can register this roster.",
     TEAM_ROSTER_SIZE_INVALID: `This event requires exactly ${teamSize ?? "the configured number of"} active team members.`,
-    TEAM_MEMBER_UNAVAILABLE: "Every team member must have an active VELOX account.",
+    TEAM_MEMBER_UNAVAILABLE: "Every team member must have an active Khemora account.",
     TEAM_MEMBER_ALREADY_REGISTERED: "A member of this roster is already registered for this tournament.",
   };
   return messages[code] ?? "This roster is not eligible for the tournament.";

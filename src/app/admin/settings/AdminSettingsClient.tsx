@@ -104,7 +104,7 @@ export function AdminSettingsClient({ initialData }: { initialData: SettingsData
           <StatusCard icon={<MessageSquare className="h-5 w-5" />} label="Telegram Bot API" active={initialData.systemStatus.telegramBot} detail="Webhook & Stars invoices" />
           <StatusCard icon={<Server className="h-5 w-5" />} label="Supabase Storage" active={initialData.systemStatus.storage} detail="Evidence & avatars bucket" />
           <StatusCard icon={<Zap className="h-5 w-5" />} label="Discord OAuth" active={initialData.systemStatus.discord} detail="Player identity linking" />
-          <StatusCard icon={<Settings className="h-5 w-5" />} label="OpenAI Assistant" active={initialData.systemStatus.aiAssistant} detail="VELOX Guide LLM" />
+          <StatusCard icon={<Settings className="h-5 w-5" />} label="OpenAI Assistant" active={initialData.systemStatus.aiAssistant} detail="Khemora Guide LLM" />
           <div className="velox-card p-4">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1f3119] text-[#c5f94d]">
               <Server className="h-5 w-5" aria-hidden />

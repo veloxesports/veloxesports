@@ -71,7 +71,7 @@ export function Screen2Discovery() {
           </div>
 
           <h3 className="mt-2 text-sm font-black text-white">
-            VELOX Champions Cup
+            Khemora Champions Cup
           </h3>
           <p className="text-[11px] text-[#869984]">
             Single Elimination • 32 Teams • Direct Seeding

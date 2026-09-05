@@ -32,7 +32,7 @@ function createMessage(role: ChatMessage["role"], content: string): ChatMessage 
   };
 }
 
-export function VeloxGuide() {
+export function KhemoraGuide() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -104,12 +104,12 @@ export function VeloxGuide() {
 
   return (
     <div
-      id="velox-guide-container"
+      id="khemora-guide-container"
       className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-3 z-50 sm:bottom-7 sm:right-6 transition-all duration-200"
     >
       {isOpen && (
         <section
-          id="velox-guide"
+          id="khemora-guide"
           aria-label="Khemora Guide chat"
           aria-modal="true"
           role="dialog"
@@ -212,7 +212,7 @@ export function VeloxGuide() {
         type="button"
         onClick={() => setIsOpen((current) => !current)}
         aria-expanded={isOpen}
-        aria-controls="velox-guide"
+        aria-controls="khemora-guide"
         aria-label={isOpen ? "Close Khemora Guide" : "Open Khemora Guide"}
         className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-[#d9ff82]/70 bg-[#c5f94d] text-[#091009] shadow-[0_14px_38px_rgba(76,118,26,0.35)] transition hover:scale-[1.03] hover:bg-[#d6ff71] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c5f94d] focus-visible:ring-offset-2 focus-visible:ring-offset-[#080d09]"
       >
@@ -222,3 +222,5 @@ export function VeloxGuide() {
     </div>
   );
 }
+
+export const VeloxGuide = KhemoraGuide;

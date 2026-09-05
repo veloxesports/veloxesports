@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { getTournamentRulesTemplate } from "../src/lib/tournaments/rule-templates";
 
 describe("game-specific tournament rule templates", () => {
-  it("covers the VELOX operating rules for every generated template", () => {
+  it("covers the Khemora operating rules for every generated template", () => {
     const rules = getTournamentRulesTemplate({ name: "Valorant", slug: "valorant" });
 
     expect(rules).toContain("Tournament format and match settings");

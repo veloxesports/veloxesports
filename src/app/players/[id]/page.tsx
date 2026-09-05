@@ -14,14 +14,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const res = await getPublicPlayerProfile(id);
   if (!res.success || !res.data) {
     return {
-      title: "Player Profile Not Found | VELOX",
+      title: "Player Profile Not Found | Khemora",
     };
   }
 
   const p = res.data;
   return {
-    title: `${p.displayName} (@${p.telegramUsername || p.veloxUsername || "player"}) | VELOX`,
-    description: `View ${p.displayName}'s rank (${p.rank}), tournament statistics, and match history on VELOX.`,
+    title: `${p.displayName} (@${p.telegramUsername || p.khemoraUsername || "player"}) | Khemora Esports`,
+    description: `View ${p.displayName}'s rank (${p.rank}), tournament statistics, and match history on Khemora Esports.`,
   };
 }
 

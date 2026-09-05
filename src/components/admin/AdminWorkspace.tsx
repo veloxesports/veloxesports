@@ -8,6 +8,7 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -130,7 +131,8 @@ function getBreadcrumbs(pathname: string) {
   return crumbs;
 }
 
-const SIDEBAR_STORAGE_KEY = "velox_admin_sidebar_collapsed";
+const SIDEBAR_STORAGE_KEY = "khemora_admin_sidebar_collapsed";
+const LEGACY_SIDEBAR_STORAGE_KEY = "velox_admin_sidebar_collapsed";
 const sidebarListeners = new Set<() => void>();
 
 function subscribeToSidebar(listener: () => void) {
@@ -145,7 +147,9 @@ function subscribeToSidebar(listener: () => void) {
 function getSidebarSnapshot(): boolean {
   if (typeof window === "undefined") return false;
   try {
-    return localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+    const value = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+    if (value !== null) return value === "true";
+    return localStorage.getItem(LEGACY_SIDEBAR_STORAGE_KEY) === "true";
   } catch {
     return false;
   }
@@ -158,7 +162,7 @@ function getSidebarServerSnapshot(): boolean {
 function toggleSidebarStorage() {
   if (typeof window === "undefined") return;
   try {
-    const current = localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+    const current = getSidebarSnapshot();
     localStorage.setItem(SIDEBAR_STORAGE_KEY, String(!current));
     sidebarListeners.forEach((fn) => fn());
   } catch {
@@ -301,13 +305,20 @@ export function AdminWorkspace({
             className="flex min-w-0 items-center gap-3 group"
             onClick={() => setMobileOpen(false)}
           >
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#c5f94d] text-base font-black tracking-tighter text-[#090d09] shadow-[0_0_15px_rgba(197,249,77,0.3)] transition group-hover:scale-105">
-              {"//"}
+            <span className="relative grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#111c12] border border-[#273827] overflow-hidden shadow-[0_0_15px_rgba(197,249,77,0.15)] transition group-hover:scale-105">
+              <Image
+                src="/images/khemora-logo.png"
+                alt="Khemora Esports"
+                width={36}
+                height={36}
+                className="h-full w-full object-contain p-0.5"
+                priority
+              />
             </span>
             {!isCollapsed && (
               <div className="flex flex-col min-w-0">
-                <span className="text-sm font-black tracking-[0.2em] text-white">
-                  VELOX
+                <span className="text-sm font-black tracking-[0.16em] text-white">
+                  KHEMORA
                 </span>
                 <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#788e76]">
                   Admin Console

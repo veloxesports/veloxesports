@@ -16,7 +16,7 @@ async function loadAdminContext() {
     ]);
     const stats = statsResult.success && statsResult.data ? statsResult.data : null;
     return {
-      name: admin.username ?? "VELOX admin",
+      name: admin.username ?? "Khemora admin",
       role: admin.role,
       counts: {
         disputes: stats?.pendingDisputes ?? 0,

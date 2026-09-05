@@ -184,7 +184,7 @@ export function AdminTournamentsClient({
         </button>
       </section>
       <p className="mt-3 text-xs leading-relaxed text-[#748173]">
-        VELOX does not run tournament automation on a schedule. Use this control whenever you are ready
+        Khemora does not run tournament automation on a schedule. Use this control whenever you are ready
         to advance all events that are currently due. Individual check-in controls remain available on each
         tournament.
       </p>

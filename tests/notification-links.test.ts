@@ -24,8 +24,8 @@ describe("notification deep links", () => {
   it("creates a Telegram Web App action only for the configured HTTPS app URL", () => {
     const originalUrl = process.env.NEXT_PUBLIC_APP_URL;
     try {
-      process.env.NEXT_PUBLIC_APP_URL = "https://velox.example/";
-      expect(notificationMiniAppUrl("/matches/match-123")).toBe("https://velox.example/matches/match-123");
+      process.env.NEXT_PUBLIC_APP_URL = "https://khemora.example/";
+      expect(notificationMiniAppUrl("/matches/match-123")).toBe("https://khemora.example/matches/match-123");
       process.env.NEXT_PUBLIC_APP_URL = "http://localhost:3000";
       expect(notificationMiniAppUrl("/matches/match-123")).toBeNull();
     } finally {

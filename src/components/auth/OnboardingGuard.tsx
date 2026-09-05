@@ -10,8 +10,12 @@ export function OnboardingGuard() {
     if (typeof window === "undefined") return;
 
     try {
-      const hasCompletedStorage = localStorage.getItem("velox_onboarding_completed_v1");
-      const hasCompletedCookie = document.cookie.includes("velox_onboarding_completed_v1=true");
+      const hasCompletedStorage =
+        localStorage.getItem("khemora_onboarding_completed_v1") ||
+        localStorage.getItem("velox_onboarding_completed_v1");
+      const hasCompletedCookie =
+        document.cookie.includes("khemora_onboarding_completed_v1=true") ||
+        document.cookie.includes("velox_onboarding_completed_v1=true");
 
       if (!hasCompletedStorage && !hasCompletedCookie) {
         router.replace("/onboarding");

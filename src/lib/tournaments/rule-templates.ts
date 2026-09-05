@@ -69,23 +69,23 @@ const gameProfiles: Record<string, GameRuleProfile> = {
 export function getTournamentRulesTemplate(game: RuleTemplateGame) {
   const profile = gameProfiles[game.slug.toLowerCase()] ?? genericProfile;
 
-  return `${game.name.toUpperCase()} — VELOX TOURNAMENT RULES
+  return `${game.name.toUpperCase()} — KHEMORA TOURNAMENT RULES
 
 1. Tournament format and match settings
-• The tournament follows the format, participant limit, schedule, region, and game mode shown in the published VELOX event page. The published bracket or scoring table is binding.
+• The tournament follows the format, participant limit, schedule, region, and game mode shown in the published Khemora event page. The published bracket or scoring table is binding.
 • ${profile.matchSettings[0]}
 • ${profile.matchSettings[1]}
 
 2. Player and team eligibility
-• Every participant must have an active VELOX account, complete registration, and meet any event-specific age, region, platform, or rank requirements stated on the event page.
+• Every participant must have an active Khemora account, complete registration, and meet any event-specific age, region, platform, or rank requirements stated on the event page.
 • A player may enter only once. In team events, each player may represent one registered team only. Team captains are responsible for their roster and communications.
 
 3. Scheduling and check-in
-• Players and teams must check in through VELOX during the published check-in window. Unchecked-in entries may be replaced or forfeited.
-• Participants must be ready at the assigned match time. Match times are East Africa Time unless the event page states otherwise. Players must monitor VELOX and Telegram for schedule updates.
+• Players and teams must check in through Khemora during the published check-in window. Unchecked-in entries may be replaced or forfeited.
+• Participants must be ready at the assigned match time. Match times are East Africa Time unless the event page states otherwise. Players must monitor Khemora and Telegram for schedule updates.
 
 4. Results, reporting, and evidence
-• The winning player or team must report the result promptly through VELOX. Both sides must keep screenshots, match summaries, or other requested evidence until the result is finalized.
+• The winning player or team must report the result promptly through Khemora. Both sides must keep screenshots, match summaries, or other requested evidence until the result is finalized.
 • Reported scores must reflect the actual match. False, incomplete, or manipulated evidence may lead to a forfeit, suspension, or ban.
 
 5. Disconnections and technical issues
@@ -94,17 +94,17 @@ export function getTournamentRulesTemplate(game: RuleTemplateGame) {
 
 6. Fair play and prohibited behavior
 • ${profile.fairPlay[0]}
-• Harassment, hate speech, threats, doxxing, impersonation, bribery, match fixing, deliberate delays, and abuse of VELOX staff or opponents are prohibited.
+• Harassment, hate speech, threats, doxxing, impersonation, bribery, match fixing, deliberate delays, and abuse of Khemora staff or opponents are prohibited.
 
 7. Disputes and forfeits
-• A dispute must be submitted through the VELOX match flow with clear evidence as soon as possible and before the published dispute deadline. Do not continue to argue in public channels.
+• A dispute must be submitted through the Khemora match flow with clear evidence as soon as possible and before the published dispute deadline. Do not continue to argue in public channels.
 • Failure to check in, join a lobby, provide required proof, or respond to an organizer within the stated window may result in a forfeit. Repeated no-shows can lead to account restrictions.
 
 8. Prizes and payments
 • Prize amounts, eligibility, and distribution are those shown on the published event page. Prizes are awarded only after results, disputes, and fair-play checks are complete.
-• Paid entries are collected only through Telegram Stars. Refunds, when applicable, follow VELOX's cancellation and payment policy; no off-platform payment request is valid.
+• Paid entries are collected only through Telegram Stars. Refunds, when applicable, follow Khemora's cancellation and payment policy; no off-platform payment request is valid.
 
 9. Organizer decisions
-• VELOX organizers may correct clear administrative errors, adjust a schedule for technical or safety reasons, disqualify rule violations, and make the final decision on evidence and disputes.
+• Khemora organizers may correct clear administrative errors, adjust a schedule for technical or safety reasons, disqualify rule violations, and make the final decision on evidence and disputes.
 • By registering, each participant agrees to these rules and any clearly published event-specific additions. These rules may be edited by the organizer before the tournament is published.`;
 }

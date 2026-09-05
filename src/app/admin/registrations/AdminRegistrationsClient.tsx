@@ -47,7 +47,7 @@ export function AdminRegistrationsClient({
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       const pName =
-        r.user.profile?.veloxUsername?.toLowerCase() ??
+        r.user.profile?.khemoraUsername?.toLowerCase() ??
         r.user.username?.toLowerCase() ??
         r.user.firstName?.toLowerCase() ??
         "";
@@ -150,7 +150,7 @@ export function AdminRegistrationsClient({
       r.id,
       `"${(
         r.team?.name ??
-        r.user.profile?.veloxUsername ??
+        r.user.profile?.khemoraUsername ??
         r.user.username ??
         r.user.firstName ??
         "Player"
@@ -365,7 +365,7 @@ export function AdminRegistrationsClient({
                 {filteredRegistrations.map((reg) => {
                   const participantName = reg.team
                     ? reg.team.name
-                    : reg.user.profile?.veloxUsername ??
+                    : reg.user.profile?.khemoraUsername ??
                       reg.user.username ??
                       reg.user.firstName ??
                       "Player";

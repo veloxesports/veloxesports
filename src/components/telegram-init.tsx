@@ -27,7 +27,7 @@ export function TelegramInit() {
       }
 
       // initData is the only Telegram-provided client value sent to the server.
-      // The server validates its signature before creating a VELOX session.
+      // The server validates its signature before creating a Khemora session.
       if (webApp.initData) {
         void authenticateTelegram(webApp.initData).then((result) => {
           if (result.success) router.refresh();

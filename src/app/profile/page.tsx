@@ -22,7 +22,7 @@ export default async function ProfilePage() {
     return (
       <TelegramAccessRequired
         title="Profile needs Telegram"
-        message={res.error ?? "Open VELOX in Telegram to view your player profile."}
+        message={res.error ?? "Open Khemora in Telegram to view your player profile."}
       />
     );
   }
@@ -36,14 +36,14 @@ export default async function ProfilePage() {
   const nextTierXp = 500;
   const xpPercent = Math.min(100, Math.max(10, Math.round((currentTierXp / nextTierXp) * 100)));
 
-  const publicProfileIdentifier = profile.veloxUsername || profile.user.username || profile.userId;
+  const publicProfileIdentifier = profile.khemoraUsername || profile.user.username || profile.userId;
 
   return (
     <main className="velox-page">
       <ProfileHeader
         initialImageUrl={profile.user.profileImage}
-        displayName={profile.veloxUsername || profile.user.firstName || "VELOX Player"}
-        fallbackInitial={(profile.veloxUsername || profile.user.firstName || "P")[0].toUpperCase()}
+        displayName={profile.khemoraUsername || profile.user.firstName || "Khemora Player"}
+        fallbackInitial={(profile.khemoraUsername || profile.user.firstName || "P")[0].toUpperCase()}
         rank={profile.rank}
         level={profile.level}
         publicProfileHref={`/players/${publicProfileIdentifier}`}

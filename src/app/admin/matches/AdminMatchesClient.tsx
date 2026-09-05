@@ -56,8 +56,8 @@ export function AdminMatchesClient({
     if (tournamentFilter !== "ALL" && match.tournamentId !== tournamentFilter) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      const p1 = match.player1?.profile?.veloxUsername?.toLowerCase() ?? match.player1?.username?.toLowerCase() ?? match.team1?.name?.toLowerCase() ?? "";
-      const p2 = match.player2?.profile?.veloxUsername?.toLowerCase() ?? match.player2?.username?.toLowerCase() ?? match.team2?.name?.toLowerCase() ?? "";
+      const p1 = match.player1?.profile?.khemoraUsername?.toLowerCase() ?? match.player1?.username?.toLowerCase() ?? match.team1?.name?.toLowerCase() ?? "";
+      const p2 = match.player2?.profile?.khemoraUsername?.toLowerCase() ?? match.player2?.username?.toLowerCase() ?? match.team2?.name?.toLowerCase() ?? "";
       const tourney = match.tournamentTitle.toLowerCase();
       const game = match.gameName.toLowerCase();
       if (!p1.includes(q) && !p2.includes(q) && !tourney.includes(q) && !game.includes(q)) return false;
@@ -222,8 +222,8 @@ export function AdminMatchesClient({
         ) : (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {filteredMatches.map((match) => {
-              const p1Name = match.player1?.profile?.veloxUsername ?? match.player1?.username ?? match.team1?.name ?? "TBD";
-              const p2Name = match.player2?.profile?.veloxUsername ?? match.player2?.username ?? match.team2?.name ?? "TBD";
+              const p1Name = match.player1?.profile?.khemoraUsername ?? match.player1?.username ?? match.team1?.name ?? "TBD";
+              const p2Name = match.player2?.profile?.khemoraUsername ?? match.player2?.username ?? match.team2?.name ?? "TBD";
               const p1Discord = match.player1?.profile?.discordUsername;
               const p2Discord = match.player2?.profile?.discordUsername;
 
@@ -428,8 +428,8 @@ function EditMatchModal({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const p1Name = match.player1?.profile?.veloxUsername ?? match.player1?.username ?? match.team1?.name ?? "Competitor 1";
-  const p2Name = match.player2?.profile?.veloxUsername ?? match.player2?.username ?? match.team2?.name ?? "Competitor 2";
+  const p1Name = match.player1?.profile?.khemoraUsername ?? match.player1?.username ?? match.team1?.name ?? "Competitor 1";
+  const p2Name = match.player2?.profile?.khemoraUsername ?? match.player2?.username ?? match.team2?.name ?? "Competitor 2";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

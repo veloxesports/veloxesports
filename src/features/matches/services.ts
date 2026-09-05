@@ -17,7 +17,7 @@ type MatchCenterMatch = {
 export async function getMatchCenter(): Promise<{ success: true; data: MatchCenterMatch[] } | { success: false; error: string }> {
   try {
     const user = await getCurrentUser();
-    if (!user) return { success: false, error: "Open VELOX inside Telegram to view your matches." };
+    if (!user) return { success: false, error: "Open Khemora inside Telegram to view your matches." };
 
     const memberships = await prisma.teamMember.findMany({
       where: { userId: user.id },

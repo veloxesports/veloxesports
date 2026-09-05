@@ -12,7 +12,7 @@ type LeaderboardPlayer = {
   rank: string;
   wins?: number;
   losses?: number;
-  veloxUsername: string | null;
+  khemoraUsername: string | null;
   user: {
     username: string | null;
     firstName: string | null;
@@ -87,7 +87,7 @@ export default async function LeaderboardPage() {
           <Trophy className="mx-auto h-10 w-10 text-[#536053]" aria-hidden />
           <h2 className="mt-3 text-base font-black text-white">The board is waiting</h2>
           <p className="mt-1 text-xs text-[#8e998f]">
-            Complete matches to set the first VELOX season rankings.
+            Complete matches to set the first Khemora season rankings.
           </p>
         </div>
       )}
@@ -105,7 +105,7 @@ export default async function LeaderboardPage() {
                   Your Standing
                 </p>
                 <p className="text-xs font-black text-white">
-                  {currentUser.profile?.veloxUsername || currentUser.username || "You"}
+                  {currentUser.profile?.khemoraUsername || currentUser.username || "You"}
                 </p>
               </div>
             </div>
@@ -226,7 +226,7 @@ function PodiumPlayer({
     </div>
   );
 
-  const playerSlug = player?.veloxUsername || player?.user.username || player?.userId;
+  const playerSlug = player?.khemoraUsername || player?.user.username || player?.userId;
   if (playerSlug) {
     return (
       <Link href={`/players/${playerSlug}`} className="contents">
@@ -310,7 +310,7 @@ function PlayerRow({
     </article>
   );
 
-  const playerSlug = player.veloxUsername || player.user.username || player.userId;
+  const playerSlug = player.khemoraUsername || player.user.username || player.userId;
   if (playerSlug) {
     return (
       <Link href={`/players/${playerSlug}`} className="block">
@@ -323,7 +323,7 @@ function PlayerRow({
 }
 
 function playerName(player: LeaderboardPlayer) {
-  return player.veloxUsername || player.user.username || player.user.firstName || "Player";
+  return player.khemoraUsername || player.user.username || player.user.firstName || "Player";
 }
 
 function PlayerAvatar({

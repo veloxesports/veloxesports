@@ -15,7 +15,7 @@ describe("telegram bot onboarding experience", () => {
       const caption = getWelcomeCardCaption();
 
       // Heading & branding
-      expect(caption).toContain("Welcome to VELOX 🎮🏆");
+      expect(caption).toContain("Welcome to KHEMORA ESPORTS 🎮🏆");
       expect(caption).toContain("Premier Esports Arena on Telegram");
 
       // Features
@@ -129,7 +129,7 @@ describe("telegram bot onboarding experience", () => {
         expect(getMiniAppUrl()).toBe("https://play.velox.gg/");
 
         process.env.NEXT_PUBLIC_APP_URL = "not-a-valid-url";
-        expect(getMiniAppUrl()).toBe("https://veloxesports.com");
+        expect(getMiniAppUrl()).toBe("https://khemoraesports.com");
       } finally {
         if (original === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
         else process.env.NEXT_PUBLIC_APP_URL = original;
@@ -139,11 +139,11 @@ describe("telegram bot onboarding experience", () => {
     it("resolves configured community URL or falls back safely", () => {
       const original = process.env.TELEGRAM_COMMUNITY_URL;
       try {
-        process.env.TELEGRAM_COMMUNITY_URL = "https://t.me/my_velox_squad";
-        expect(getCommunityUrl()).toBe("https://t.me/my_velox_squad");
+        process.env.TELEGRAM_COMMUNITY_URL = "https://t.me/my_khemora_squad";
+        expect(getCommunityUrl()).toBe("https://t.me/my_khemora_squad");
 
         process.env.TELEGRAM_COMMUNITY_URL = "";
-        expect(getCommunityUrl()).toBe("https://t.me/veloxesports");
+        expect(getCommunityUrl()).toBe("https://t.me/khemoraesports");
       } finally {
         if (original === undefined) delete process.env.TELEGRAM_COMMUNITY_URL;
         else process.env.TELEGRAM_COMMUNITY_URL = original;

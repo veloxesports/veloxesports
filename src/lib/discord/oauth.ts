@@ -47,7 +47,7 @@ export function getDiscordAvatarUrl(user: { id: string; avatar?: string | null }
 function getSecretKey(): string {
   const secret = process.env.SESSION_SECRET;
   if (!secret || secret.length < 32) {
-    return "velox-discord-oauth-signing-secret-default-32-chars";
+    return "khemora-discord-oauth-signing-secret-default-32-chars";
   }
   return secret;
 }
@@ -57,7 +57,7 @@ export function isDiscordOAuthConfigured(): boolean {
 }
 
 export function appBaseUrl(): string {
-  const value = process.env.NEXT_PUBLIC_APP_URL || "https://veloxesports-psi.vercel.app";
+  const value = process.env.NEXT_PUBLIC_APP_URL || "https://khemoraesports.vercel.app";
   try {
     const url = new URL(value);
     if (url.protocol === "http:" || url.protocol === "https:") {
@@ -66,7 +66,7 @@ export function appBaseUrl(): string {
   } catch {
     // ignore
   }
-  return "https://veloxesports-psi.vercel.app";
+  return "https://khemoraesports.vercel.app";
 }
 
 export function discordRedirectUri(): string {

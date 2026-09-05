@@ -43,7 +43,7 @@ export default async function Home() {
     tournamentsResult.success && tournamentsResult.data ? tournamentsResult.data[0] : undefined;
   const wallet = walletResult.success && walletResult.data ? walletResult.data.wallet : null;
   const profile = user?.profile;
-  const displayName = profile?.veloxUsername || user?.username || user?.firstName || "Player";
+  const displayName = profile?.khemoraUsername || user?.username || user?.firstName || "Player";
   const avatarUrl = user?.profileImage;
   const rank = profile?.rank ?? "BRONZE";
   const level = profile?.level ?? 1;
@@ -356,7 +356,7 @@ export default async function Home() {
             </div>
           ) : (
             <p className="p-4 text-xs text-[#8e998f]">
-              Open VELOX in Telegram to track verified Star earnings.
+              Open Khemora in Telegram to track verified Star earnings.
             </p>
           )}
         </div>

@@ -201,7 +201,7 @@ function MatchCard({ match }: { match: Match }) {
         <div className="mt-3.5 flex items-center justify-between border-t border-[#1e2a20] pt-2.5 text-[10px] font-bold text-[#7f9180]">
           <span className="flex items-center gap-1">
             <MapPin className="h-3.5 w-3.5 text-[#5e7060]" aria-hidden />
-            VELOX Server Arena
+            Khemora Server Arena
           </span>
           <span className="inline-flex items-center gap-1 text-[11px] font-black text-[#c5f94d] group-hover:translate-x-0.5 transition-transform">
             {needsReview ? "Submit Result" : isLive ? "Enter Lobby" : "Match Room"}

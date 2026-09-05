@@ -57,7 +57,7 @@ export function createTournamentInvoice(input: {
   return telegramApi<string>("createInvoiceLink", {
     title,
     description,
-    payload: `velox:${input.paymentId}`,
+    payload: `khemora:${input.paymentId}`,
     provider_token: "",
     currency: "XTR",
     prices: [{ label: "Tournament entry", amount: input.amount }],
@@ -96,7 +96,7 @@ export async function sendTelegramMiniAppNotification(input: {
   const chatId = Number(input.telegramUserId);
   if (!Number.isSafeInteger(chatId) || chatId <= 0) throw new Error("TELEGRAM_INVALID_CHAT");
 
-  const text = `🔔 VELOX\n\n${input.title}\n${input.message}`.slice(0, 4_096);
+  const text = `🔔 KHEMORA ESPORTS\n\n${input.title}\n${input.message}`.slice(0, 4_096);
   await telegramApi<boolean>("sendMessage", {
     chat_id: chatId,
     text,

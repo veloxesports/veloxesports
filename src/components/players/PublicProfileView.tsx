@@ -44,8 +44,8 @@ export function PublicProfileView({ profile, headToHead, isViewerProfile }: Publ
       const shareUrl = typeof window !== "undefined" ? window.location.href : "";
       if (navigator.share) {
         void navigator.share({
-          title: `${profile.displayName} | VELOX Player Profile`,
-          text: `Check out ${profile.displayName}'s esports profile and tournament stats on VELOX!`,
+          title: `${profile.displayName} | Khemora Player Profile`,
+          text: `Check out ${profile.displayName}'s esports profile and tournament stats on Khemora!`,
           url: shareUrl,
         });
       } else {
